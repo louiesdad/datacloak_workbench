@@ -1,0 +1,108 @@
+name: Coverage Report
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  coverage:
+    name: Generate Coverage Report
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Generate coverage for all packages
+      run: npm run coverage:all
+
+    - name: Merge coverage reports
+      run: npm run coverage:merge
+
+    - name: Generate HTML report
+      run: npm run coverage:html
+
+    - name: Check coverage thresholds
+      run: npm run coverage:check
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        files: ./coverage/merged/lcov.info
+        name: full-coverage
+        fail_ci_if_error: true
+        verbose: true
+
+    - name: Comment PR with coverage
+      if: github.event_name == 'pull_request'
+      uses: 5monkeys/cobertura-action@master
+      with:
+        path: coverage/merged/cobertura-coverage.xml
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        minimum_coverage: 80
+        fail_below_threshold: true
+
+    - name: Upload coverage artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: coverage-report
+        path: |
+          coverage/
+          reports/coverage/
+        retention-days: 30
+
+  patch-coverage:
+    name: Patch Coverage Check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Generate base coverage
+      run: |
+        git checkout ${{ github.base_ref }}
+        npm ci
+        npm run coverage:all
+        npm run coverage:merge
+        cp coverage/merged/lcov.info coverage/base-lcov.info
+
+    - name: Generate patch coverage
+      run: |
+        git checkout ${{ github.head_ref }}
+        npm ci
+        npm run coverage:all
+        npm run coverage:merge
+
+    - name: Check patch coverage
+      run: npm run coverage:patch-check
+      env:
+        BASE_COVERAGE: coverage/base-lcov.info
+        PATCH_COVERAGE: coverage/merged/lcov.info
+        MINIMUM_PATCH_COVERAGE: 80

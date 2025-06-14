@@ -1,0 +1,146 @@
+name: Build Electron App
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build'
+        required: true
+        default: 'develop'
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+            artifact: '*.AppImage'
+          - os: windows-latest
+            platform: win
+            artifact: '*.exe'
+          - os: macos-latest
+            platform: mac
+            artifact: '*.dmg'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build web-ui
+      run: npm run build:web-ui
+
+    - name: Build backend
+      run: npm run build:backend
+
+    - name: Prepare app for packaging
+      run: npm run prepare:electron
+
+    # macOS code signing
+    - name: Import Code-Signing Certificates (macOS)
+      if: matrix.os == 'macos-latest'
+      uses: Apple-Actions/import-codesign-certs@v2
+      with:
+        p12-file-base64: ${{ secrets.APPLE_CERTIFICATE_P12 }}
+        p12-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+
+    - name: Setup Apple Notarization (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        echo "APPLE_ID=${{ secrets.APPLE_ID }}" >> $GITHUB_ENV
+        echo "APPLE_ID_PASSWORD=${{ secrets.APPLE_ID_PASSWORD }}" >> $GITHUB_ENV
+        echo "APPLE_TEAM_ID=${{ secrets.APPLE_TEAM_ID }}" >> $GITHUB_ENV
+
+    # Windows code signing
+    - name: Setup Windows Code Signing
+      if: matrix.os == 'windows-latest'
+      run: |
+        echo "${{ secrets.WIN_CERTIFICATE }}" | base64 --decode > certificate.p12
+        echo "CSC_LINK=certificate.p12" >> $GITHUB_ENV
+        echo "CSC_KEY_PASSWORD=${{ secrets.WIN_CERTIFICATE_PASSWORD }}" >> $GITHUB_ENV
+
+    # Build Electron app
+    - name: Build Electron App
+      run: npm run build:electron:${{ matrix.platform }}
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        APPLE_ID: ${{ secrets.APPLE_ID }}
+        APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+        APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        CSC_LINK: ${{ env.CSC_LINK }}
+        CSC_KEY_PASSWORD: ${{ secrets.WIN_CERTIFICATE_PASSWORD }}
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: electron-${{ matrix.platform }}
+        path: |
+          dist/${{ matrix.artifact }}
+          dist/latest*.yml
+        retention-days: 30
+
+    - name: Upload to release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          dist/${{ matrix.artifact }}
+          dist/latest*.yml
+        draft: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  smoke-test:
+    name: Smoke Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    needs: [build]
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Download build artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: electron-${{ matrix.os == 'ubuntu-latest' && 'linux' || matrix.os == 'windows-latest' && 'win' || 'mac' }}
+        path: ./dist
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+
+    - name: Install test dependencies
+      run: npm ci
+
+    - name: Run smoke tests
+      run: npm run test:smoke
+      timeout-minutes: 10
+
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: smoke-test-results-${{ matrix.os }}
+        path: test-results/
+        retention-days: 7

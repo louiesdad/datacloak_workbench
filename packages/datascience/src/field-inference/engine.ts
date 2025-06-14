@@ -1,13 +1,20 @@
 import { InferenceResult, Dataset } from '../types';
 import { TypeDetector } from './type-detector';
 import { StatisticsCalculator } from './statistics-calculator';
+import { GPTAssist, GPTAssistConfig } from './gpt-assist';
 
 export class FieldInferenceEngine {
+  private gptAssist: GPTAssist;
+
+  constructor(gptConfig?: Partial<GPTAssistConfig>) {
+    this.gptAssist = new GPTAssist(gptConfig);
+  }
+
   async inferField(fieldName: string, values: any[]): Promise<InferenceResult> {
     const typeResult = TypeDetector.detectFieldType(values);
     const statistics = StatisticsCalculator.calculate(values, typeResult.type);
 
-    const result: InferenceResult = {
+    let result: InferenceResult = {
       fieldName,
       inferredType: typeResult.type,
       confidence: typeResult.confidence,
@@ -17,6 +24,11 @@ export class FieldInferenceEngine {
     const format = this.detectFormat(values, typeResult.type);
     if (format) {
       result.format = format;
+    }
+
+    // Use GPT assist for low confidence results
+    if (this.gptAssist.shouldUseGPTAssist(result)) {
+      result = await this.gptAssist.enhanceInference(fieldName, values, result);
     }
 
     return result;

@@ -1,0 +1,65 @@
+# Codecov configuration
+coverage:
+  precision: 2
+  round: down
+  range: "70...100"
+  
+  status:
+    project:
+      default:
+        target: 80%
+        threshold: 1%
+        if_not_found: success
+    patch:
+      default:
+        target: 80%
+        threshold: 1%
+        if_not_found: success
+
+  ignore:
+    - "**/*.test.ts"
+    - "**/*.test.js"
+    - "**/*.spec.ts"
+    - "**/*.spec.js"
+    - "**/test/**"
+    - "**/tests/**"
+    - "**/__tests__/**"
+    - "**/dist/**"
+    - "**/build/**"
+    - "**/coverage/**"
+    - "**/*.d.ts"
+    - "scripts/**"
+    - "build-resources/**"
+    - "binaries/**"
+
+comment:
+  layout: "reach,diff,flags,tree"
+  behavior: default
+  require_changes: false
+  require_base: no
+  require_head: yes
+
+parsers:
+  gcov:
+    branch_detection:
+      conditional: yes
+      loop: yes
+      method: no
+      macro: no
+
+flags:
+  web-ui:
+    paths:
+      - packages/web-ui/src
+  backend:
+    paths:
+      - packages/backend/src
+  datascience:
+    paths:
+      - packages/datascience/src
+  security:
+    paths:
+      - packages/security/src
+  electron-shell:
+    paths:
+      - packages/electron-shell/src
