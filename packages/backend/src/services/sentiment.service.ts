@@ -2,13 +2,17 @@ import { getSQLiteConnection } from '../database/sqlite';
 import { runDuckDB } from '../database/duckdb';
 import { v4 as uuidv4 } from 'uuid';
 import { AppError } from '../middleware/error.middleware';
+import { SecurityService } from './security.service';
 
 export interface SentimentAnalysisResult {
   id?: number;
   text: string;
+  originalText?: string; // Store original before PII masking
   sentiment: 'positive' | 'negative' | 'neutral';
   score: number;
   confidence: number;
+  piiDetected?: boolean;
+  piiItemsFound?: number;
   createdAt?: string;
 }
 
@@ -23,6 +27,11 @@ export interface SentimentStatistics {
 }
 
 export class SentimentService {
+  private securityService: SecurityService;
+
+  constructor() {
+    this.securityService = new SecurityService();
+  }
   private performSentimentAnalysis(text: string): SentimentAnalysisResult {
     // Mock sentiment analysis - replace with actual ML model or API
     const words = text.toLowerCase().split(/\s+/);
@@ -69,12 +78,41 @@ export class SentimentService {
     };
   }
 
-  async analyzeSentiment(text: string): Promise<SentimentAnalysisResult> {
+  async analyzeSentiment(text: string, enablePIIMasking: boolean = true): Promise<SentimentAnalysisResult> {
     if (!text || text.trim().length === 0) {
       throw new AppError('Text is required for sentiment analysis', 400, 'INVALID_TEXT');
     }
 
-    const result = this.performSentimentAnalysis(text.trim());
+    const originalText = text.trim();
+    let processedText = originalText;
+    let piiDetected = false;
+    let piiItemsFound = 0;
+
+    // Apply PII masking if enabled
+    if (enablePIIMasking) {
+      try {
+        await this.securityService.initialize();
+        const maskingResult = await this.securityService.maskText(originalText);
+        
+        if (maskingResult.detectedPII.length > 0) {
+          processedText = maskingResult.maskedText;
+          piiDetected = true;
+          piiItemsFound = maskingResult.detectedPII.length;
+          
+          console.log(`PII masking applied: ${piiItemsFound} items found and masked`);
+        }
+      } catch (error) {
+        console.warn('PII masking failed, proceeding with original text:', error);
+        // Continue with original text if masking fails
+      }
+    }
+
+    const result = this.performSentimentAnalysis(processedText);
+    
+    // Add PII information to result
+    result.originalText = enablePIIMasking ? originalText : undefined;
+    result.piiDetected = piiDetected;
+    result.piiItemsFound = piiItemsFound;
     
     // Store in SQLite
     const db = getSQLiteConnection();
@@ -87,6 +125,7 @@ export class SentimentService {
       VALUES (?, ?, ?, ?)
     `);
     
+    // Store the processed (masked) text for analysis
     const info = stmt.run(result.text, result.sentiment, result.score, result.confidence);
     result.id = info.lastInsertRowid as number;
 

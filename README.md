@@ -49,7 +49,10 @@ datacloak-sentiment-workbench/
 - **Dual Database Architecture**: SQLite for transactions + DuckDB for analytics
 - **Real Sentiment Analysis**: Keyword-based scoring with confidence metrics
 - **Large File Processing**: Handle CSV/Excel files up to 50GB with streaming
-- **Comprehensive Testing**: 82.1% coverage with 99+ tests (unit + integration)
+- **🔒 DataCloak Security Integration**: Native PII detection, masking, and compliance auditing
+- **🛡️ Automatic Privacy Protection**: PII masking before sentiment analysis with audit trails
+- **📊 Security Monitoring**: Real-time compliance scoring and violation tracking
+- **Comprehensive Testing**: 82.1% coverage with 110+ tests (unit + integration + security)
 - **Complete Documentation**: API reference, architecture guides, deployment docs
 - **Production Ready**: Error handling, validation, logging, health monitoring
 
@@ -416,6 +419,15 @@ packages/backend/
 - `DELETE /api/v1/data/datasets/:id` - Delete dataset
 - `POST /api/v1/data/export` - Export analysis results
 
+**Security & Privacy**:
+- `POST /api/v1/security/detect` - PII detection in text
+- `POST /api/v1/security/mask` - Text masking with PII protection
+- `POST /api/v1/security/audit/file` - File security audit
+- `POST /api/v1/security/scan/dataset/:id` - Dataset security scan
+- `GET /api/v1/security/metrics` - Security metrics and compliance scores
+- `GET /api/v1/security/status` - Security service status
+- `GET /api/v1/security/audit/history` - Audit history with pagination
+
 **Health & Monitoring**:
 - `GET /health` - Basic health check
 - `GET /api/v1/health/status` - Detailed service status
@@ -434,7 +446,7 @@ CREATE TABLE sentiment_analyses (
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
--- Dataset metadata
+-- Dataset metadata with security information
 CREATE TABLE datasets (
   id TEXT PRIMARY KEY,
   filename TEXT NOT NULL,
@@ -442,6 +454,32 @@ CREATE TABLE datasets (
   size INTEGER NOT NULL,
   record_count INTEGER NOT NULL,
   mime_type TEXT,
+  security_audit_id TEXT,
+  pii_detected INTEGER DEFAULT 0,
+  compliance_score REAL,
+  risk_level TEXT, -- 'low', 'medium', 'high', 'critical'
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Security audit results
+CREATE TABLE security_audits (
+  id TEXT PRIMARY KEY,
+  file_processed TEXT NOT NULL,
+  pii_items_detected INTEGER DEFAULT 0,
+  masking_accuracy REAL DEFAULT 0,
+  compliance_score REAL DEFAULT 0,
+  violations TEXT, -- JSON array
+  recommendations TEXT, -- JSON array
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Security event tracking
+CREATE TABLE security_events (
+  id TEXT PRIMARY KEY,
+  type TEXT NOT NULL, -- 'pii_detected', 'masking_applied', etc.
+  severity TEXT NOT NULL, -- 'low', 'medium', 'high', 'critical'
+  details TEXT, -- JSON object
+  source TEXT NOT NULL,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 ```

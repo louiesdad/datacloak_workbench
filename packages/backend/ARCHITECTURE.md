@@ -2,7 +2,7 @@
 
 ## Overview
 
-The DataCloak Sentiment Workbench backend is a robust Express.js TypeScript API that provides sentiment analysis, data management, and analytics capabilities. It uses a dual-database architecture with SQLite for transactional data and DuckDB for analytical workloads.
+The DataCloak Sentiment Workbench backend is a robust Express.js TypeScript API that provides sentiment analysis, data management, security auditing, and analytics capabilities. It features DataCloak security integration for PII protection, dual-database architecture with SQLite for transactional data and DuckDB for analytical workloads, and comprehensive security monitoring.
 
 ## Technology Stack
 
@@ -69,6 +69,16 @@ The DataCloak Sentiment Workbench backend is a robust Express.js TypeScript API 
 - **Format support**: CSV, Excel (XLSX), and plain text
 - **Field inference**: Automatically detects data types
 - **Preview generation**: Returns sample data for validation
+- **Security scanning**: Automatic PII detection during file upload
+- **Risk assessment**: Compliance scoring and risk level classification
+
+### Security & Privacy
+- **PII Detection**: Automatic detection of emails, phones, SSNs, credit cards, names
+- **Text Masking**: Real-time PII masking before sentiment analysis
+- **Security Auditing**: File-level security audits with compliance scoring
+- **Event Tracking**: Comprehensive logging of all security events
+- **Compliance Monitoring**: GDPR, CCPA, HIPAA, PCI compliance tracking
+- **DataCloak Integration**: Native bridge with fallback to high-fidelity mock
 
 ### Database Design
 

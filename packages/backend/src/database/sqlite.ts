@@ -63,6 +63,31 @@ export const createTables = async (): Promise<void> => {
     );
   `);
 
+  // Add security columns if they don't exist
+  try {
+    db.exec(`ALTER TABLE datasets ADD COLUMN security_audit_id TEXT;`);
+  } catch (error) {
+    // Column already exists, ignore error
+  }
+  
+  try {
+    db.exec(`ALTER TABLE datasets ADD COLUMN pii_detected INTEGER DEFAULT 0;`);
+  } catch (error) {
+    // Column already exists, ignore error
+  }
+
+  try {
+    db.exec(`ALTER TABLE datasets ADD COLUMN compliance_score REAL;`);
+  } catch (error) {
+    // Column already exists, ignore error
+  }
+
+  try {
+    db.exec(`ALTER TABLE datasets ADD COLUMN risk_level TEXT;`);
+  } catch (error) {
+    // Column already exists, ignore error
+  }
+
   // Analysis batches table
   db.exec(`
     CREATE TABLE IF NOT EXISTS analysis_batches (
@@ -77,13 +102,47 @@ export const createTables = async (): Promise<void> => {
     );
   `);
 
+  // Security audits table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS security_audits (
+      id TEXT PRIMARY KEY,
+      file_processed TEXT NOT NULL,
+      pii_items_detected INTEGER DEFAULT 0,
+      masking_accuracy REAL DEFAULT 0,
+      encryption_status TEXT CHECK (encryption_status IN ('enabled', 'disabled')),
+      compliance_score REAL DEFAULT 0,
+      violations TEXT, -- JSON array
+      recommendations TEXT, -- JSON array
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  // Security events table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS security_events (
+      id TEXT PRIMARY KEY,
+      type TEXT NOT NULL CHECK (type IN ('pii_detected', 'masking_applied', 'audit_completed', 'violation_found')),
+      severity TEXT NOT NULL CHECK (severity IN ('low', 'medium', 'high', 'critical')),
+      details TEXT, -- JSON object
+      source TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
   // Create indexes for better performance
   db.exec(`
     CREATE INDEX IF NOT EXISTS idx_sentiment_analyses_created_at ON sentiment_analyses(created_at);
     CREATE INDEX IF NOT EXISTS idx_sentiment_analyses_sentiment ON sentiment_analyses(sentiment);
     CREATE INDEX IF NOT EXISTS idx_datasets_created_at ON datasets(created_at);
+    CREATE INDEX IF NOT EXISTS idx_datasets_risk_level ON datasets(risk_level);
     CREATE INDEX IF NOT EXISTS idx_analysis_batches_status ON analysis_batches(status);
     CREATE INDEX IF NOT EXISTS idx_analysis_batches_dataset_id ON analysis_batches(dataset_id);
+    CREATE INDEX IF NOT EXISTS idx_security_audits_created_at ON security_audits(created_at);
+    CREATE INDEX IF NOT EXISTS idx_security_audits_compliance_score ON security_audits(compliance_score);
+    CREATE INDEX IF NOT EXISTS idx_security_events_created_at ON security_events(created_at);
+    CREATE INDEX IF NOT EXISTS idx_security_events_type ON security_events(type);
+    CREATE INDEX IF NOT EXISTS idx_security_events_severity ON security_events(severity);
   `);
 
   // Create triggers for updated_at

@@ -5,6 +5,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import csv from 'csv-parser';
 import * as XLSX from 'xlsx';
+import { SecurityService } from './security.service';
 
 export interface Dataset {
   id: string;
@@ -36,10 +37,23 @@ export interface UploadResult {
     type: string;
     sampleValues: any[];
     nullCount: number;
+    piiDetected?: boolean;
+    piiType?: string;
   }[];
+  securityScan?: {
+    piiItemsDetected: number;
+    complianceScore: number;
+    riskLevel: string;
+    recommendations: string[];
+  };
 }
 
 export class DataService {
+  private securityService: SecurityService;
+
+  constructor() {
+    this.securityService = new SecurityService();
+  }
   private getUploadDir(): string {
     const uploadDir = path.join(process.cwd(), 'data', 'uploads');
     if (!fs.existsSync(uploadDir)) {
@@ -77,34 +91,88 @@ export class DataService {
       // Parse file and get preview data
       const { previewData, fieldInfo, recordCount } = await this.parseFile(filePath, file.mimetype);
 
-      // Store dataset metadata in SQLite
-      const db = getSQLiteConnection();
-      if (!db) {
-        throw new AppError('Database connection not available', 500, 'DB_ERROR');
+      // Perform security scan
+      let securityScan;
+      try {
+        await this.securityService.initialize();
+        const scanResult = await this.securityService.scanDataset(datasetId, filePath);
+        
+        securityScan = {
+          piiItemsDetected: scanResult.auditResult.piiItemsDetected,
+          complianceScore: scanResult.auditResult.complianceScore,
+          riskLevel: scanResult.piiSummary.riskLevel,
+          recommendations: scanResult.piiSummary.recommendations
+        };
+
+        // Enhance field info with PII detection
+        const enhancedFieldInfo = await this.enhanceFieldInfoWithPII(fieldInfo, previewData);
+        
+        // Store dataset metadata in SQLite with security information
+        const db = getSQLiteConnection();
+        if (!db) {
+          throw new AppError('Database connection not available', 500, 'DB_ERROR');
+        }
+
+        const stmt = db.prepare(`
+          INSERT INTO datasets (id, filename, original_filename, size, record_count, mime_type, 
+                               pii_detected, compliance_score, risk_level)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+
+        stmt.run(
+          datasetId,
+          filename,
+          file.originalname,
+          file.size,
+          recordCount,
+          file.mimetype,
+          scanResult.auditResult.piiItemsDetected > 0 ? 1 : 0,
+          scanResult.auditResult.complianceScore,
+          scanResult.piiSummary.riskLevel
+        );
+
+        // Get the created dataset
+        const dataset = this.getDatasetById(datasetId);
+
+        return {
+          dataset,
+          previewData,
+          fieldInfo: enhancedFieldInfo,
+          securityScan,
+        };
+
+      } catch (securityError) {
+        console.warn('Security scan failed, proceeding without security information:', securityError);
+        
+        // Store dataset metadata in SQLite without security information
+        const db = getSQLiteConnection();
+        if (!db) {
+          throw new AppError('Database connection not available', 500, 'DB_ERROR');
+        }
+
+        const stmt = db.prepare(`
+          INSERT INTO datasets (id, filename, original_filename, size, record_count, mime_type)
+          VALUES (?, ?, ?, ?, ?, ?)
+        `);
+
+        stmt.run(
+          datasetId,
+          filename,
+          file.originalname,
+          file.size,
+          recordCount,
+          file.mimetype
+        );
+
+        // Get the created dataset
+        const dataset = this.getDatasetById(datasetId);
+
+        return {
+          dataset,
+          previewData,
+          fieldInfo,
+        };
       }
-
-      const stmt = db.prepare(`
-        INSERT INTO datasets (id, filename, original_filename, size, record_count, mime_type)
-        VALUES (?, ?, ?, ?, ?, ?)
-      `);
-
-      stmt.run(
-        datasetId,
-        filename,
-        file.originalname,
-        file.size,
-        recordCount,
-        file.mimetype
-      );
-
-      // Get the created dataset
-      const dataset = this.getDatasetById(datasetId);
-
-      return {
-        dataset,
-        previewData,
-        fieldInfo,
-      };
 
     } catch (error) {
       // Clean up file if upload failed
@@ -363,5 +431,50 @@ export class DataService {
       downloadUrl: `/api/v1/downloads/export-${exportId}.${format}`,
       expiresAt: expiresAt.toISOString(),
     };
+  }
+
+  private async enhanceFieldInfoWithPII(
+    fieldInfo: any[], 
+    _previewData: any[]
+  ): Promise<any[]> {
+    if (!fieldInfo || fieldInfo.length === 0) return fieldInfo;
+
+    try {
+      const enhancedFieldInfo = [];
+      
+      for (const field of fieldInfo) {
+        // Create sample text from field values for PII detection
+        const sampleText = field.sampleValues
+          .filter((val: any) => val != null && val !== '')
+          .slice(0, 10) // Take first 10 values
+          .join(' ');
+
+        let piiDetected = false;
+        let piiType = undefined;
+
+        if (sampleText.length > 0) {
+          try {
+            const piiResults = await this.securityService.detectPII(sampleText);
+            if (piiResults.length > 0) {
+              piiDetected = true;
+              piiType = piiResults[0].piiType; // Use the first detected PII type
+            }
+          } catch (error) {
+            console.warn(`PII detection failed for field ${field.name}:`, error);
+          }
+        }
+
+        enhancedFieldInfo.push({
+          ...field,
+          piiDetected,
+          piiType
+        });
+      }
+
+      return enhancedFieldInfo;
+    } catch (error) {
+      console.warn('Failed to enhance field info with PII detection:', error);
+      return fieldInfo;
+    }
   }
 }

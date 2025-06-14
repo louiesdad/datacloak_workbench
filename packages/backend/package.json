@@ -1,7 +1,8 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "Express TypeScript API for DataCloak Sentiment Workbench - Production ready with 82.1% test coverage",
+  "main": "dist/server.js",
   "scripts": {
     "build": "tsc",
     "start": "node dist/server.js",
@@ -16,11 +17,11 @@
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist coverage"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "keywords": ["express", "typescript", "sentiment-analysis", "api", "sqlite", "duckdb", "testing"],
+  "author": "DataCloak Team",
+  "license": "MIT",
   "dependencies": {
+    "@dsw/security": "file:../security",
     "better-sqlite3": "^11.10.0",
     "compression": "^1.8.0",
     "cors": "^2.8.5",
