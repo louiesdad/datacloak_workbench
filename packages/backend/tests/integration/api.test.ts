@@ -1,6 +1,8 @@
+import { describe, beforeAll, afterAll, it, expect } from '@jest/globals';
 import request from 'supertest';
 import { createApp } from '../../src/app';
 import { setupTestDatabase, teardownTestDatabase } from './database.setup';
+
 
 describe('API Integration Tests', () => {
   let app: any;
@@ -13,6 +15,7 @@ describe('API Integration Tests', () => {
   afterAll(async () => {
     await teardownTestDatabase();
   });
+
 
   describe('Health Endpoints', () => {
     it('should return health status', async () => {

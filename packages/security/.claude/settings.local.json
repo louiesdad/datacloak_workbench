@@ -8,7 +8,9 @@
       "Bash(git commit:*)",
       "Bash(npm --prefix /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/datascience test)",
       "Bash(npm:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(git push:*)",
+      "Bash(npx jest:*)"
     ],
     "deny": []
   }

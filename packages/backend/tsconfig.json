@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
+    "target": "es2018",
     "module": "commonjs",
-    "lib": ["ES2022"],
+    "lib": ["es2018"],
     "outDir": "./dist",
     "rootDir": "./src",
     "strict": true,
@@ -11,6 +11,11 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "moduleResolution": "node",
+    "types": ["node", "jest"],
+    "typeRoots": [
+      "./node_modules/@types",
+      "./src/types"
+    ],
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,

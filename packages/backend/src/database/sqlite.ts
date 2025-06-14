@@ -33,7 +33,7 @@ export const initializeSQLite = async (): Promise<void> => {
   }
 };
 
-const createTables = async (): Promise<void> => {
+export const createTables = async (): Promise<void> => {
   if (!db) throw new Error('Database not initialized');
 
   // Sentiment analysis results table
