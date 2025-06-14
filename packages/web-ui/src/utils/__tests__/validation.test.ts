@@ -225,14 +225,15 @@ describe('FormValidator', () => {
     });
   });
 
-  it('should validate entire form', () => {
+  it('should validate entire form', async () => {
     const validData = {
       email: 'test@example.com',
       password: 'password123',
       age: '25'
     };
 
-    expect(validator.validateForm(validData)).toEqual({
+    const result = await validator.validateForm(validData);
+    expect(result).toEqual({
       isValid: true,
       errors: {},
       fieldErrors: {}
@@ -244,11 +245,11 @@ describe('FormValidator', () => {
       age: '15'
     };
 
-    const result = validator.validateForm(invalidData);
-    expect(result.isValid).toBe(false);
-    expect(result.errors.email).toContain('Please enter a valid email address');
-    expect(result.errors.password).toContain('Must be at least 8 characters long');
-    expect(result.errors.age).toContain('Value must be between 18 and 100');
+    const invalidResult = await validator.validateForm(invalidData);
+    expect(invalidResult.isValid).toBe(false);
+    expect(invalidResult.errors.email).toContain('Please enter a valid email address');
+    expect(invalidResult.errors.password).toContain('Must be at least 8 characters long');
+    expect(invalidResult.errors.age).toContain('Value must be between 18 and 100');
   });
 
   it('should stop on first error when configured', () => {
@@ -279,8 +280,8 @@ describe('FormValidator', () => {
     });
   });
 
-  it('should handle missing fields in form validation', () => {
-    const result = validator.validateForm({
+  it('should handle missing fields in form validation', async () => {
+    const result = await validator.validateForm({
       email: 'test@example.com'
       // missing password and age
     });
@@ -320,25 +321,25 @@ describe('Standalone Validation Functions', () => {
       email: [required(), email()]
     };
 
-    it('should validate form data', () => {
+    it('should validate form data', async () => {
       const data = {
         username: 'john',
         email: 'john@example.com'
       };
 
-      const result = validateForm(data, schema);
+      const result = await validateForm(data, schema);
       
       expect(result.isValid).toBe(true);
       expect(Object.keys(result.errors)).toHaveLength(0);
     });
 
-    it('should return field-specific errors', () => {
+    it('should return field-specific errors', async () => {
       const data = {
         username: 'jo',
         email: 'invalid-email'
       };
 
-      const result = validateForm(data, schema);
+      const result = await validateForm(data, schema);
       
       expect(result.isValid).toBe(false);
       expect(result.errors.username).toContain('Must be at least 3 characters long');

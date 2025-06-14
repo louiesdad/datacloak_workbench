@@ -49,7 +49,7 @@ export const email = (message = 'Please enter a valid email address'): Validatio
 
 export const minLength = (min: number, message?: string): ValidationRule => {
   return (value: any) => {
-    if (!value) return true; // Allow empty for optional fields
+    if (value === null || value === undefined) return true; // Allow null/undefined for optional fields
     if (typeof value !== 'string') return true;
     
     if (value.length < min) {
