@@ -1,0 +1,14 @@
+{
+  "name": "integration-tests",
+  "version": "1.0.0",
+  "description": "Integration tests for DataCloak Sentiment Workbench",
+  "private": true,
+  "scripts": {
+    "test": "node data-science-backend.test.js",
+    "test:all": "for test in *.test.js; do echo \"Running $test\"; node \"$test\" || exit 1; done"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^20.0.0"
+  }
+}
