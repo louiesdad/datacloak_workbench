@@ -6,6 +6,7 @@ import * as path from 'path';
 import csv from 'csv-parser';
 import * as XLSX from 'xlsx';
 import { SecurityService } from './security.service';
+import { FileStreamService, StreamProgress } from './file-stream.service';
 
 export interface Dataset {
   id: string;
@@ -50,9 +51,12 @@ export interface UploadResult {
 
 export class DataService {
   private securityService: SecurityService;
+  private fileStreamService: FileStreamService;
+  private static readonly LARGE_FILE_THRESHOLD = 100 * 1024 * 1024; // 100MB
 
   constructor() {
     this.securityService = new SecurityService();
+    this.fileStreamService = new FileStreamService();
   }
   private getUploadDir(): string {
     const uploadDir = path.join(process.cwd(), 'data', 'uploads');
@@ -194,45 +198,142 @@ export class DataService {
     recordCount: number;
   }> {
     const previewSize = 100; // Number of rows to preview
-    let allData: any[] = [];
+    const fileStats = fs.statSync(filePath);
+    const isLargeFile = fileStats.size > DataService.LARGE_FILE_THRESHOLD;
 
+    if (isLargeFile) {
+      console.log(`Processing large file (${Math.round(fileStats.size / 1024 / 1024)}MB) using chunked streaming`);
+      return this.parseFileWithStreaming(filePath, mimeType, previewSize);
+    }
+
+    // Use original parsing for smaller files
     if (mimeType === 'text/csv' || mimeType === 'text/plain') {
-      // Parse CSV
-      return new Promise((resolve, reject) => {
-        const results: any[] = [];
-        
-        fs.createReadStream(filePath)
-          .pipe(csv())
-          .on('data', (data: any) => {
-            results.push(data);
-          })
-          .on('end', () => {
-            const previewData = results.slice(0, previewSize);
-            const fieldInfo = this.analyzeFields(results);
-            resolve({
-              previewData,
-              fieldInfo,
-              recordCount: results.length,
-            });
-          })
-          .on('error', reject);
-      });
+      return this.parseCsvFile(filePath, previewSize);
     } else {
-      // Parse Excel
-      const workbook = XLSX.readFile(filePath);
-      const sheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[sheetName];
-      allData = XLSX.utils.sheet_to_json(worksheet);
+      return this.parseExcelFile(filePath, previewSize);
+    }
+  }
 
-      const previewData = allData.slice(0, previewSize);
+  private async parseFileWithStreaming(filePath: string, mimeType: string, previewSize: number): Promise<{
+    previewData: any[];
+    fieldInfo: { name: string; type: string; sampleValues: any[]; nullCount: number }[];
+    recordCount: number;
+  }> {
+    let previewData: any[] = [];
+    let allData: any[] = [];
+    let recordCount = 0;
+    let previewComplete = false;
+
+    const progressCallback = (progress: StreamProgress) => {
+      console.log(`Processing: ${progress.percentComplete.toFixed(1)}% complete, ${progress.rowsProcessed} rows processed`);
+      if (progress.averageRowsPerSecond) {
+        console.log(`Speed: ${Math.round(progress.averageRowsPerSecond)} rows/second`);
+      }
+      if (progress.estimatedTimeRemaining) {
+        const remainingMinutes = Math.round(progress.estimatedTimeRemaining / 1000 / 60);
+        console.log(`Estimated time remaining: ${remainingMinutes} minutes`);
+      }
+    };
+
+    const chunkCallback = async (chunkResult: any) => {
+      recordCount += chunkResult.processedRows;
+      
+      // Collect preview data from first chunk
+      if (!previewComplete && chunkResult.data.length > 0) {
+        const remainingPreviewNeeded = previewSize - previewData.length;
+        if (remainingPreviewNeeded > 0) {
+          previewData.push(...chunkResult.data.slice(0, remainingPreviewNeeded));
+          if (previewData.length >= previewSize) {
+            previewComplete = true;
+          }
+        }
+      }
+
+      // For field analysis, we need a sample of data from across the file
+      // Take a sample from each chunk to get representative field info
+      if (chunkResult.data.length > 0) {
+        const sampleSize = Math.min(50, chunkResult.data.length);
+        allData.push(...chunkResult.data.slice(0, sampleSize));
+        
+        // Limit total sample size to prevent memory issues
+        if (allData.length > 10000) {
+          allData = allData.slice(0, 10000);
+        }
+      }
+    };
+
+    try {
+      const streamResult = await this.fileStreamService.streamProcessFile(filePath, {
+        mimeType,
+        onProgress: progressCallback,
+        onChunk: chunkCallback,
+        chunkSize: 256 * 1024 * 1024 // 256MB chunks
+      });
+
+      console.log(`Streaming complete: ${streamResult.totalRows} rows processed in ${streamResult.processingTime}ms`);
+
       const fieldInfo = this.analyzeFields(allData);
 
       return {
         previewData,
         fieldInfo,
-        recordCount: allData.length,
+        recordCount: streamResult.totalRows,
       };
+    } catch (error) {
+      console.error('Streaming file processing failed, falling back to regular parsing:', error);
+      // Fallback to regular parsing for smaller files
+      if (mimeType === 'text/csv' || mimeType === 'text/plain') {
+        return this.parseCsvFile(filePath, previewSize);
+      } else {
+        return this.parseExcelFile(filePath, previewSize);
+      }
     }
+  }
+
+  private async parseCsvFile(filePath: string, previewSize: number): Promise<{
+    previewData: any[];
+    fieldInfo: { name: string; type: string; sampleValues: any[]; nullCount: number }[];
+    recordCount: number;
+  }> {
+    return new Promise((resolve, reject) => {
+      const results: any[] = [];
+      
+      fs.createReadStream(filePath)
+        .pipe(csv())
+        .on('data', (data: any) => {
+          results.push(data);
+        })
+        .on('end', () => {
+          const previewData = results.slice(0, previewSize);
+          const fieldInfo = this.analyzeFields(results);
+          resolve({
+            previewData,
+            fieldInfo,
+            recordCount: results.length,
+          });
+        })
+        .on('error', reject);
+    });
+  }
+
+  private parseExcelFile(filePath: string, previewSize: number): {
+    previewData: any[];
+    fieldInfo: { name: string; type: string; sampleValues: any[]; nullCount: number }[];
+    recordCount: number;
+  } {
+    const workbook = XLSX.readFile(filePath);
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+    const allData = XLSX.utils.sheet_to_json(worksheet);
+
+    const previewData = allData.slice(0, previewSize);
+    const fieldInfo = this.analyzeFields(allData);
+
+    return {
+      previewData,
+      fieldInfo,
+      recordCount: allData.length,
+    };
   }
 
   private analyzeFields(data: any[]): { name: string; type: string; sampleValues: any[]; nullCount: number }[] {

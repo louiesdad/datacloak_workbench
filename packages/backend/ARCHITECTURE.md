@@ -236,6 +236,153 @@ Environment variables are managed through `src/config/env.ts`:
 3. **Building**: `npm run build`
 4. **Production**: `npm start`
 
+### Job Queue System
+
+The backend includes a comprehensive job queue system for handling long-running operations:
+
+#### Supported Job Types
+- `sentiment_analysis_batch` - Process large batches of text analysis
+- `file_processing` - Stream process large files with chunked reading
+- `security_scan` - Comprehensive security scanning of datasets
+- `data_export` - Export processed data in various formats
+
+#### Job Queue Features
+```typescript
+// Create a batch sentiment analysis job
+const jobId = jobQueue.addJob('sentiment_analysis_batch', {
+  texts: ['text1', 'text2', ...],
+  enablePIIMasking: true
+}, { priority: 'high' });
+
+// Monitor job progress
+jobQueue.on('job:progress', (job) => {
+  console.log(`Job ${job.id}: ${job.progress}% complete`);
+});
+```
+
+#### Queue Management
+- **Priority scheduling**: low, medium, high, critical
+- **Concurrent processing**: Configurable max concurrent jobs (default: 3)
+- **Progress tracking**: Real-time progress updates and ETA
+- **Error handling**: Automatic retry and fallback mechanisms
+- **Job lifecycle**: pending → running → completed/failed/cancelled
+
+### Large File Processing
+
+#### Chunked File Reading
+The system automatically uses chunked processing for files larger than 100MB:
+
+```typescript
+// FileStreamService automatically chunks large files
+const result = await fileStreamService.streamProcessFile(filePath, {
+  chunkSize: 256 * 1024 * 1024, // 256MB chunks
+  onProgress: (progress) => {
+    console.log(`Progress: ${progress.percentComplete}%`);
+  },
+  onChunk: async (chunk) => {
+    // Process each chunk as it's read
+    await processChunk(chunk.data);
+  }
+});
+```
+
+#### Performance Features
+- **Memory efficiency**: 256MB chunk processing prevents memory overload
+- **Progress tracking**: Real-time progress with estimated completion time
+- **Fallback support**: Automatic fallback to regular parsing if streaming fails
+- **Format support**: Both CSV and Excel files with optimized streaming
+
+### Job Queue API Endpoints
+
+#### Create Job
+```http
+POST /api/v1/jobs
+Content-Type: application/json
+
+{
+  "type": "sentiment_analysis_batch",
+  "data": {
+    "texts": ["text1", "text2"],
+    "enablePIIMasking": true
+  },
+  "priority": "high"
+}
+```
+
+#### Monitor Job
+```http
+GET /api/v1/jobs/:jobId
+```
+
+#### List Jobs
+```http
+GET /api/v1/jobs?status=running&type=file_processing&limit=10
+```
+
+#### Cancel Job
+```http
+DELETE /api/v1/jobs/:jobId
+```
+
+#### Queue Statistics
+```http
+GET /api/v1/jobs/stats/summary
+```
+
+#### Wait for Completion
+```http
+POST /api/v1/jobs/:jobId/wait
+Content-Type: application/json
+
+{
+  "timeout": 30000
+}
+```
+
+## Enhanced Database Schema
+
+### Job Processing Tables
+```sql
+-- Job queue tracking (in-memory, not persisted)
+-- Jobs are managed in memory for performance
+-- Completed job results are stored in existing tables
+```
+
+### File Processing Enhancements
+The existing dataset tables now support chunked processing metadata:
+- Processing progress tracking
+- Chunk-based field inference
+- Memory usage estimation
+
+## Performance Optimizations
+
+### File Upload Processing
+- **Automatic chunking**: Files >100MB processed in 256MB chunks
+- **Memory management**: Configurable memory limits and cleanup
+- **Progress reporting**: Real-time upload and processing progress
+- **Security integration**: PII scanning during chunked processing
+
+### Batch Operations
+- **Background processing**: Long-running operations moved to job queue
+- **Concurrent execution**: Multiple jobs processed simultaneously
+- **Resource management**: Configurable concurrency limits
+- **Error recovery**: Automatic retry mechanisms for failed operations
+
+## Testing Infrastructure
+
+### Enhanced Test Coverage
+- **Error handling tests**: Comprehensive error scenario validation
+- **Integration tests**: End-to-end API testing with proper error handling
+- **Performance tests**: Large file processing and concurrent operation testing
+- **Security tests**: PII detection and masking validation
+
+### Test Categories
+1. **Unit Tests**: Individual component testing
+2. **Integration Tests**: API endpoint testing
+3. **Error Handling Tests**: Validation and error response testing
+4. **Security Tests**: PII detection and compliance testing
+5. **Performance Tests**: Large file and concurrent processing
+
 ## Future Enhancements
 
 1. **Authentication**: JWT-based auth system
@@ -243,3 +390,6 @@ Environment variables are managed through `src/config/env.ts`:
 3. **Caching**: Redis for frequently accessed data
 4. **WebSocket**: Real-time analysis updates
 5. **ML Integration**: Advanced sentiment models
+6. **Job Persistence**: Database-backed job queue for reliability
+7. **Distributed Processing**: Multi-node job processing
+8. **Advanced Monitoring**: Metrics and alerting system
