@@ -1,0 +1,373 @@
+.error-boundary {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 2rem;
+  overflow: auto;
+}
+
+.error-container {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  padding: 3rem;
+  max-width: 800px;
+  width: 100%;
+  max-height: 90vh;
+  overflow: auto;
+  text-align: center;
+}
+
+.error-icon {
+  font-size: 4rem;
+  margin-bottom: 1.5rem;
+  display: block;
+}
+
+.error-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #1a202c;
+  margin: 0 0 1rem 0;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.error-description {
+  font-size: 1.125rem;
+  color: #64748b;
+  line-height: 1.6;
+  margin: 0 0 2rem 0;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.error-details {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin: 2rem 0;
+  text-align: left;
+}
+
+.error-details h3 {
+  margin: 0 0 1rem 0;
+  color: #374151;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.error-message,
+.error-id {
+  margin: 0.75rem 0;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.error-message strong,
+.error-id strong {
+  color: #374151;
+  font-weight: 600;
+}
+
+.error-stack {
+  margin-top: 1rem;
+}
+
+.error-stack summary {
+  cursor: pointer;
+  color: #6b7280;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.error-stack summary:hover {
+  color: #374151;
+}
+
+.error-stack pre {
+  background: #1f2937;
+  color: #f9fafb;
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  margin: 0.5rem 0;
+}
+
+.error-stack h4 {
+  margin: 1rem 0 0.5rem 0;
+  color: #374151;
+  font-size: 1rem;
+}
+
+.error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+  margin: 2rem 0;
+}
+
+.error-action {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  font-size: 0.875rem;
+  min-width: 120px;
+}
+
+.error-action.primary {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+}
+
+.error-action.primary:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.error-action.secondary {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+
+.error-action.secondary:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.error-action.tertiary {
+  background: white;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.error-action.tertiary:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+  transform: translateY(-1px);
+}
+
+.error-help,
+.error-prevention {
+  text-align: left;
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+}
+
+.error-help h3,
+.error-prevention h3 {
+  margin: 0 0 1rem 0;
+  color: #0c4a6e;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.error-help ul,
+.error-prevention ul {
+  margin: 0;
+  padding-left: 1.5rem;
+  color: #0f172a;
+}
+
+.error-help li,
+.error-prevention li {
+  margin: 0.5rem 0;
+  line-height: 1.5;
+}
+
+.error-help strong,
+.error-prevention strong {
+  color: #0c4a6e;
+  font-weight: 600;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .error-boundary {
+    padding: 1rem;
+  }
+
+  .error-container {
+    padding: 2rem 1.5rem;
+  }
+
+  .error-title {
+    font-size: 2rem;
+  }
+
+  .error-description {
+    font-size: 1rem;
+  }
+
+  .error-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .error-action {
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .error-details {
+    padding: 1rem;
+  }
+
+  .error-help,
+  .error-prevention {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .error-container {
+    padding: 1.5rem 1rem;
+  }
+
+  .error-title {
+    font-size: 1.75rem;
+  }
+
+  .error-icon {
+    font-size: 3rem;
+  }
+
+  .error-stack pre {
+    font-size: 0.625rem;
+    padding: 0.75rem;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .error-action.primary {
+    background: #000;
+    border: 2px solid #000;
+  }
+
+  .error-action.secondary {
+    background: #000;
+    border: 2px solid #000;
+  }
+
+  .error-action.tertiary {
+    border-color: #000;
+    color: #000;
+  }
+
+  .error-details {
+    border-color: #000;
+  }
+
+  .error-help,
+  .error-prevention {
+    border-color: #000;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .error-action:hover {
+    transform: none;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .error-boundary {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  }
+
+  .error-container {
+    background: #1e293b;
+    color: #f8fafc;
+  }
+
+  .error-title {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .error-description {
+    color: #cbd5e1;
+  }
+
+  .error-details {
+    background: #0f172a;
+    border-color: #334155;
+  }
+
+  .error-details h3 {
+    color: #f1f5f9;
+  }
+
+  .error-message strong,
+  .error-id strong {
+    color: #f1f5f9;
+  }
+
+  .error-stack summary {
+    color: #94a3b8;
+  }
+
+  .error-stack summary:hover {
+    color: #f1f5f9;
+  }
+
+  .error-action.tertiary {
+    background: #374151;
+    color: #f8fafc;
+    border-color: #4b5563;
+  }
+
+  .error-action.tertiary:hover {
+    background: #4b5563;
+    border-color: #6b7280;
+  }
+
+  .error-help,
+  .error-prevention {
+    background: #0c4a6e;
+    border-color: #0369a1;
+  }
+
+  .error-help h3,
+  .error-prevention h3 {
+    color: #bae6fd;
+  }
+
+  .error-help ul,
+  .error-prevention ul {
+    color: #e0f2fe;
+  }
+
+  .error-help strong,
+  .error-prevention strong {
+    color: #bae6fd;
+  }
+}

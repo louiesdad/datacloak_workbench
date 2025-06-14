@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import './TransformOperationEditor.css';
 import type { 
   TransformOperation, 
   TableSchema, 
@@ -30,7 +31,7 @@ export const TransformOperationEditor: React.FC<TransformOperationEditorProps> =
 }) => {
   const [localConfig, setLocalConfig] = useState(operation.config);
 
-  const updateConfig = useCallback((updates: Partial<typeof localConfig>) => {
+  const updateConfig = useCallback((updates: any) => {
     const newConfig = { ...localConfig, ...updates };
     setLocalConfig(newConfig);
     onOperationChange({ config: newConfig });

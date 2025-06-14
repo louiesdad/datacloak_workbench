@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import { ProfilerUI } from '../ProfilerUI';
 import type { FileProfile, FieldProfile } from '../ProfilerUI';
@@ -90,7 +90,7 @@ describe('ProfilerUI', () => {
     // Click to expand the file
     const fileHeader = screen.getByText('test.csv').closest('.file-header');
     if (fileHeader) {
-      fileHeader.click();
+      fireEvent.click(fileHeader);
     }
 
     expect(screen.getByText('customer_id')).toBeInTheDocument();
@@ -122,7 +122,7 @@ describe('ProfilerUI', () => {
     // Click to expand the file
     const fileHeader = screen.getByText('test.csv').closest('.file-header');
     if (fileHeader) {
-      fileHeader.click();
+      fireEvent.click(fileHeader);
     }
 
     expect(screen.getByText('value1')).toBeInTheDocument();
@@ -143,7 +143,7 @@ describe('ProfilerUI', () => {
     // Click to expand the file
     const fileHeader = screen.getByText('test.csv').closest('.file-header');
     if (fileHeader) {
-      fileHeader.click();
+      fireEvent.click(fileHeader);
     }
 
     expect(screen.getByText('75.0%')).toBeInTheDocument();

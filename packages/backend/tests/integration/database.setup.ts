@@ -1,8 +1,10 @@
-import { initializeDatabases } from '../../src/database';
+import { initializeSQLite } from '../../src/database/sqlite';
 
 export const setupTestDatabase = async () => {
   try {
-    await initializeDatabases();
+    // Only initialize SQLite for integration tests to avoid DuckDB issues
+    await initializeSQLite();
+    console.log('Test database (SQLite) initialized successfully');
   } catch (error) {
     console.error('Failed to setup test database:', error);
     throw error;

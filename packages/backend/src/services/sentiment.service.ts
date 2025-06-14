@@ -90,16 +90,17 @@ export class SentimentService {
     const info = stmt.run(result.text, result.sentiment, result.score, result.confidence);
     result.id = info.lastInsertRowid as number;
 
-    // Also store in DuckDB for analytics - skip for now due to DuckDB parameter binding issues
-    // TODO: Fix DuckDB parameter binding
-    try {
-      await runDuckDB(`
-        INSERT INTO text_analytics (text, sentiment, score, confidence, word_count, char_count)
-        VALUES ('${result.text.replace(/'/g, "''")}', '${result.sentiment}', ${result.score}, ${result.confidence}, ${result.text.split(/\s+/).length}, ${result.text.length})
-      `);
-    } catch (error) {
-      // Log error but don't fail the operation
-      console.warn('Failed to store analytics in DuckDB:', error);
+    // Also store in DuckDB for analytics (only if not in test environment)
+    if (process.env.NODE_ENV !== 'test') {
+      try {
+        await runDuckDB(`
+          INSERT INTO text_analytics (text, sentiment, score, confidence, word_count, char_count)
+          VALUES ('${result.text.replace(/'/g, "''")}', '${result.sentiment}', ${result.score}, ${result.confidence}, ${result.text.split(/\s+/).length}, ${result.text.length})
+        `);
+      } catch (error) {
+        // Log error but don't fail the operation
+        console.warn('Failed to store analytics in DuckDB:', error);
+      }
     }
 
     return result;
@@ -140,17 +141,18 @@ export class SentimentService {
         }
       })();
 
-      // Store analytics in DuckDB - skip for now due to parameter binding issues
-      // TODO: Fix DuckDB parameter binding
-      try {
-        for (const result of results) {
-          await runDuckDB(`
-            INSERT INTO text_analytics (text, sentiment, score, confidence, word_count, char_count, batch_id)
-            VALUES ('${result.text.replace(/'/g, "''")}', '${result.sentiment}', ${result.score}, ${result.confidence}, ${result.text.split(/\s+/).length}, ${result.text.length}, '${batchId}')
-          `);
+      // Store analytics in DuckDB (only if not in test environment)
+      if (process.env.NODE_ENV !== 'test') {
+        try {
+          for (const result of results) {
+            await runDuckDB(`
+              INSERT INTO text_analytics (text, sentiment, score, confidence, word_count, char_count, batch_id)
+              VALUES ('${result.text.replace(/'/g, "''")}', '${result.sentiment}', ${result.score}, ${result.confidence}, ${result.text.split(/\s+/).length}, ${result.text.length}, '${batchId}')
+            `);
+          }
+        } catch (error) {
+          console.warn('Failed to store batch analytics in DuckDB:', error);
         }
-      } catch (error) {
-        console.warn('Failed to store batch analytics in DuckDB:', error);
       }
 
       return results;

@@ -8,6 +8,10 @@
     "build": "tsc",
     "test": "jest",
     "test:coverage": "jest --coverage",
+    "test:mutation": "stryker run",
+    "test:mutation:ci": "stryker run --reporters clear-text,json",
+    "test:performance": "jest --testPathPattern=performance.test.ts --verbose",
+    "test:adversarial": "jest --testPathPattern=adversarial",
     "dev": "tsc --watch",
     "lint": "eslint src --ext .ts,.tsx",
     "clean": "rm -rf dist"
@@ -16,6 +20,10 @@
   "author": "DSW Team",
   "license": "MIT",
   "devDependencies": {
+    "@stryker-mutator/core": "^8.0.0",
+    "@stryker-mutator/jest-runner": "^8.0.0",
+    "@stryker-mutator/typescript-checker": "^8.0.0",
+    "@stryker-mutator/html-reporter": "^8.0.0",
     "@types/jest": "^29.5.0",
     "@types/node": "^20.0.0",
     "@typescript-eslint/eslint-plugin": "^6.0.0",

@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { AppError, errorHandler } from '../../src/middleware/error.middleware';
-import { asyncHandler } from '../../src/middleware/validation.middleware';
+import { asyncHandler, validateRequest } from '../../src/middleware/validation.middleware';
 
 describe('Error Middleware', () => {
   let mockRequest: Partial<Request>;
@@ -95,6 +95,82 @@ describe('Validation Middleware', () => {
 
       expect(mockFn).toHaveBeenCalled();
       expect(mockNext).toHaveBeenCalledWith(error);
+    });
+
+    it('should handle synchronous functions that throw', async () => {
+      const testError = new Error('Sync error');
+      const mockFn = jest.fn().mockImplementation(() => {
+        throw testError;
+      });
+      const handler = asyncHandler(mockFn);
+      const mockNext = jest.fn();
+
+      // Call the handler
+      handler({} as Request, {} as Response, mockNext);
+
+      // Wait for the next tick to allow Promise.resolve().catch() to execute
+      await new Promise(resolve => setImmediate(resolve));
+
+      expect(mockFn).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalledWith(testError);
+    });
+  });
+
+  describe('validateRequest', () => {
+    const mockSchema = {
+      validate: jest.fn()
+    };
+
+    let mockRequest: Partial<Request>;
+    let mockResponse: Partial<Response>;
+    let mockNext: NextFunction;
+
+    beforeEach(() => {
+      mockRequest = { body: { test: 'data' } };
+      mockResponse = {};
+      mockNext = jest.fn();
+      mockSchema.validate.mockClear();
+    });
+
+    it('should call next when validation passes', () => {
+      mockSchema.validate.mockReturnValue({ error: null });
+      const middleware = validateRequest(mockSchema);
+
+      middleware(mockRequest as Request, mockResponse as Response, mockNext);
+
+      expect(mockSchema.validate).toHaveBeenCalledWith({ test: 'data' }, { abortEarly: false });
+      expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('should throw AppError when validation fails', () => {
+      const validationError = {
+        details: [
+          { message: 'Field is required' },
+          { message: 'Invalid format' }
+        ]
+      };
+      mockSchema.validate.mockReturnValue({ error: validationError });
+      
+      const middleware = validateRequest(mockSchema);
+
+      expect(() => {
+        middleware(mockRequest as Request, mockResponse as Response, mockNext);
+      }).toThrow('Field is required, Invalid format');
+    });
+
+    it('should throw AppError with single validation error', () => {
+      const validationError = {
+        details: [
+          { message: 'Field is required' }
+        ]
+      };
+      mockSchema.validate.mockReturnValue({ error: validationError });
+      
+      const middleware = validateRequest(mockSchema);
+
+      expect(() => {
+        middleware(mockRequest as Request, mockResponse as Response, mockNext);
+      }).toThrow('Field is required');
     });
   });
 });
