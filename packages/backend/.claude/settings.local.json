@@ -8,7 +8,8 @@
       "Bash(npm run test:*)",
       "Bash(npm test)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(npm test:*)"
     ],
     "deny": []
   }

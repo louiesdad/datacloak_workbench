@@ -1,11 +1,17 @@
 import request from 'supertest';
 import { createApp } from '../../src/app';
+import { setupTestDatabase, teardownTestDatabase } from './database.setup';
 
 describe('App Integration Tests', () => {
   let app: any;
 
-  beforeAll(() => {
+  beforeAll(async () => {
+    await setupTestDatabase();
     app = createApp();
+  });
+
+  afterAll(async () => {
+    await teardownTestDatabase();
   });
 
   describe('GET /health', () => {
@@ -68,7 +74,7 @@ describe('App Integration Tests', () => {
     it('should handle data upload endpoint', async () => {
       const response = await request(app)
         .post('/api/v1/data/upload')
-        .send({})
+        .attach('file', Buffer.from('name,age\nJohn,30\nJane,25'), 'test.csv')
         .expect(201);
 
       expect(response.body).toHaveProperty('data');

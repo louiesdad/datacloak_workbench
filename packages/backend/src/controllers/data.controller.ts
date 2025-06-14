@@ -1,17 +1,23 @@
 import { Request, Response } from 'express';
-import { SuccessResponse, PaginatedResponse } from '../types';
+import { SuccessResponse } from '../types';
+import { DataService } from '../services/data.service';
+import { paginationSchema, exportDataSchema, datasetIdSchema } from '../validation/schemas';
 import { AppError } from '../middleware/error.middleware';
 
 export class DataController {
-  async uploadData(_req: Request, res: Response): Promise<void> {
-    // TODO: Implement file upload logic
+  private dataService = new DataService();
+
+  async uploadData(req: Request, res: Response): Promise<void> {
+    const file = req.file;
+    
+    if (!file) {
+      throw new AppError('No file provided', 400, 'NO_FILE');
+    }
+
+    const uploadResult = await this.dataService.uploadDataset(file);
+    
     const result: SuccessResponse = {
-      data: {
-        id: 'dataset-123',
-        filename: 'data.csv',
-        size: 1024,
-        recordCount: 100,
-      },
+      data: uploadResult,
       message: 'Data uploaded successfully',
     };
     
@@ -19,48 +25,42 @@ export class DataController {
   }
 
   async getDatasets(req: Request, res: Response): Promise<void> {
-    const page = parseInt(req.query.page as string) || 1;
-    const pageSize = parseInt(req.query.pageSize as string) || 10;
-    
-    // TODO: Implement database query for datasets
-    const result: PaginatedResponse<any> = {
-      data: [],
-      pagination: {
-        page,
-        pageSize,
-        total: 0,
-        totalPages: 0,
-      },
-    };
+    const { error, value } = paginationSchema.validate(req.query);
+    if (error) {
+      throw new AppError(error.details[0].message, 400, 'VALIDATION_ERROR');
+    }
+
+    const { page, pageSize } = value;
+    const result = await this.dataService.getDatasets(page, pageSize);
     
     res.json(result);
   }
 
   async getDatasetById(req: Request, res: Response): Promise<void> {
-    const { id } = req.params;
-    
-    // TODO: Implement database query for specific dataset
-    if (!id) {
-      throw new AppError('Dataset not found', 404, 'NOT_FOUND');
+    const { error, value } = datasetIdSchema.validate(req.params);
+    if (error) {
+      throw new AppError(error.details[0].message, 400, 'VALIDATION_ERROR');
     }
+
+    const { id } = value;
+    const dataset = this.dataService.getDatasetById(id);
     
     const result: SuccessResponse = {
-      data: {
-        id,
-        filename: 'data.csv',
-        size: 1024,
-        recordCount: 100,
-        createdAt: new Date().toISOString(),
-      },
+      data: dataset,
     };
     
     res.json(result);
   }
 
   async deleteDataset(req: Request, res: Response): Promise<void> {
-    const { id } = req.params;
+    const { error, value } = datasetIdSchema.validate(req.params);
+    if (error) {
+      throw new AppError(error.details[0].message, 400, 'VALIDATION_ERROR');
+    }
+
+    const { id } = value;
+    await this.dataService.deleteDataset(id);
     
-    // TODO: Implement dataset deletion
     const result: SuccessResponse = {
       data: { id },
       message: 'Dataset deleted successfully',
@@ -70,14 +70,20 @@ export class DataController {
   }
 
   async exportData(req: Request, res: Response): Promise<void> {
-    const { format } = req.body;
+    const { error, value } = exportDataSchema.validate(req.body);
+    if (error) {
+      throw new AppError(error.details[0].message, 400, 'VALIDATION_ERROR');
+    }
+
+    const { format, datasetId, dateRange, sentimentFilter } = value;
+    const exportResult = await this.dataService.exportData(format, {
+      datasetId,
+      dateRange,
+      sentimentFilter,
+    });
     
-    // TODO: Implement data export logic
     const result: SuccessResponse = {
-      data: {
-        downloadUrl: `/api/v1/downloads/export-123.${format}`,
-        expiresAt: new Date(Date.now() + 3600000).toISOString(),
-      },
+      data: exportResult,
       message: 'Export initiated successfully',
     };
     

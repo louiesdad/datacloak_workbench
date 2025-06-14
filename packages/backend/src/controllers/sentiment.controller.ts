@@ -1,18 +1,23 @@
 import { Request, Response } from 'express';
-import { SuccessResponse, PaginatedResponse } from '../types';
+import { SuccessResponse } from '../types';
+import { SentimentService } from '../services/sentiment.service';
+import { sentimentAnalysisSchema, batchSentimentAnalysisSchema, paginationSchema } from '../validation/schemas';
+import { AppError } from '../middleware/error.middleware';
 
 export class SentimentController {
+  private sentimentService = new SentimentService();
+
   async analyzeSentiment(req: Request, res: Response): Promise<void> {
-    const { text } = req.body;
+    const { error, value } = sentimentAnalysisSchema.validate(req.body);
+    if (error) {
+      throw new AppError(error.details[0].message, 400, 'VALIDATION_ERROR');
+    }
+
+    const { text } = value;
+    const analysis = await this.sentimentService.analyzeSentiment(text);
     
-    // TODO: Implement sentiment analysis logic
     const result: SuccessResponse = {
-      data: {
-        text,
-        sentiment: 'positive',
-        score: 0.85,
-        confidence: 0.92,
-      },
+      data: analysis,
       message: 'Sentiment analysis completed',
     };
     
@@ -20,19 +25,16 @@ export class SentimentController {
   }
 
   async batchAnalyzeSentiment(req: Request, res: Response): Promise<void> {
-    const { texts } = req.body;
-    
-    // TODO: Implement batch sentiment analysis logic
-    const results = texts.map((text: string, index: number) => ({
-      id: index,
-      text,
-      sentiment: 'neutral',
-      score: 0.5,
-      confidence: 0.8,
-    }));
+    const { error, value } = batchSentimentAnalysisSchema.validate(req.body);
+    if (error) {
+      throw new AppError(error.details[0].message, 400, 'VALIDATION_ERROR');
+    }
+
+    const { texts } = value;
+    const analyses = await this.sentimentService.batchAnalyzeSentiment(texts);
     
     const result: SuccessResponse = {
-      data: results,
+      data: analyses,
       message: 'Batch sentiment analysis completed',
     };
     
@@ -40,35 +42,22 @@ export class SentimentController {
   }
 
   async getAnalysisHistory(req: Request, res: Response): Promise<void> {
-    const page = parseInt(req.query.page as string) || 1;
-    const pageSize = parseInt(req.query.pageSize as string) || 10;
-    
-    // TODO: Implement database query for history
-    const result: PaginatedResponse<any> = {
-      data: [],
-      pagination: {
-        page,
-        pageSize,
-        total: 0,
-        totalPages: 0,
-      },
-    };
+    const { error, value } = paginationSchema.validate(req.query);
+    if (error) {
+      throw new AppError(error.details[0].message, 400, 'VALIDATION_ERROR');
+    }
+
+    const { page, pageSize } = value;
+    const result = await this.sentimentService.getAnalysisHistory(page, pageSize);
     
     res.json(result);
   }
 
   async getStatistics(_req: Request, res: Response): Promise<void> {
-    // TODO: Implement statistics calculation
+    const statistics = await this.sentimentService.getStatistics();
+    
     const result: SuccessResponse = {
-      data: {
-        totalAnalyses: 0,
-        sentimentDistribution: {
-          positive: 0,
-          neutral: 0,
-          negative: 0,
-        },
-        averageConfidence: 0,
-      },
+      data: statistics,
     };
     
     res.json(result);
