@@ -2,13 +2,17 @@ import React, { useCallback } from 'react';
 import { useAppContext, useAppActions, type AnalysisConfig } from '../context/AppContext';
 import { 
   DataSourcePicker, 
-  ProfilerUI, 
-  TransformDesigner,
-  RunWizard,
-  ResultExplorer,
+  ProfilerUI,
   type FileProfile,
   type FieldProfile
 } from './index';
+import { 
+  TransformDesigner,
+  RunWizard,
+  ResultExplorer,
+  preloadHeavyComponents,
+  preloadAnalysisComponents
+} from './LazyComponents';
 import type { FileInfo } from '../platform-bridge';
 import type { Dataset, SentimentResult } from '../../../../shared/contracts/api';
 import './WorkflowManager.css';
@@ -131,6 +135,9 @@ export const WorkflowManager: React.FC = () => {
     completeStep('profile');
     setStep('transform');
     
+    // Preload heavy components for next steps
+    preloadHeavyComponents();
+    
     addNotification({
       type: 'info',
       title: 'Profile Complete',
@@ -146,6 +153,9 @@ export const WorkflowManager: React.FC = () => {
   const handleSkipTransform = useCallback(() => {
     completeStep('transform');
     setStep('configure');
+    
+    // Preload analysis components
+    preloadAnalysisComponents();
     
     addNotification({
       type: 'info',
