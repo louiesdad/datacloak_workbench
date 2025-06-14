@@ -93,7 +93,7 @@ describe('Field Inference', () => {
     });
 
     test('detects fixed length patterns', () => {
-      const values = ['ABC12', 'DEF34', 'GHI56'];
+      const values = Array.from({ length: 12 }, (_, i) => `ABC${i.toString().padStart(2, '0')}`);
       const customPatterns = PatternAnalyzer.detectCustomPatterns(values);
       
       const lengthPattern = customPatterns.find(p => p.name.includes('Fixed Length'));

@@ -122,10 +122,10 @@ export class AccuracyEvaluator {
       'json', 'array', 'object', 'null', 'undefined', 'mixed'
     ];
     
-    const matrix: Record<FieldType, Record<FieldType, number>> = {};
+    const matrix = {} as Record<FieldType, Record<FieldType, number>>;
     
     for (const actualType of allTypes) {
-      matrix[actualType] = {};
+      matrix[actualType] = {} as Record<FieldType, number>;
       for (const predictedType of allTypes) {
         matrix[actualType][predictedType] = 0;
       }

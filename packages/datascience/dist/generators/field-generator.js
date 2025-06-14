@@ -66,12 +66,16 @@ class FieldGenerator {
             return patterns[Math.floor(Math.random() * patterns.length)];
         }
         const length = Math.floor(Math.random() * (maxLength - minLength + 1)) + minLength;
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 ';
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
         let result = '';
         for (let i = 0; i < length; i++) {
             result += chars.charAt(Math.floor(Math.random() * chars.length));
         }
-        return result.trim() || 'sample';
+        // Ensure minimum length is maintained after any processing
+        while (result.length < minLength) {
+            result += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return result || 'sample';
     }
     static generateNumber(options) {
         const { minValue = 0, maxValue = 1000 } = options;

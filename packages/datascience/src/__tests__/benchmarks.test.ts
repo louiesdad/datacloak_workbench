@@ -253,8 +253,39 @@ describe('Benchmarks', () => {
             precision: 0.85,
             recall: 0.88,
             f1Score: 0.865,
-            confusionMatrix: { matrix: {}, totalPredictions: 10 },
-            typeSpecificMetrics: {}
+            confusionMatrix: { 
+              matrix: {
+                'string': { 'string': 8, 'number': 1, 'boolean': 0, 'date': 0, 'email': 0, 'url': 0, 'phone': 0, 'json': 0, 'array': 0, 'object': 0, 'null': 0, 'undefined': 0, 'mixed': 0 },
+                'number': { 'string': 0, 'number': 1, 'boolean': 0, 'date': 0, 'email': 0, 'url': 0, 'phone': 0, 'json': 0, 'array': 0, 'object': 0, 'null': 0, 'undefined': 0, 'mixed': 0 },
+                'boolean': { 'string': 0, 'number': 0, 'boolean': 0, 'date': 0, 'email': 0, 'url': 0, 'phone': 0, 'json': 0, 'array': 0, 'object': 0, 'null': 0, 'undefined': 0, 'mixed': 0 },
+                'date': { 'string': 0, 'number': 0, 'boolean': 0, 'date': 0, 'email': 0, 'url': 0, 'phone': 0, 'json': 0, 'array': 0, 'object': 0, 'null': 0, 'undefined': 0, 'mixed': 0 },
+                'email': { 'string': 0, 'number': 0, 'boolean': 0, 'date': 0, 'email': 0, 'url': 0, 'phone': 0, 'json': 0, 'array': 0, 'object': 0, 'null': 0, 'undefined': 0, 'mixed': 0 },
+                'url': { 'string': 0, 'number': 0, 'boolean': 0, 'date': 0, 'email': 0, 'url': 0, 'phone': 0, 'json': 0, 'array': 0, 'object': 0, 'null': 0, 'undefined': 0, 'mixed': 0 },
+                'phone': { 'string': 0, 'number': 0, 'boolean': 0, 'date': 0, 'email': 0, 'url': 0, 'phone': 0, 'json': 0, 'array': 0, 'object': 0, 'null': 0, 'undefined': 0, 'mixed': 0 },
+                'json': { 'string': 0, 'number': 0, 'boolean': 0, 'date': 0, 'email': 0, 'url': 0, 'phone': 0, 'json': 0, 'array': 0, 'object': 0, 'null': 0, 'undefined': 0, 'mixed': 0 },
+                'array': { 'string': 0, 'number': 0, 'boolean': 0, 'date': 0, 'email': 0, 'url': 0, 'phone': 0, 'json': 0, 'array': 0, 'object': 0, 'null': 0, 'undefined': 0, 'mixed': 0 },
+                'object': { 'string': 0, 'number': 0, 'boolean': 0, 'date': 0, 'email': 0, 'url': 0, 'phone': 0, 'json': 0, 'array': 0, 'object': 0, 'null': 0, 'undefined': 0, 'mixed': 0 },
+                'null': { 'string': 0, 'number': 0, 'boolean': 0, 'date': 0, 'email': 0, 'url': 0, 'phone': 0, 'json': 0, 'array': 0, 'object': 0, 'null': 0, 'undefined': 0, 'mixed': 0 },
+                'undefined': { 'string': 0, 'number': 0, 'boolean': 0, 'date': 0, 'email': 0, 'url': 0, 'phone': 0, 'json': 0, 'array': 0, 'object': 0, 'null': 0, 'undefined': 0, 'mixed': 0 },
+                'mixed': { 'string': 0, 'number': 0, 'boolean': 0, 'date': 0, 'email': 0, 'url': 0, 'phone': 0, 'json': 0, 'array': 0, 'object': 0, 'null': 0, 'undefined': 0, 'mixed': 0 }
+              } as Record<import('../types').FieldType, Record<import('../types').FieldType, number>>, 
+              totalPredictions: 10 
+            },
+            typeSpecificMetrics: {
+              'string': { truePositives: 8, falsePositives: 0, falseNegatives: 1, precision: 1.0, recall: 0.89, f1Score: 0.94 },
+              'number': { truePositives: 1, falsePositives: 1, falseNegatives: 0, precision: 0.5, recall: 1.0, f1Score: 0.67 },
+              'boolean': { truePositives: 0, falsePositives: 0, falseNegatives: 0, precision: 0, recall: 0, f1Score: 0 },
+              'date': { truePositives: 0, falsePositives: 0, falseNegatives: 0, precision: 0, recall: 0, f1Score: 0 },
+              'email': { truePositives: 0, falsePositives: 0, falseNegatives: 0, precision: 0, recall: 0, f1Score: 0 },
+              'url': { truePositives: 0, falsePositives: 0, falseNegatives: 0, precision: 0, recall: 0, f1Score: 0 },
+              'phone': { truePositives: 0, falsePositives: 0, falseNegatives: 0, precision: 0, recall: 0, f1Score: 0 },
+              'json': { truePositives: 0, falsePositives: 0, falseNegatives: 0, precision: 0, recall: 0, f1Score: 0 },
+              'array': { truePositives: 0, falsePositives: 0, falseNegatives: 0, precision: 0, recall: 0, f1Score: 0 },
+              'object': { truePositives: 0, falsePositives: 0, falseNegatives: 0, precision: 0, recall: 0, f1Score: 0 },
+              'null': { truePositives: 0, falsePositives: 0, falseNegatives: 0, precision: 0, recall: 0, f1Score: 0 },
+              'undefined': { truePositives: 0, falsePositives: 0, falseNegatives: 0, precision: 0, recall: 0, f1Score: 0 },
+              'mixed': { truePositives: 0, falsePositives: 0, falseNegatives: 0, precision: 0, recall: 0, f1Score: 0 }
+            } as Record<import('../types').FieldType, import('../benchmarks/accuracy-evaluator').TypeMetrics>
           },
           threshold: 0.8
         }
@@ -319,8 +350,39 @@ describe('Benchmarks', () => {
             precision: 0.85,
             recall: 0.88,
             f1Score: 0.865,
-            confusionMatrix: { matrix: {}, totalPredictions: 10 },
-            typeSpecificMetrics: {}
+            confusionMatrix: { 
+              matrix: {
+                'string': { 'string': 8, 'number': 1, 'boolean': 0, 'date': 0, 'email': 0, 'url': 0, 'phone': 0, 'json': 0, 'array': 0, 'object': 0, 'null': 0, 'undefined': 0, 'mixed': 0 },
+                'number': { 'string': 0, 'number': 1, 'boolean': 0, 'date': 0, 'email': 0, 'url': 0, 'phone': 0, 'json': 0, 'array': 0, 'object': 0, 'null': 0, 'undefined': 0, 'mixed': 0 },
+                'boolean': { 'string': 0, 'number': 0, 'boolean': 0, 'date': 0, 'email': 0, 'url': 0, 'phone': 0, 'json': 0, 'array': 0, 'object': 0, 'null': 0, 'undefined': 0, 'mixed': 0 },
+                'date': { 'string': 0, 'number': 0, 'boolean': 0, 'date': 0, 'email': 0, 'url': 0, 'phone': 0, 'json': 0, 'array': 0, 'object': 0, 'null': 0, 'undefined': 0, 'mixed': 0 },
+                'email': { 'string': 0, 'number': 0, 'boolean': 0, 'date': 0, 'email': 0, 'url': 0, 'phone': 0, 'json': 0, 'array': 0, 'object': 0, 'null': 0, 'undefined': 0, 'mixed': 0 },
+                'url': { 'string': 0, 'number': 0, 'boolean': 0, 'date': 0, 'email': 0, 'url': 0, 'phone': 0, 'json': 0, 'array': 0, 'object': 0, 'null': 0, 'undefined': 0, 'mixed': 0 },
+                'phone': { 'string': 0, 'number': 0, 'boolean': 0, 'date': 0, 'email': 0, 'url': 0, 'phone': 0, 'json': 0, 'array': 0, 'object': 0, 'null': 0, 'undefined': 0, 'mixed': 0 },
+                'json': { 'string': 0, 'number': 0, 'boolean': 0, 'date': 0, 'email': 0, 'url': 0, 'phone': 0, 'json': 0, 'array': 0, 'object': 0, 'null': 0, 'undefined': 0, 'mixed': 0 },
+                'array': { 'string': 0, 'number': 0, 'boolean': 0, 'date': 0, 'email': 0, 'url': 0, 'phone': 0, 'json': 0, 'array': 0, 'object': 0, 'null': 0, 'undefined': 0, 'mixed': 0 },
+                'object': { 'string': 0, 'number': 0, 'boolean': 0, 'date': 0, 'email': 0, 'url': 0, 'phone': 0, 'json': 0, 'array': 0, 'object': 0, 'null': 0, 'undefined': 0, 'mixed': 0 },
+                'null': { 'string': 0, 'number': 0, 'boolean': 0, 'date': 0, 'email': 0, 'url': 0, 'phone': 0, 'json': 0, 'array': 0, 'object': 0, 'null': 0, 'undefined': 0, 'mixed': 0 },
+                'undefined': { 'string': 0, 'number': 0, 'boolean': 0, 'date': 0, 'email': 0, 'url': 0, 'phone': 0, 'json': 0, 'array': 0, 'object': 0, 'null': 0, 'undefined': 0, 'mixed': 0 },
+                'mixed': { 'string': 0, 'number': 0, 'boolean': 0, 'date': 0, 'email': 0, 'url': 0, 'phone': 0, 'json': 0, 'array': 0, 'object': 0, 'null': 0, 'undefined': 0, 'mixed': 0 }
+              } as Record<import('../types').FieldType, Record<import('../types').FieldType, number>>, 
+              totalPredictions: 10 
+            },
+            typeSpecificMetrics: {
+              'string': { truePositives: 8, falsePositives: 0, falseNegatives: 1, precision: 1.0, recall: 0.89, f1Score: 0.94 },
+              'number': { truePositives: 1, falsePositives: 1, falseNegatives: 0, precision: 0.5, recall: 1.0, f1Score: 0.67 },
+              'boolean': { truePositives: 0, falsePositives: 0, falseNegatives: 0, precision: 0, recall: 0, f1Score: 0 },
+              'date': { truePositives: 0, falsePositives: 0, falseNegatives: 0, precision: 0, recall: 0, f1Score: 0 },
+              'email': { truePositives: 0, falsePositives: 0, falseNegatives: 0, precision: 0, recall: 0, f1Score: 0 },
+              'url': { truePositives: 0, falsePositives: 0, falseNegatives: 0, precision: 0, recall: 0, f1Score: 0 },
+              'phone': { truePositives: 0, falsePositives: 0, falseNegatives: 0, precision: 0, recall: 0, f1Score: 0 },
+              'json': { truePositives: 0, falsePositives: 0, falseNegatives: 0, precision: 0, recall: 0, f1Score: 0 },
+              'array': { truePositives: 0, falsePositives: 0, falseNegatives: 0, precision: 0, recall: 0, f1Score: 0 },
+              'object': { truePositives: 0, falsePositives: 0, falseNegatives: 0, precision: 0, recall: 0, f1Score: 0 },
+              'null': { truePositives: 0, falsePositives: 0, falseNegatives: 0, precision: 0, recall: 0, f1Score: 0 },
+              'undefined': { truePositives: 0, falsePositives: 0, falseNegatives: 0, precision: 0, recall: 0, f1Score: 0 },
+              'mixed': { truePositives: 0, falsePositives: 0, falseNegatives: 0, precision: 0, recall: 0, f1Score: 0 }
+            } as Record<import('../types').FieldType, import('../benchmarks/accuracy-evaluator').TypeMetrics>
           },
           passed: true,
           threshold: 0.8
