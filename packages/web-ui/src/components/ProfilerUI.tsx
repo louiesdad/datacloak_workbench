@@ -1,0 +1,307 @@
+import React, { useState, useEffect } from 'react';
+import type { FileInfo } from '../platform-bridge';
+import './ProfilerUI.css';
+
+export interface FieldProfile {
+  name: string;
+  type: 'string' | 'number' | 'date' | 'boolean' | 'unknown';
+  samples: string[];
+  nullCount: number;
+  totalCount: number;
+  uniqueCount?: number;
+  piiDetection: {
+    isPII: boolean;
+    piiType?: 'email' | 'phone' | 'ssn' | 'credit_card' | 'name' | 'address' | 'other';
+    confidence: number;
+  };
+  stats?: {
+    min?: number;
+    max?: number;
+    mean?: number;
+    median?: number;
+  };
+}
+
+export interface FileProfile {
+  file: FileInfo;
+  fields: FieldProfile[];
+  rowCount: number;
+  processingTime: number;
+  errors: string[];
+}
+
+interface ProfilerUIProps {
+  fileProfiles: FileProfile[];
+  onFieldToggle?: (fileIndex: number, fieldName: string, selected: boolean) => void;
+  onPIIToggle?: (fileIndex: number, fieldName: string, maskPII: boolean) => void;
+  selectedFields?: Record<string, boolean>;
+  piiMaskingSettings?: Record<string, boolean>;
+}
+
+const PIIBadge: React.FC<{ field: FieldProfile }> = ({ field }) => {
+  const { piiDetection } = field;
+  
+  if (!piiDetection.isPII) {
+    return null;
+  }
+
+  const getPIIBadgeColor = (_piiType: string, confidence: number) => {
+    if (confidence >= 0.8) return 'high-confidence';
+    if (confidence >= 0.6) return 'medium-confidence';
+    return 'low-confidence';
+  };
+
+  const getPIITypeLabel = (piiType: string) => {
+    const labels: Record<string, string> = {
+      email: 'Email',
+      phone: 'Phone',
+      ssn: 'SSN',
+      credit_card: 'Credit Card',
+      name: 'Name',
+      address: 'Address',
+      other: 'PII'
+    };
+    return labels[piiType] || 'PII';
+  };
+
+  return (
+    <span 
+      className={`pii-badge ${getPIIBadgeColor(piiDetection.piiType || 'other', piiDetection.confidence)}`}
+      title={`${getPIITypeLabel(piiDetection.piiType || 'other')} (${Math.round(piiDetection.confidence * 100)}% confidence)`}
+    >
+      🔒 {getPIITypeLabel(piiDetection.piiType || 'other')}
+    </span>
+  );
+};
+
+const FieldTypeIcon: React.FC<{ type: string }> = ({ type }) => {
+  const icons: Record<string, string> = {
+    string: '📝',
+    number: '🔢',
+    date: '📅',
+    boolean: '☑️',
+    unknown: '❓'
+  };
+  
+  return <span className="field-type-icon" title={`${type} field`}>{icons[type]}</span>;
+};
+
+const FieldRow: React.FC<{
+  field: FieldProfile;
+  fileIndex: number;
+  isSelected: boolean;
+  isPIIMasked: boolean;
+  onFieldToggle?: (fileIndex: number, fieldName: string, selected: boolean) => void;
+  onPIIToggle?: (fileIndex: number, fieldName: string, maskPII: boolean) => void;
+}> = ({ field, fileIndex, isSelected, isPIIMasked, onFieldToggle, onPIIToggle }) => {
+  const completionRate = ((field.totalCount - field.nullCount) / field.totalCount * 100).toFixed(1);
+  
+  return (
+    <tr className={`field-row ${isSelected ? 'selected' : ''} ${field.piiDetection.isPII ? 'has-pii' : ''}`}>
+      <td className="field-select">
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={(e) => onFieldToggle?.(fileIndex, field.name, e.target.checked)}
+        />
+      </td>
+      <td className="field-name">
+        <div className="field-name-content">
+          <FieldTypeIcon type={field.type} />
+          <span className="name">{field.name}</span>
+          <PIIBadge field={field} />
+        </div>
+      </td>
+      <td className="field-type">{field.type}</td>
+      <td className="field-stats">
+        <div className="completion-rate">
+          <div className="completion-bar">
+            <div 
+              className="completion-fill" 
+              style={{ width: `${completionRate}%` }}
+            ></div>
+          </div>
+          <span className="completion-text">{completionRate}%</span>
+        </div>
+        <div className="count-info">
+          {field.totalCount.toLocaleString()} rows, {field.nullCount.toLocaleString()} null
+        </div>
+        {field.uniqueCount && (
+          <div className="unique-info">
+            {field.uniqueCount.toLocaleString()} unique values
+          </div>
+        )}
+      </td>
+      <td className="field-samples">
+        <div className="samples">
+          {field.samples.slice(0, 3).map((sample, idx) => (
+            <span key={idx} className="sample">{sample}</span>
+          ))}
+          {field.samples.length > 3 && (
+            <span className="sample-more">+{field.samples.length - 3} more</span>
+          )}
+        </div>
+      </td>
+      <td className="field-actions">
+        {field.piiDetection.isPII && (
+          <label className="pii-mask-toggle">
+            <input
+              type="checkbox"
+              checked={isPIIMasked}
+              onChange={(e) => onPIIToggle?.(fileIndex, field.name, e.target.checked)}
+            />
+            <span className="toggle-text">Mask PII</span>
+          </label>
+        )}
+      </td>
+    </tr>
+  );
+};
+
+export const ProfilerUI: React.FC<ProfilerUIProps> = ({
+  fileProfiles,
+  onFieldToggle,
+  onPIIToggle,
+  selectedFields = {},
+  piiMaskingSettings = {}
+}) => {
+  const [expandedFiles, setExpandedFiles] = useState<Set<number>>(new Set());
+
+  useEffect(() => {
+    // Auto-expand first file if only one file
+    if (fileProfiles.length === 1) {
+      setExpandedFiles(new Set([0]));
+    }
+  }, [fileProfiles]);
+
+  const toggleFileExpansion = (fileIndex: number) => {
+    const newExpanded = new Set(expandedFiles);
+    if (newExpanded.has(fileIndex)) {
+      newExpanded.delete(fileIndex);
+    } else {
+      newExpanded.add(fileIndex);
+    }
+    setExpandedFiles(newExpanded);
+  };
+
+  const getFieldKey = (fileIndex: number, fieldName: string) => `${fileIndex}:${fieldName}`;
+
+  const formatFileSize = (bytes: number): string => {
+    const units = ['B', 'KB', 'MB', 'GB'];
+    let size = bytes;
+    let unitIndex = 0;
+    
+    while (size >= 1024 && unitIndex < units.length - 1) {
+      size /= 1024;
+      unitIndex++;
+    }
+    
+    return `${size.toFixed(1)} ${units[unitIndex]}`;
+  };
+
+  if (fileProfiles.length === 0) {
+    return (
+      <div className="profiler-ui empty">
+        <div className="empty-state">
+          <div className="empty-icon">📊</div>
+          <h3>No Data to Profile</h3>
+          <p>Select data files to see field analysis and PII detection.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="profiler-ui">
+      <div className="profiler-header">
+        <h2>Data Profile Analysis</h2>
+        <div className="profile-summary">
+          {fileProfiles.length} file{fileProfiles.length > 1 ? 's' : ''} analyzed
+        </div>
+      </div>
+
+      {fileProfiles.map((profile, fileIndex) => {
+        const isExpanded = expandedFiles.has(fileIndex);
+        const piiFieldCount = profile.fields.filter(f => f.piiDetection.isPII).length;
+        const selectedFieldCount = profile.fields.filter(f => 
+          selectedFields[getFieldKey(fileIndex, f.name)]
+        ).length;
+
+        return (
+          <div key={fileIndex} className="file-profile">
+            <div 
+              className="file-header"
+              onClick={() => toggleFileExpansion(fileIndex)}
+            >
+              <div className="file-info">
+                <span className="expand-icon">{isExpanded ? '▼' : '▶'}</span>
+                <strong className="file-name">{profile.file.name}</strong>
+                <span className="file-size">{formatFileSize(profile.file.size)}</span>
+              </div>
+              <div className="file-stats">
+                <span className="row-count">{profile.rowCount.toLocaleString()} rows</span>
+                <span className="field-count">{profile.fields.length} fields</span>
+                {piiFieldCount > 0 && (
+                  <span className="pii-count">🔒 {piiFieldCount} PII</span>
+                )}
+                {selectedFieldCount > 0 && (
+                  <span className="selected-count">✓ {selectedFieldCount} selected</span>
+                )}
+              </div>
+            </div>
+
+            {profile.errors.length > 0 && (
+              <div className="file-errors">
+                <h4>Processing Errors:</h4>
+                {profile.errors.map((error, idx) => (
+                  <div key={idx} className="error-message">{error}</div>
+                ))}
+              </div>
+            )}
+
+            {isExpanded && (
+              <div className="fields-table-container">
+                <table className="fields-table">
+                  <thead>
+                    <tr>
+                      <th className="select-col">
+                        <input
+                          type="checkbox"
+                          checked={selectedFieldCount === profile.fields.length}
+                          onChange={(e) => {
+                            profile.fields.forEach(field => {
+                              onFieldToggle?.(fileIndex, field.name, e.target.checked);
+                            });
+                          }}
+                          title="Select all fields"
+                        />
+                      </th>
+                      <th>Field Name</th>
+                      <th>Type</th>
+                      <th>Statistics</th>
+                      <th>Sample Values</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {profile.fields.map((field) => (
+                      <FieldRow
+                        key={field.name}
+                        field={field}
+                        fileIndex={fileIndex}
+                        isSelected={selectedFields[getFieldKey(fileIndex, field.name)] || false}
+                        isPIIMasked={piiMaskingSettings[getFieldKey(fileIndex, field.name)] || false}
+                        onFieldToggle={onFieldToggle}
+                        onPIIToggle={onPIIToggle}
+                      />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+};

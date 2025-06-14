@@ -11,11 +11,23 @@ export interface PlatformCapabilities {
   platform: 'electron' | 'browser' | 'extension';
 }
 
+export interface FileInfo {
+  name: string;
+  path: string;
+  size: number;
+  type: string;
+  lastModified: number;
+}
+
 export interface FileSystemAPI {
   readFile: (path: string) => Promise<string>;
   writeFile: (path: string, content: string) => Promise<void>;
   selectDirectory: () => Promise<string | null>;
   selectFile: (filters?: FileFilter[]) => Promise<string | null>;
+  selectFiles: (filters?: FileFilter[]) => Promise<string[]>;
+  getFileInfo: (path: string) => Promise<FileInfo>;
+  readFileStream: (path: string, chunkSize?: number) => AsyncIterableIterator<Uint8Array>;
+  validateFile: (path: string, maxSizeGB?: number) => Promise<{ valid: boolean; error?: string }>;
 }
 
 export interface FileFilter {
@@ -103,6 +115,17 @@ class BrowserPlatformBridge extends EventEmitter implements PlatformBridge {
     platform: 'browser'
   };
 
+  fileSystem: FileSystemAPI = {
+    readFile: async () => { throw new Error('File system access not available in browser'); },
+    writeFile: async () => { throw new Error('File system access not available in browser'); },
+    selectDirectory: async () => { throw new Error('Directory selection not available in browser'); },
+    selectFile: async () => { throw new Error('File selection not available in browser'); },
+    selectFiles: async () => { throw new Error('File selection not available in browser'); },
+    getFileInfo: async () => { throw new Error('File info not available in browser'); },
+    readFileStream: async function* () { throw new Error('File streaming not available in browser'); },
+    validateFile: async () => ({ valid: false, error: 'File validation not available in browser' })
+  };
+
   notifications: NotificationAPI = {
     show: async (title: string, body: string, options?: NotificationOptions) => {
       if (this.capabilities.hasNotifications && Notification.permission === 'granted') {
@@ -170,6 +193,46 @@ class ElectronPlatformBridge extends EventEmitter implements PlatformBridge {
           resolve(data.path || null);
         });
       });
+    },
+    selectFiles: async (filters?: FileFilter[]) => {
+      return new Promise((resolve) => {
+        window.electronAPI!.send('fs:selectFiles', { filters });
+        window.electronAPI!.receive('fs:selectFiles:response', (data: { paths?: string[] }) => {
+          resolve(data.paths || []);
+        });
+      });
+    },
+    getFileInfo: async (path: string) => {
+      return new Promise((resolve, reject) => {
+        window.electronAPI!.send('fs:getFileInfo', { path });
+        window.electronAPI!.receive('fs:getFileInfo:response', (data: { error?: string; fileInfo?: FileInfo }) => {
+          if (data.error) {
+            reject(new Error(data.error));
+          } else {
+            resolve(data.fileInfo!);
+          }
+        });
+      });
+    },
+    readFileStream: async function* (path: string, chunkSize = 1024 * 1024) {
+      return new Promise<AsyncIterableIterator<Uint8Array>>((resolve, reject) => {
+        window.electronAPI!.send('fs:createReadStream', { path, chunkSize });
+        window.electronAPI!.receive('fs:createReadStream:response', (data: { error?: string; streamId?: string }) => {
+          if (data.error) {
+            reject(new Error(data.error));
+          } else {
+            resolve(createAsyncIterator(data.streamId!));
+          }
+        });
+      });
+    },
+    validateFile: async (path: string, maxSizeGB = 50) => {
+      return new Promise((resolve) => {
+        window.electronAPI!.send('fs:validateFile', { path, maxSizeGB });
+        window.electronAPI!.receive('fs:validateFile:response', (data: { valid: boolean; error?: string }) => {
+          resolve(data);
+        });
+      });
     }
   };
 
@@ -202,6 +265,27 @@ export function initializePlatformBridge(): PlatformBridge {
   } else {
     return new BrowserPlatformBridge();
   }
+}
+
+// Helper function for creating async iterator from Electron stream
+function createAsyncIterator(streamId: string): AsyncIterableIterator<Uint8Array> {
+  return {
+    [Symbol.asyncIterator]() {
+      return this;
+    },
+    async next() {
+      return new Promise<IteratorResult<Uint8Array>>((resolve) => {
+        window.electronAPI!.send('fs:readStreamChunk', { streamId });
+        window.electronAPI!.receive('fs:readStreamChunk:response', (data: { chunk?: Uint8Array; done: boolean }) => {
+          if (data.done) {
+            resolve({ value: undefined, done: true });
+          } else {
+            resolve({ value: data.chunk!, done: false });
+          }
+        });
+      });
+    }
+  };
 }
 
 // Initialize the bridge on import
