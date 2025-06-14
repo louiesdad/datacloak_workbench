@@ -1,0 +1,59 @@
+{
+  "name": "@datacloak/shared",
+  "version": "1.0.0",
+  "description": "Shared contracts and test fixtures for DataCloak Sentiment Workbench",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "clean": "rimraf dist",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./contracts": {
+      "import": "./dist/contracts/index.js",
+      "require": "./dist/contracts/index.js",
+      "types": "./dist/contracts/index.d.ts"
+    },
+    "./test-fixtures": {
+      "import": "./dist/test-fixtures/index.js",
+      "require": "./dist/test-fixtures/index.js",
+      "types": "./dist/test-fixtures/index.d.ts"
+    }
+  },
+  "files": [
+    "dist/**/*",
+    "contracts/**/*.ts",
+    "test-fixtures/**/*.ts",
+    "README.md"
+  ],
+  "keywords": [
+    "datacloak",
+    "sentiment-analysis",
+    "shared",
+    "contracts",
+    "types",
+    "test-fixtures"
+  ],
+  "author": "DataCloak Inc.",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "rimraf": "^5.0.0",
+    "typescript": "^5.0.0"
+  },
+  "peerDependencies": {
+    "typescript": ">=5.0.0"
+  }
+}
