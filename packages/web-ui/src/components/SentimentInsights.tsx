@@ -286,8 +286,8 @@ export const SentimentInsights: React.FC<SentimentInsightsProps> = ({
     switch (activeView) {
       case 'overview':
         return (
-          <div className="insights-overview">
-            <div className="summary-cards">
+          <div className="insights-overview" data-testid="insights-overview">
+            <div className="summary-cards" data-testid="summary-cards">
               <div className="summary-card">
                 <div className="card-icon">📊</div>
                 <div className="card-content">
@@ -552,7 +552,7 @@ export const SentimentInsights: React.FC<SentimentInsightsProps> = ({
   };
 
   return (
-    <div className={`sentiment-insights ${className}`}>
+    <div className={`sentiment-insights ${className}`} data-testid="sentiment-insights">
       <div className="insights-header">
         <div className="header-left">
           <h2>📈 Sentiment Analysis Insights</h2>
@@ -564,25 +564,27 @@ export const SentimentInsights: React.FC<SentimentInsightsProps> = ({
             className="export-insights-button"
             onClick={handleExportInsights}
             disabled={isExporting}
+            data-testid="export-insights-button"
           >
             {isExporting ? '📤 Exporting...' : '📤 Export Insights'}
           </button>
         )}
       </div>
 
-      <div className="insights-navigation">
+      <div className="insights-navigation" data-testid="insights-navigation">
         {(['overview', 'keywords', 'emotions', 'patterns'] as const).map(view => (
           <button
             key={view}
             className={`nav-button ${activeView === view ? 'active' : ''}`}
             onClick={() => setActiveView(view)}
+            data-testid={`insights-nav-${view}`}
           >
             {view.charAt(0).toUpperCase() + view.slice(1)}
           </button>
         ))}
       </div>
 
-      <div className="insights-content">
+      <div className="insights-content" data-testid="insights-content">
         {renderInsightContent()}
       </div>
 

@@ -1,0 +1,408 @@
+.security-audit-report {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin: 1rem 0;
+}
+
+.audit-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.audit-header h2 {
+  margin: 0;
+  color: #1a202c;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.audit-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.mask-all-button,
+.export-report-button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+}
+
+.mask-all-button {
+  background: #dc2626;
+  color: white;
+}
+
+.mask-all-button:hover {
+  background: #b91c1c;
+}
+
+.export-report-button {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+.export-report-button:hover {
+  background: #e2e8f0;
+}
+
+/* Audit Sections */
+.audit-section {
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.audit-section:last-child {
+  border-bottom: none;
+}
+
+.section-header {
+  width: 100%;
+  padding: 1rem 1.5rem;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+}
+
+.section-header:hover {
+  background: #f8fafc;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.expand-icon {
+  font-size: 0.875rem;
+  color: #64748b;
+  transition: transform 0.2s ease;
+}
+
+.title-text {
+  font-weight: 600;
+  color: #1a202c;
+  flex: 1;
+}
+
+.section-badge {
+  background: #3b82f6;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.section-content {
+  padding: 0 1.5rem 1.5rem 1.5rem;
+}
+
+/* Security Overview */
+.security-overview {
+  margin-top: 1rem;
+}
+
+.risk-assessment {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.risk-level {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.risk-icon {
+  font-size: 1.5rem;
+}
+
+.risk-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1rem;
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.metric-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1a202c;
+  line-height: 1;
+}
+
+.metric-label {
+  font-size: 0.875rem;
+  color: #64748b;
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
+/* PII Types */
+.pii-types {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.pii-type-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: #f8fafc;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.type-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.type-name {
+  font-weight: 500;
+  color: #1a202c;
+}
+
+.type-count {
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.type-percentage {
+  font-weight: 600;
+  color: #3b82f6;
+}
+
+/* Confidence Analysis */
+.confidence-analysis {
+  margin-top: 1rem;
+}
+
+.confidence-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.confidence-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.confidence-bar {
+  flex: 1;
+  max-width: 200px;
+}
+
+.confidence-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 200px;
+}
+
+.confidence-label {
+  font-weight: 500;
+  color: #1a202c;
+  font-size: 0.875rem;
+}
+
+.confidence-count {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+/* PII Details */
+.pii-details {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.pii-field-detail {
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.field-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.field-name {
+  font-weight: 600;
+  color: #1a202c;
+  font-family: 'Monaco', 'Consolas', monospace;
+}
+
+.pii-type {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: white;
+}
+
+.pii-type.email { background: #3b82f6; }
+.pii-type.phone { background: #10b981; }
+.pii-type.ssn { background: #dc2626; }
+.pii-type.credit_card { background: #dc2626; }
+.pii-type.name { background: #8b5cf6; }
+.pii-type.address { background: #f59e0b; }
+.pii-type.other { background: #64748b; }
+
+.confidence-score {
+  font-weight: 600;
+  color: #059669;
+  font-size: 0.875rem;
+}
+
+.field-samples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.samples-label {
+  font-size: 0.875rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.sample-value {
+  padding: 0.25rem 0.5rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-family: 'Monaco', 'Consolas', monospace;
+  color: #374151;
+}
+
+/* Recommendations */
+.recommendations {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.recommendation-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: #fef3c7;
+  border-radius: 6px;
+  border-left: 4px solid #f59e0b;
+}
+
+.recommendation-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+.recommendation-text {
+  color: #92400e;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .audit-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .audit-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .risk-metrics {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .field-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .confidence-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .confidence-bar {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .section-content {
+    padding: 0 1rem 1rem 1rem;
+  }
+
+  .audit-header {
+    padding: 1rem;
+  }
+
+  .section-header {
+    padding: 0.75rem 1rem;
+  }
+
+  .risk-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .metric {
+    padding: 0.75rem;
+  }
+
+  .field-samples {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

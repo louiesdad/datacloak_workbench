@@ -20,8 +20,18 @@ export { LargeFileUploader } from './LargeFileUploader';
 export { LargeDatasetExporter } from './LargeDatasetExporter';
 export { MemoryMonitor, MemoryAlert } from './MemoryMonitor';
 export { ElectronFeatureMonitor } from './ElectronFeatureMonitor';
+export { AppVersion, CompactAppVersion } from './AppVersion';
+export { SecurityAuditReport } from './SecurityAuditReport';
+export { SecurityBadge, PIIBadge, SecurityRiskBadge } from './SecurityBadge';
+export { TransformPipelinePersistence } from './TransformPipelinePersistence';
+export { SentimentAnalysisControl } from './SentimentAnalysisControl';
+export { SSEProgressIndicator } from './SSEProgressIndicator';
+export { WebSocketStatus } from './WebSocketStatus';
+export { RealTimeDashboard } from './RealTimeDashboard';
+export { JobQueueManager } from './JobQueueManager';
 
 export type { FieldProfile, FileProfile } from './ProfilerUI';
+export type { SecurityLevel, PIIType } from './SecurityBadge';
 export type { 
   TransformPipeline, 
   TransformOperation, 

@@ -220,10 +220,20 @@ export const ProgressiveImage: React.FC<{
   const imgRef = React.useRef<HTMLImageElement>(null);
 
   React.useEffect(() => {
+    if (!src) return;
+    
+    setIsLoaded(false);
+    setIsError(false);
+    
     const img = new Image();
     img.onload = () => setIsLoaded(true);
     img.onerror = () => setIsError(true);
     img.src = src;
+
+    return () => {
+      img.onload = null;
+      img.onerror = null;
+    };
   }, [src]);
 
   if (isError) {
@@ -293,6 +303,8 @@ export const useDebouncedSearch = (
   const [debouncedTerm, setDebouncedTerm] = React.useState(searchTerm);
 
   React.useEffect(() => {
+    if (searchTerm === debouncedTerm) return;
+    
     const handler = setTimeout(() => {
       setDebouncedTerm(searchTerm);
     }, delay);

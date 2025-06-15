@@ -202,6 +202,8 @@ export const LargeFileUploader: React.FC<LargeFileUploaderProps> = ({
   const handleDragOver = (event: React.DragEvent) => {
     event.preventDefault();
     event.stopPropagation();
+    // Set the dropEffect to enable dropping
+    event.dataTransfer.dropEffect = disabled ? 'none' : 'copy';
     if (!disabled) {
       setIsDragOver(true);
     }
@@ -210,7 +212,21 @@ export const LargeFileUploader: React.FC<LargeFileUploaderProps> = ({
   const handleDragLeave = (event: React.DragEvent) => {
     event.preventDefault();
     event.stopPropagation();
-    setIsDragOver(false);
+    // Only set drag over to false if leaving the upload area, not child elements
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = event.clientX;
+    const y = event.clientY;
+    if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
+      setIsDragOver(false);
+    }
+  };
+
+  const handleDragEnter = (event: React.DragEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!disabled) {
+      setIsDragOver(true);
+    }
   };
 
   const handleDrop = (event: React.DragEvent) => {
@@ -277,7 +293,7 @@ export const LargeFileUploader: React.FC<LargeFileUploaderProps> = ({
     const { file, progress, status, error } = fileState;
 
     return (
-      <div key={fileKey} className={`file-upload-item ${status}`}>
+      <div key={fileKey} className={`file-upload-item ${status}`} data-testid={`file-upload-item-${fileKey}`}>
         <div className="file-info">
           <div className="file-name" title={file.name}>
             {file.name}
@@ -299,6 +315,7 @@ export const LargeFileUploader: React.FC<LargeFileUploaderProps> = ({
                   : progress.stage
               }
               className="file-progress-bar"
+              testId={`file-upload-progress-${fileKey}`}
             />
           </div>
         )}
@@ -309,6 +326,7 @@ export const LargeFileUploader: React.FC<LargeFileUploaderProps> = ({
               className="cancel-button"
               onClick={() => handleCancelUpload(fileKey)}
               title="Cancel upload"
+              data-testid="cancel-upload-button"
             >
               ✕
             </button>
@@ -320,6 +338,7 @@ export const LargeFileUploader: React.FC<LargeFileUploaderProps> = ({
                 className="retry-button"
                 onClick={() => handleRetryUpload(fileKey)}
                 title="Retry upload"
+                data-testid="retry-upload-button"
               >
                 ↻
               </button>
@@ -327,6 +346,7 @@ export const LargeFileUploader: React.FC<LargeFileUploaderProps> = ({
                 className="remove-button"
                 onClick={() => handleRemoveFile(fileKey)}
                 title="Remove file"
+                data-testid="remove-file-button"
               >
                 ✕
               </button>
@@ -345,7 +365,7 @@ export const LargeFileUploader: React.FC<LargeFileUploaderProps> = ({
         </div>
 
         {status === 'error' && error && (
-          <div className="upload-error">
+          <div className="upload-error" data-testid={`upload-error-${fileKey}`}>
             <ApiErrorDisplay
               error={error}
               context="File Upload"
@@ -358,7 +378,7 @@ export const LargeFileUploader: React.FC<LargeFileUploaderProps> = ({
         )}
 
         {status === 'completed' && (
-          <div className="upload-success">
+          <div className="upload-success" data-testid={`upload-success-${fileKey}`}>
             <span className="success-icon">✓</span>
             <span className="success-message">Upload completed</span>
           </div>
@@ -368,13 +388,25 @@ export const LargeFileUploader: React.FC<LargeFileUploaderProps> = ({
   };
 
   return (
-    <div className={`large-file-uploader ${className}`}>
+    <div className={`large-file-uploader ${className}`} data-testid="file-uploader">
       <div
         className={`upload-area ${isDragOver ? 'drag-over' : ''} ${disabled ? 'disabled' : ''}`}
+        onDragEnter={handleDragEnter}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={() => !disabled && fileInputRef.current?.click()}
+        data-testid="upload-area"
+        role="button"
+        tabIndex={disabled ? -1 : 0}
+        aria-label={`Upload area. Click to select ${multiple ? 'files' : 'file'} or drag and drop here`}
+        aria-disabled={disabled}
+        onKeyDown={(e) => {
+          if (!disabled && (e.key === 'Enter' || e.key === ' ')) {
+            e.preventDefault();
+            fileInputRef.current?.click();
+          }
+        }}
       >
         <input
           ref={fileInputRef}
@@ -384,6 +416,9 @@ export const LargeFileUploader: React.FC<LargeFileUploaderProps> = ({
           onChange={handleFileSelect}
           disabled={disabled}
           style={{ display: 'none' }}
+          data-testid="file-input"
+          aria-label={`Select ${multiple ? 'files' : 'file'} to upload`}
+          aria-describedby="file-restrictions"
         />
 
         {children || (
@@ -396,7 +431,7 @@ export const LargeFileUploader: React.FC<LargeFileUploaderProps> = ({
               <div className="secondary-text">
                 Drag and drop files here, or click to browse
               </div>
-              <div className="file-restrictions">
+              <div className="file-restrictions" id="file-restrictions">
                 <div>Supported formats: {acceptedTypes.join(', ')}</div>
                 <div>Maximum file size: {formatFileSize(maxFileSize)}</div>
                 {multiple && <div>Multiple files allowed</div>}
@@ -407,17 +442,17 @@ export const LargeFileUploader: React.FC<LargeFileUploaderProps> = ({
       </div>
 
       {fileStates.size > 0 && (
-        <div className="upload-queue">
+        <div className="upload-queue" data-testid="upload-queue">
           <div className="queue-header">
             <h4>Upload Queue ({fileStates.size} files)</h4>
-            <div className="queue-stats">
+            <div className="queue-stats" data-testid="upload-stats">
               {Array.from(fileStates.values()).filter(s => s.status === 'completed').length} completed,{' '}
               {Array.from(fileStates.values()).filter(s => s.status === 'uploading').length} uploading,{' '}
               {Array.from(fileStates.values()).filter(s => s.status === 'error').length} failed
             </div>
           </div>
           
-          <div className="file-list">
+          <div className="file-list" data-testid="file-list">
             {Array.from(fileStates.entries()).map(([fileKey, fileState]) =>
               renderFileProgress(fileKey, fileState)
             )}

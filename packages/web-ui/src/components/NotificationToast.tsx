@@ -17,7 +17,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onDis
 
       return () => clearTimeout(timer);
     }
-  }, [notification.id, notification.type, onDismiss]);
+  }, [notification.id, notification.type]);
 
   const getIcon = (type: Notification['type']) => {
     switch (type) {

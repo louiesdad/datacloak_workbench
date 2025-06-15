@@ -476,30 +476,30 @@ export const LargeDatasetExporter: React.FC<LargeDatasetExporterProps> = ({
   const availableColumns = data.length > 0 ? Object.keys(data[0]) : [];
 
   return (
-    <div className={`large-dataset-exporter ${className}`}>
+    <div className={`large-dataset-exporter ${className}`} data-testid="large-dataset-exporter">
       <div className="exporter-header">
         <h3>Large Dataset Export</h3>
         <p>Export large datasets with optimized chunking and compression</p>
       </div>
 
-      <div className="dataset-summary">
+      <div className="dataset-summary" data-testid="dataset-summary">
         <div className="summary-item">
           <span className="label">Total Rows:</span>
-          <span className="value">{data.length.toLocaleString()}</span>
+          <span className="value" data-testid="total-rows">{data.length.toLocaleString()}</span>
         </div>
         <div className="summary-item">
           <span className="label">Columns:</span>
-          <span className="value">{availableColumns.length}</span>
+          <span className="value" data-testid="total-columns">{availableColumns.length}</span>
         </div>
         {analysisResult && (
           <>
             <div className="summary-item">
               <span className="label">Estimated Size:</span>
-              <span className="value">{formatFileSize(analysisResult.estimatedSize)}</span>
+              <span className="value" data-testid="estimated-size">{formatFileSize(analysisResult.estimatedSize)}</span>
             </div>
             <div className="summary-item">
               <span className="label">Recommended Chunks:</span>
-              <span className="value">{analysisResult.recommendedChunks}</span>
+              <span className="value" data-testid="recommended-chunks">{analysisResult.recommendedChunks}</span>
             </div>
           </>
         )}
@@ -510,6 +510,7 @@ export const LargeDatasetExporter: React.FC<LargeDatasetExporterProps> = ({
           className="analyze-button"
           onClick={handleAnalyze}
           disabled={isAnalyzing || isExporting}
+          data-testid="analyze-dataset-button"
         >
           {isAnalyzing ? 'Analyzing...' : 'Analyze Dataset'}
         </button>
@@ -519,6 +520,7 @@ export const LargeDatasetExporter: React.FC<LargeDatasetExporterProps> = ({
             className="settings-button"
             onClick={() => setShowSettings(!showSettings)}
             disabled={isExporting}
+            data-testid="export-settings-button"
           >
             {showSettings ? 'Hide Settings' : 'Export Settings'}
           </button>
@@ -646,15 +648,16 @@ export const LargeDatasetExporter: React.FC<LargeDatasetExporterProps> = ({
       )}
 
       {exportProgress && (
-        <div className="export-progress">
+        <div className="export-progress" data-testid="export-progress">
           <h4>Export Progress</h4>
           <ProgressIndicator
             value={exportProgress.percentage}
             label={`${exportProgress.stage} (${exportProgress.processedRows}/${exportProgress.totalRows} rows)`}
             showPercentage
             size="large"
+            testId="large-export-progress"
           />
-          <div className="progress-details">
+          <div className="progress-details" data-testid="export-progress-details">
             <span>Chunk {exportProgress.currentChunk} of {exportProgress.totalChunks}</span>
             {exportProgress.estimatedTimeRemaining > 0 && (
               <span>ETA: {Math.round(exportProgress.estimatedTimeRemaining)}s</span>
@@ -670,6 +673,7 @@ export const LargeDatasetExporter: React.FC<LargeDatasetExporterProps> = ({
               className="export-button"
               onClick={exportWithStreaming}
               disabled={!analysisResult || isExporting || isAnalyzing}
+              data-testid="start-large-export-button"
             >
               {isExporting ? 'Exporting...' : 'Start Export'}
             </button>

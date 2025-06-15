@@ -51,7 +51,9 @@ export const FormField: React.FC<FormFieldProps> = ({
 
   // Update internal value when prop changes
   useEffect(() => {
-    setInternalValue(value);
+    if (value !== internalValue) {
+      setInternalValue(value);
+    }
   }, [value]);
 
   // Build validation rules based on props

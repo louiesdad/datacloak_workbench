@@ -10,6 +10,7 @@ import type {
 } from '../types/transforms';
 import { TransformOperationEditor } from './TransformOperationEditor';
 import { TransformPreviewPanel } from './TransformPreviewPanel';
+import { TransformPipelinePersistence } from './TransformPipelinePersistence';
 import { ApiErrorDisplay } from './ApiErrorDisplay';
 import { useApiErrorHandler, type ApiError } from '../hooks/useApiErrorHandler';
 import { useDataTransformer } from '../hooks/useWebWorker';
@@ -220,10 +221,8 @@ export const TransformDesigner: React.FC<TransformDesignerProps> = ({
       
       setValidation(validationResult);
       
-      // Clear errors on successful validation
-      if (apiError?.code === 'VALIDATION_ERROR') {
-        setApiError(null);
-      }
+      // Clear validation errors on successful validation
+      setApiError(prev => prev?.code === 'VALIDATION_ERROR' ? null : prev);
       
       // Also call the provided callback if available
       if (onValidationRequested) {
@@ -237,15 +236,15 @@ export const TransformDesigner: React.FC<TransformDesignerProps> = ({
         }
       }
     } catch (error) {
-      const apiError = handleApiError(error, {
+      const validationError = handleApiError(error, {
         operation: 'transform validation',
         component: 'TransformDesigner',
         userMessage: 'Failed to validate transform pipeline'
       });
-      setApiError(apiError);
+      setApiError(validationError);
       setValidation(null);
     }
-  }, [pipeline, sourceSchema, dataTransformer, handleApiError, apiError, onValidationRequested]);
+  }, [pipeline, sourceSchema, dataTransformer, handleApiError, onValidationRequested]);
 
   // Auto-validate when pipeline changes
   useEffect(() => {
@@ -272,7 +271,7 @@ export const TransformDesigner: React.FC<TransformDesignerProps> = ({
   const selectedOperation = pipeline.operations.find(op => op.id === selectedOperationId);
 
   return (
-    <div className="transform-designer">
+    <div className="transform-designer" data-testid="transform-designer">
       <div className="transform-designer-header">
         <div className="pipeline-info">
           <h2>Transform Pipeline</h2>
@@ -288,6 +287,7 @@ export const TransformDesigner: React.FC<TransformDesignerProps> = ({
             onClick={undo}
             disabled={!canUndo}
             title="Undo (Ctrl+Z)"
+            data-testid="undo-button"
           >
             ↶ Undo
           </button>
@@ -296,6 +296,7 @@ export const TransformDesigner: React.FC<TransformDesignerProps> = ({
             onClick={redo}
             disabled={!canRedo}
             title="Redo (Ctrl+Y)"
+            data-testid="redo-button"
           >
             ↷ Redo
           </button>
@@ -303,11 +304,26 @@ export const TransformDesigner: React.FC<TransformDesignerProps> = ({
             className="action-button primary"
             onClick={requestPreview}
             disabled={isPreviewLoading || pipeline.operations.length === 0}
+            data-testid="preview-button"
           >
             {isPreviewLoading ? '⟳ Loading...' : '👁 Preview'}
           </button>
         </div>
       </div>
+
+      {/* Pipeline Persistence */}
+      <TransformPipelinePersistence
+        currentPipeline={pipeline}
+        onPipelineLoad={(loadedPipeline) => {
+          setPipeline(loadedPipeline);
+          saveToHistory(loadedPipeline);
+          onPipelineChange?.(loadedPipeline);
+        }}
+        onPipelineSaved={(savedPipeline) => {
+          // Pipeline has been saved, could show notification
+          console.log('Pipeline saved:', savedPipeline.name);
+        }}
+      />
 
       <div className="transform-designer-body">
         <div className="operations-panel">
@@ -322,6 +338,7 @@ export const TransformDesigner: React.FC<TransformDesignerProps> = ({
                   }
                 }}
                 defaultValue=""
+                data-testid="add-operation-select"
               >
                 <option value="">+ Add Operation</option>
                 <option value="filter">Filter Rows</option>
@@ -336,7 +353,7 @@ export const TransformDesigner: React.FC<TransformDesignerProps> = ({
             </div>
           </div>
 
-          <div className="operations-list">
+          <div className="operations-list" data-testid="operations-list">
             {pipeline.operations.length === 0 ? (
               <div className="empty-operations">
                 <div className="empty-icon">🔧</div>
@@ -349,6 +366,8 @@ export const TransformDesigner: React.FC<TransformDesignerProps> = ({
                   key={operation.id}
                   className={`operation-item ${selectedOperationId === operation.id ? 'selected' : ''} ${!operation.enabled ? 'disabled' : ''}`}
                   onClick={() => setSelectedOperationId(operation.id)}
+                  data-testid={`operation-item-${operation.id}`}
+                  data-operation-type={operation.type}
                 >
                   <div className="operation-header">
                     <div className="operation-info">
@@ -364,6 +383,7 @@ export const TransformDesigner: React.FC<TransformDesignerProps> = ({
                         }}
                         disabled={index === 0}
                         title="Move up"
+                        data-testid={`move-up-${operation.id}`}
                       >
                         ↑
                       </button>
@@ -375,6 +395,7 @@ export const TransformDesigner: React.FC<TransformDesignerProps> = ({
                         }}
                         disabled={index === pipeline.operations.length - 1}
                         title="Move down"
+                        data-testid={`move-down-${operation.id}`}
                       >
                         ↓
                       </button>
@@ -385,6 +406,7 @@ export const TransformDesigner: React.FC<TransformDesignerProps> = ({
                           updateOperation(operation.id, { enabled: !operation.enabled });
                         }}
                         title={operation.enabled ? 'Disable' : 'Enable'}
+                        data-testid={`toggle-${operation.id}`}
                       >
                         {operation.enabled ? '●' : '○'}
                       </button>
@@ -395,6 +417,7 @@ export const TransformDesigner: React.FC<TransformDesignerProps> = ({
                           deleteOperation(operation.id);
                         }}
                         title="Delete"
+                        data-testid={`delete-${operation.id}`}
                       >
                         ×
                       </button>

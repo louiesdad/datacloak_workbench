@@ -175,6 +175,7 @@ export const DataSourcePicker: React.FC<DataSourcePickerProps> = ({
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    e.dataTransfer.dropEffect = 'copy';
     setIsDragOver(true);
   }, []);
 
@@ -303,7 +304,7 @@ export const DataSourcePicker: React.FC<DataSourcePickerProps> = ({
   }, []);
 
   return (
-    <div className="data-source-picker">
+    <div className="data-source-picker" data-testid="data-source-picker">
       <div className="upload-section">
         <h3>Select Data Files</h3>
         <p>Upload your data files for sentiment analysis processing</p>
@@ -324,7 +325,7 @@ export const DataSourcePicker: React.FC<DataSourcePickerProps> = ({
               <div className="secondary-text">
                 Drag and drop files here, or click to browse
               </div>
-              <div className="file-requirements">
+              <div className="file-requirements" id="file-requirements">
                 <div>Supported formats: {acceptedFormats.join(', ')}</div>
                 <div>Maximum file size: {maxSizeGB}GB per file</div>
                 <div>Large files will be uploaded in chunks for reliability</div>
@@ -342,7 +343,7 @@ export const DataSourcePicker: React.FC<DataSourcePickerProps> = ({
       </div>
 
       {validationResults.length > 0 && (
-        <div className="validation-results">
+        <div className="validation-results" data-testid="validation-results">
           <h4>File Validation Results</h4>
           {validationResults.map((result, index) => (
             <div
@@ -356,10 +357,10 @@ export const DataSourcePicker: React.FC<DataSourcePickerProps> = ({
                 </div>
               )}
               {result.error && (
-                <div className="error-message">{result.error}</div>
+                <div className="error-message" data-testid={`validation-error-${index}`}>{result.error}</div>
               )}
               {result.valid && (
-                <div className="success-message">✓ Ready for processing</div>
+                <div className="success-message" data-testid={`validation-success-${index}`}>✓ Ready for processing</div>
               )}
             </div>
           ))}
@@ -385,6 +386,9 @@ export const DataSourcePicker: React.FC<DataSourcePickerProps> = ({
         multiple
         accept={acceptedFormats.join(',')}
         style={{ display: 'none' }}
+        data-testid="hidden-file-input"
+        aria-label="Select data files for upload"
+        aria-describedby="file-requirements"
         onChange={async (e) => {
           const files = Array.from(e.target.files || []);
           if (files.length === 0) return;

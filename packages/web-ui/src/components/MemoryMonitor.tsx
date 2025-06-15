@@ -51,8 +51,6 @@ export const MemoryMonitor: React.FC<MemoryMonitorProps> = ({
     if (autoHide && memoryPressure === 'low') {
       const timer = setTimeout(() => setIsVisible(false), 5000);
       return () => clearTimeout(timer);
-    } else {
-      setIsVisible(true);
     }
   }, [autoHide, memoryPressure]);
 
@@ -102,22 +100,23 @@ export const MemoryMonitor: React.FC<MemoryMonitorProps> = ({
       className="memory-indicator-compact"
       onClick={() => setIsExpanded(true)}
       style={{ borderColor: getPressureColor(memoryPressure) }}
+      data-testid="memory-indicator-compact"
     >
       <div className="memory-icon">
         {getPressureIcon(memoryPressure)}
       </div>
-      <div className="memory-percentage">
+      <div className="memory-percentage" data-testid="memory-percentage">
         {currentStats ? `${currentStats.percentage.toFixed(0)}%` : '--'}
       </div>
     </div>
   );
 
   const renderFullView = () => (
-    <div className="memory-monitor-panel">
+    <div className="memory-monitor-panel" data-testid="memory-monitor-panel">
       <div className="monitor-header">
         <div className="header-left">
           <span className="monitor-title">Memory Usage</span>
-          <span className="pressure-indicator" style={{ color: getPressureColor(memoryPressure) }}>
+          <span className="pressure-indicator" style={{ color: getPressureColor(memoryPressure) }} data-testid="pressure-indicator">
             {getPressureIcon(memoryPressure)} {memoryPressure.toUpperCase()}
           </span>
         </div>
@@ -127,6 +126,7 @@ export const MemoryMonitor: React.FC<MemoryMonitorProps> = ({
               className="collapse-button"
               onClick={() => setIsExpanded(false)}
               title="Collapse"
+              data-testid="collapse-memory-monitor"
             >
               ➖
             </button>
@@ -135,6 +135,7 @@ export const MemoryMonitor: React.FC<MemoryMonitorProps> = ({
             className="close-button"
             onClick={() => setIsVisible(false)}
             title="Hide"
+            data-testid="close-memory-monitor"
           >
             ✕
           </button>
@@ -193,11 +194,12 @@ export const MemoryMonitor: React.FC<MemoryMonitorProps> = ({
             </div>
           )}
 
-          <div className="monitor-actions">
+          <div className="monitor-actions" data-testid="memory-actions">
             <button
               className="action-button cleanup-button"
               onClick={triggerGarbageCollection}
               title="Trigger garbage collection"
+              data-testid="memory-cleanup-button"
             >
               🗑️ Cleanup
             </button>
@@ -207,6 +209,7 @@ export const MemoryMonitor: React.FC<MemoryMonitorProps> = ({
                 className="action-button emergency-button"
                 onClick={forceCleanup}
                 title="Force emergency cleanup"
+                data-testid="emergency-cleanup-button"
               >
                 🚨 Emergency Cleanup
               </button>
@@ -217,6 +220,7 @@ export const MemoryMonitor: React.FC<MemoryMonitorProps> = ({
                 className="action-button clear-button"
                 onClick={clearHistory}
                 title="Clear history"
+                data-testid="clear-history-button"
               >
                 📊 Clear History
               </button>
@@ -224,9 +228,9 @@ export const MemoryMonitor: React.FC<MemoryMonitorProps> = ({
           </div>
 
           {showHistory && history.length > 0 && (
-            <div className="memory-history">
+            <div className="memory-history" data-testid="memory-history">
               <h5>Memory History (Last {history.length} readings):</h5>
-              <div className="history-chart">
+              <div className="history-chart" data-testid="memory-history-chart">
                 {history.slice(-20).map((entry, index) => {
                   const height = (entry.stats.percentage / 100) * 40;
                   return (

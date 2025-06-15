@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAppContext, useAppActions, type WorkflowStep } from '../context/AppContext';
+import { CompactAppVersion } from './AppVersion';
 import './Navigation.css';
 
 interface NavigationProps {
@@ -108,7 +109,7 @@ export const Navigation: React.FC<NavigationProps> = ({ className }) => {
   };
 
   return (
-    <nav className={`navigation ${className || ''}`}>
+    <nav className={`navigation ${className || ''}`} data-testid="main-navigation">
       <div className="navigation-header">
         <h1 className="app-title">DataCloak Sentiment Workbench</h1>
         <p className="app-subtitle">Secure data processing with automatic PII detection</p>
@@ -182,6 +183,7 @@ export const Navigation: React.FC<NavigationProps> = ({ className }) => {
           <button
             className="nav-action secondary"
             onClick={() => setStep('upload')}
+            data-testid="start-over-button"
           >
             ← Start Over
           </button>
@@ -191,11 +193,15 @@ export const Navigation: React.FC<NavigationProps> = ({ className }) => {
           <button
             className="nav-action primary"
             onClick={() => setStep('results')}
+            data-testid="view-results-button"
           >
             View Results →
           </button>
         )}
       </div>
+
+      {/* App version */}
+      <CompactAppVersion className="navigation-version" />
     </nav>
   );
 };

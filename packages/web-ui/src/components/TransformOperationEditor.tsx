@@ -65,7 +65,7 @@ export const TransformOperationEditor: React.FC<TransformOperationEditorProps> =
   };
 
   return (
-    <div className="transform-operation-editor">
+    <div className="transform-operation-editor" data-testid="transform-operation-editor">
       <div className="operation-header">
         <div className="operation-title">
           <span className="operation-type-badge">{operation.type}</span>
@@ -75,6 +75,7 @@ export const TransformOperationEditor: React.FC<TransformOperationEditorProps> =
             onChange={(e) => updateName(e.target.value)}
             className="operation-name-input"
             placeholder="Operation name"
+            data-testid="operation-name-input"
           />
         </div>
       </div>

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import type { FileInfo } from '../platform-bridge';
 import { DataPreview } from './DataPreview';
 import { VirtualTable, PerformantList } from './VirtualScrollList';
+import { SecurityAuditReport } from './SecurityAuditReport';
+import { PIIBadge } from './SecurityBadge';
 import './ProfilerUI.css';
 
 export interface FieldProfile {
@@ -40,39 +42,21 @@ interface ProfilerUIProps {
   piiMaskingSettings?: Record<string, boolean>;
 }
 
-const PIIBadge: React.FC<{ field: FieldProfile }> = ({ field }) => {
+const FieldPIIBadge: React.FC<{ field: FieldProfile }> = ({ field }) => {
   const { piiDetection } = field;
   
   if (!piiDetection.isPII) {
     return null;
   }
 
-  const getPIIBadgeColor = (_piiType: string, confidence: number) => {
-    if (confidence >= 0.8) return 'high-confidence';
-    if (confidence >= 0.6) return 'medium-confidence';
-    return 'low-confidence';
-  };
-
-  const getPIITypeLabel = (piiType: string) => {
-    const labels: Record<string, string> = {
-      email: 'Email',
-      phone: 'Phone',
-      ssn: 'SSN',
-      credit_card: 'Credit Card',
-      name: 'Name',
-      address: 'Address',
-      other: 'PII'
-    };
-    return labels[piiType] || 'PII';
-  };
-
   return (
-    <span 
-      className={`pii-badge ${getPIIBadgeColor(piiDetection.piiType || 'other', piiDetection.confidence)}`}
-      title={`${getPIITypeLabel(piiDetection.piiType || 'other')} (${Math.round(piiDetection.confidence * 100)}% confidence)`}
-    >
-      🔒 {getPIITypeLabel(piiDetection.piiType || 'other')}
-    </span>
+    <PIIBadge
+      piiType={piiDetection.piiType as any || 'other'}
+      confidence={piiDetection.confidence}
+      fieldName={field.name}
+      size="small"
+      showConfidence={true}
+    />
   );
 };
 
@@ -99,7 +83,11 @@ const FieldRow: React.FC<{
   const completionRate = ((field.totalCount - field.nullCount) / field.totalCount * 100).toFixed(1);
   
   return (
-    <div className={`field-row ${isSelected ? 'selected' : ''} ${field.piiDetection.isPII ? 'has-pii' : ''}`}>
+    <div 
+      className={`field-row ${isSelected ? 'selected' : ''} ${field.piiDetection.isPII ? 'has-pii' : ''}`}
+      data-testid={`field-row-${field.name}`}
+      data-has-pii={field.piiDetection.isPII}
+    >
       <div className="field-select">
         <input
           type="checkbox"
@@ -111,7 +99,7 @@ const FieldRow: React.FC<{
         <div className="field-name-content">
           <FieldTypeIcon type={field.type} />
           <span className="name">{field.name}</span>
-          <PIIBadge field={field} />
+          <FieldPIIBadge field={field} />
         </div>
       </div>
       <div className="field-type">{field.type}</div>
@@ -146,11 +134,13 @@ const FieldRow: React.FC<{
       </div>
       <div className="field-actions">
         {field.piiDetection.isPII && (
-          <label className="pii-mask-toggle">
+          <label className="pii-mask-toggle" data-testid={`pii-mask-toggle-${field.name}`}>
             <input
               type="checkbox"
               checked={isPIIMasked}
               onChange={(e) => onPIIToggle?.(fileIndex, field.name, e.target.checked)}
+              data-testid={`pii-mask-checkbox-${field.name}`}
+              aria-label={`Mask PII data for ${field.name}`}
             />
             <span className="toggle-text">Mask PII</span>
           </label>
@@ -166,15 +156,16 @@ export const ProfilerUI: React.FC<ProfilerUIProps> = ({
   onPIIToggle,
   selectedFields = {},
   piiMaskingSettings = {}
-}) => {
+) => {
   const [expandedFiles, setExpandedFiles] = useState<Set<number>>(new Set());
+  const [showSecurityAudit, setShowSecurityAudit] = useState(false);
 
   useEffect(() => {
     // Auto-expand first file if only one file
     if (fileProfiles.length === 1) {
       setExpandedFiles(new Set([0]));
     }
-  }, [fileProfiles]);
+  }, [fileProfiles.length]);
 
   const toggleFileExpansion = (fileIndex: number) => {
     const newExpanded = new Set(expandedFiles);
@@ -201,6 +192,24 @@ export const ProfilerUI: React.FC<ProfilerUIProps> = ({
     return `${size.toFixed(1)} ${units[unitIndex]}`;
   };
 
+  const handleMaskAllPII = () => {
+    fileProfiles.forEach((profile, fileIndex) => {
+      profile.fields.forEach(field => {
+        if (field.piiDetection.isPII) {
+          onPIIToggle?.(fileIndex, field.name, true);
+        }
+      });
+    });
+  };
+
+  const handleExportSecurityReport = () => {
+    // Implementation would export the security audit report
+    console.log('Exporting security report...');
+  };
+
+  const allFields = fileProfiles.flatMap(profile => profile.fields);
+  const hasPIIFields = allFields.some(field => field.piiDetection.isPII);
+
   if (fileProfiles.length === 0) {
     return (
       <div className="profiler-ui empty">
@@ -216,9 +225,22 @@ export const ProfilerUI: React.FC<ProfilerUIProps> = ({
   return (
     <div className="profiler-ui">
       <div className="profiler-header">
-        <h2>Data Profile Analysis</h2>
-        <div className="profile-summary">
-          {fileProfiles.length} file{fileProfiles.length > 1 ? 's' : ''} analyzed
+        <div className="header-main">
+          <h2>Data Profile Analysis</h2>
+          <div className="profile-summary">
+            {fileProfiles.length} file{fileProfiles.length > 1 ? 's' : ''} analyzed
+          </div>
+        </div>
+        <div className="header-actions">
+          {hasPIIFields && (
+            <button
+              className="security-audit-toggle"
+              onClick={() => setShowSecurityAudit(!showSecurityAudit)}
+              data-testid="security-audit-toggle"
+            >
+              🔒 {showSecurityAudit ? 'Hide' : 'Show'} Security Report
+            </button>
+          )}
         </div>
       </div>
 
@@ -315,6 +337,16 @@ export const ProfilerUI: React.FC<ProfilerUIProps> = ({
           </div>
         );
       })}
+
+      {/* Security Audit Report */}
+      {showSecurityAudit && hasPIIFields && (
+        <SecurityAuditReport
+          fieldProfiles={allFields}
+          onMaskAllPII={handleMaskAllPII}
+          onExportReport={handleExportSecurityReport}
+          className="profiler-security-audit"
+        />
+      )}
     </div>
   );
 };

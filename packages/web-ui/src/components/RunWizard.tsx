@@ -120,17 +120,15 @@ export const RunWizard: React.FC<RunWizardProps> = ({
 
   // Auto-advance wizard steps in development/testing when all required data is available
   useEffect(() => {
-    // Only auto-advance if we have all required data
-    if (datasets.length > 0 && config.selectedDatasets.length > 0 && config.textColumn) {
+    // Only auto-advance if we have all required data and we're not already at step 4
+    if (datasets.length > 0 && config.selectedDatasets.length > 0 && config.textColumn && currentStep < 4) {
       // Auto-advance to step 4 (Review) for easier testing
-      if (currentStep < 4) {
-        const timer = setTimeout(() => {
-          setCurrentStep(4);
-        }, 100);
-        return () => clearTimeout(timer);
-      }
+      const timer = setTimeout(() => {
+        setCurrentStep(4);
+      }, 100);
+      return () => clearTimeout(timer);
     }
-  }, [datasets, config.selectedDatasets, config.textColumn, currentStep]);
+  }, [datasets, config.selectedDatasets, config.textColumn]);
 
   // Add a development mode quick start button
   const isDevelopment = !window.platformBridge?.backend;

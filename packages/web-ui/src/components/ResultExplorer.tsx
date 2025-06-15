@@ -390,6 +390,7 @@ export const ResultExplorer: React.FC<ResultExplorerProps> = ({
                 <button 
                   className="select-all-button"
                   onClick={selectAllResults}
+                  data-testid="select-all-results"
                 >
                   {selectedResults.length === filteredResults.length ? 'Deselect All' : 'Select All'}
                 </button>
@@ -400,6 +401,7 @@ export const ResultExplorer: React.FC<ResultExplorerProps> = ({
                     setSortBy(newSortBy as any);
                     setSortDirection(newDirection as any);
                   }}
+                  data-testid="sort-results"
                 >
                   <option value="date-desc">Date (Newest)</option>
                   <option value="date-asc">Date (Oldest)</option>
@@ -592,7 +594,7 @@ export const ResultExplorer: React.FC<ResultExplorerProps> = ({
                 </div>
               </div>
 
-              <div className="export-columns">
+              <div className="export-columns" data-testid="export-columns">
                 <h5>Select columns to export:</h5>
                 <div className="column-selection">
                   <label>
@@ -606,6 +608,7 @@ export const ResultExplorer: React.FC<ResultExplorerProps> = ({
                             : [...prev, 'text']
                         );
                       }}
+                      data-testid="column-text"
                     />
                     Text content
                   </label>
@@ -620,6 +623,7 @@ export const ResultExplorer: React.FC<ResultExplorerProps> = ({
                             : [...prev, 'sentiment']
                         );
                       }}
+                      data-testid="column-sentiment"
                     />
                     Sentiment classification
                   </label>
@@ -634,6 +638,7 @@ export const ResultExplorer: React.FC<ResultExplorerProps> = ({
                             : [...prev, 'score']
                         );
                       }}
+                      data-testid="column-score"
                     />
                     Sentiment score
                   </label>
@@ -648,6 +653,7 @@ export const ResultExplorer: React.FC<ResultExplorerProps> = ({
                             : [...prev, 'confidence']
                         );
                       }}
+                      data-testid="column-confidence"
                     />
                     Confidence score
                   </label>
@@ -662,6 +668,7 @@ export const ResultExplorer: React.FC<ResultExplorerProps> = ({
                             : [...prev, 'keywords']
                         );
                       }}
+                      data-testid="column-keywords"
                     />
                     Extracted keywords
                   </label>
@@ -676,6 +683,7 @@ export const ResultExplorer: React.FC<ResultExplorerProps> = ({
                             : [...prev, 'createdAt']
                         );
                       }}
+                      data-testid="column-created-at"
                     />
                     Creation timestamp
                   </label>
@@ -691,6 +699,7 @@ export const ResultExplorer: React.FC<ResultExplorerProps> = ({
                               : [...prev, 'emotions']
                           );
                         }}
+                        data-testid="column-emotions"
                       />
                       Emotion analysis
                     </label>
@@ -738,12 +747,13 @@ export const ResultExplorer: React.FC<ResultExplorerProps> = ({
             </div>
           </div>
 
-      <div className="filters-section">
+      <div className="filters-section" data-testid="filters-section">
         <div className="filter-group">
           <label>Sentiment:</label>
           <select
             value={filters.sentiment}
             onChange={(e) => setFilters(prev => ({ ...prev, sentiment: e.target.value as any }))}
+            data-testid="sentiment-filter"
           >
             <option value="all">All</option>
             <option value="positive">Positive</option>
@@ -757,6 +767,7 @@ export const ResultExplorer: React.FC<ResultExplorerProps> = ({
           <select
             value={filters.dateRange}
             onChange={(e) => setFilters(prev => ({ ...prev, dateRange: e.target.value as any }))}
+            data-testid="date-range-filter"
           >
             <option value="all">All Time</option>
             <option value="today">Today</option>
@@ -774,6 +785,7 @@ export const ResultExplorer: React.FC<ResultExplorerProps> = ({
             step="0.1"
             value={filters.confidenceMin}
             onChange={(e) => setFilters(prev => ({ ...prev, confidenceMin: parseFloat(e.target.value) }))}
+            data-testid="confidence-filter"
           />
           <span>{(filters.confidenceMin * 100).toFixed(0)}%</span>
         </div>
@@ -785,16 +797,18 @@ export const ResultExplorer: React.FC<ResultExplorerProps> = ({
             placeholder="Search in text..."
             value={filters.searchTerm}
             onChange={(e) => setFilters(prev => ({ ...prev, searchTerm: e.target.value }))}
+            data-testid="search-filter"
           />
         </div>
       </div>
 
-      <div className="explorer-tabs">
+      <div className="explorer-tabs" data-testid="explorer-tabs">
         {(['overview', 'details', 'insights', 'charts', 'export'] as const).map(tab => (
           <button
             key={tab}
             className={`tab ${activeTab === tab ? 'active' : ''}`}
             onClick={() => setActiveTab(tab)}
+            data-testid={`tab-${tab}`}
           >
             {tab.charAt(0).toUpperCase() + tab.slice(1)}
           </button>

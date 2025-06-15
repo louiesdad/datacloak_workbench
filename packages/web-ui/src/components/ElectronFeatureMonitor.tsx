@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ProgressIndicator } from './ProgressIndicator';
 import { useNotifications } from './NotificationToast';
 import './ElectronFeatureMonitor.css';
@@ -101,7 +101,13 @@ export const ElectronFeatureMonitor: React.FC<ElectronFeatureMonitorProps> = ({
 
   // Auto-updater monitoring
   useEffect(() => {
-    if (!electronStatus.isElectron || !window.platformBridge?.autoUpdater) return;
+    // Capture initial state to avoid dependency on changing electronStatus
+    const isElectronEnv = !!(window as any).electron || 
+                          !!(window as any).require || 
+                          window.platformBridge?.capabilities?.platform === 'electron' ||
+                          testMode;
+    
+    if (!isElectronEnv || !window.platformBridge?.autoUpdater) return;
 
     const checkForUpdates = async () => {
       try {
@@ -133,7 +139,7 @@ export const ElectronFeatureMonitor: React.FC<ElectronFeatureMonitorProps> = ({
     const interval = setInterval(checkForUpdates, 30 * 60 * 1000); // Every 30 minutes
 
     return () => clearInterval(interval);
-  }, [electronStatus.isElectron, addNotification]);
+  }, [addNotification, testMode]);
 
   // Handle update download
   const downloadUpdate = async () => {
