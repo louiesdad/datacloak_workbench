@@ -1,4 +1,5 @@
 import { AppError } from '../middleware/error.middleware';
+import { RateLimiterService, createOpenAIRateLimiter } from './rate-limiter.service';
 
 export interface OpenAIConfig {
   apiKey: string;
@@ -35,6 +36,7 @@ export class OpenAIService {
   private readonly baseUrl = 'https://api.openai.com/v1';
   private retryAttempts = 3;
   private retryDelay = 1000; // Base delay in ms
+  private rateLimiter: RateLimiterService;
 
   constructor(config: OpenAIConfig) {
     this.config = {
@@ -48,6 +50,9 @@ export class OpenAIService {
     if (!this.config.apiKey) {
       throw new AppError('OpenAI API key is required', 500, 'OPENAI_CONFIG_ERROR');
     }
+
+    // Initialize rate limiter (3 requests per second)
+    this.rateLimiter = createOpenAIRateLimiter();
   }
 
   /**
@@ -96,6 +101,9 @@ export class OpenAIService {
    * Make a request to OpenAI API with retry logic and error handling
    */
   private async makeOpenAIRequest(payload: any, attempt = 1): Promise<any> {
+    // Apply rate limiting
+    await this.rateLimiter.waitForLimit();
+
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
@@ -114,7 +122,11 @@ export class OpenAIService {
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        await this.handleAPIError(response, attempt);
+        const shouldRetry = await this.handleAPIError(response, attempt);
+        if (shouldRetry && attempt < this.retryAttempts) {
+          // Retry the request
+          return this.makeOpenAIRequest(payload, attempt + 1);
+        }
       }
 
       const data = await response.json();
@@ -143,7 +155,7 @@ export class OpenAIService {
   /**
    * Handle OpenAI API errors with appropriate error types and retry logic
    */
-  private async handleAPIError(response: Response, attempt: number): Promise<never> {
+  private async handleAPIError(response: Response, attempt: number): Promise<boolean> {
     let errorData: any = {};
     
     try {
@@ -170,13 +182,7 @@ export class OpenAIService {
         if (attempt < this.retryAttempts) {
           console.log(`Rate limited. Retrying after ${retryAfter} seconds (attempt ${attempt}/${this.retryAttempts})`);
           await this.sleep(retryAfter * 1000);
-          // Note: This would need to be called from the parent function to retry
-          throw this.createOpenAIError(
-            'rate_limit_retry',
-            `Rate limited. Retry attempt ${attempt}`,
-            'rate_limit',
-            retryAfter
-          );
+          return true; // Signal retry
         }
         
         throw this.createOpenAIError(
@@ -201,12 +207,7 @@ export class OpenAIService {
           const delay = this.retryDelay * Math.pow(2, attempt - 1); // Exponential backoff
           console.log(`Server error ${response.status}. Retrying in ${delay}ms (attempt ${attempt}/${this.retryAttempts})`);
           await this.sleep(delay);
-          // Note: This would need to be called from the parent function to retry
-          throw this.createOpenAIError(
-            'server_error_retry',
-            `Server error ${response.status}. Retry attempt ${attempt}`,
-            'server_error'
-          );
+          return true; // Signal retry
         }
         
         throw this.createOpenAIError(
@@ -349,17 +350,17 @@ Text to analyze: "${text.replace(/"/g, '\\"')}"`;
       tokensToday: number;
     };
   }> {
-    // This would require implementing rate limit tracking
-    // For now, return mock data
+    const rateLimitStatus = this.rateLimiter.getStatus();
+    
     return {
       rateLimit: {
-        requestsRemaining: 1000,
-        tokensRemaining: 50000,
-        resetTime: new Date(Date.now() + 3600000) // 1 hour from now
+        requestsRemaining: rateLimitStatus.tokensRemaining,
+        tokensRemaining: 50000, // This would need to be tracked separately
+        resetTime: new Date(Date.now() + rateLimitStatus.nextRefillIn)
       },
       usage: {
-        requestsToday: 150,
-        tokensToday: 8500
+        requestsToday: rateLimitStatus.maxTokens - rateLimitStatus.tokensRemaining,
+        tokensToday: 8500 // This would need to be tracked separately
       }
     };
   }

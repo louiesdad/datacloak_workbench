@@ -12,6 +12,7 @@ import { TransformOperationEditor } from './TransformOperationEditor';
 import { TransformPreviewPanel } from './TransformPreviewPanel';
 import { ApiErrorDisplay } from './ApiErrorDisplay';
 import { useApiErrorHandler, type ApiError } from '../hooks/useApiErrorHandler';
+import { useDataTransformer } from '../hooks/useWebWorker';
 import './TransformDesigner.css';
 
 interface TransformDesignerProps {
@@ -53,6 +54,9 @@ export const TransformDesigner: React.FC<TransformDesignerProps> = ({
   const [selectedOperationId, setSelectedOperationId] = useState<string | null>(null);
   const [apiError, setApiError] = useState<ApiError | null>(null);
   const { handleApiError } = useApiErrorHandler();
+  
+  // Web Worker for data transformations
+  const dataTransformer = useDataTransformer();
   
   // Undo/Redo state
   const undoRedoRef = useRef<UndoRedoManager>(createUndoRedoManager({
@@ -175,13 +179,21 @@ export const TransformDesigner: React.FC<TransformDesignerProps> = ({
   }, [updatePipeline]);
 
   const requestPreview = useCallback(async () => {
-    if (!onPreviewRequested) return;
-    
     setIsPreviewLoading(true);
     setApiError(null); // Clear previous errors
+    
     try {
-      const previewResult = await onPreviewRequested(pipeline);
-      setPreview(previewResult);
+      // Use Web Worker if we have sample data, otherwise use the provided callback
+      if (onPreviewRequested) {
+        // For now, still use the provided callback but in future could be enhanced
+        // to fetch data and process in worker
+        const previewResult = await onPreviewRequested(pipeline);
+        setPreview(previewResult);
+      } else {
+        // Direct Web Worker usage (when data is available locally)
+        // This would require sample data to be passed to the component
+        console.warn('Web Worker preview not yet implemented without data source');
+      }
     } catch (error) {
       const apiError = handleApiError(error, {
         operation: 'transform preview',
@@ -196,14 +208,33 @@ export const TransformDesigner: React.FC<TransformDesignerProps> = ({
   }, [onPreviewRequested, pipeline, handleApiError]);
 
   const requestValidation = useCallback(async () => {
-    if (!onValidationRequested) return;
-    
     try {
-      const validationResult = await onValidationRequested(pipeline);
+      // Use Web Worker for validation
+      const validationResult = await dataTransformer.execute({
+        type: 'VALIDATE_TRANSFORM',
+        payload: {
+          operations: pipeline.operations,
+          schema: sourceSchema
+        }
+      });
+      
       setValidation(validationResult);
+      
       // Clear errors on successful validation
       if (apiError?.code === 'VALIDATION_ERROR') {
         setApiError(null);
+      }
+      
+      // Also call the provided callback if available
+      if (onValidationRequested) {
+        try {
+          const serverValidation = await onValidationRequested(pipeline);
+          // Merge results if needed
+          setValidation(serverValidation);
+        } catch (error) {
+          // Server validation failed, but we already have local validation
+          console.warn('Server validation failed, using local validation', error);
+        }
       }
     } catch (error) {
       const apiError = handleApiError(error, {
@@ -214,7 +245,7 @@ export const TransformDesigner: React.FC<TransformDesignerProps> = ({
       setApiError(apiError);
       setValidation(null);
     }
-  }, [onValidationRequested, pipeline, handleApiError, apiError]);
+  }, [pipeline, sourceSchema, dataTransformer, handleApiError, apiError, onValidationRequested]);
 
   // Auto-validate when pipeline changes
   useEffect(() => {

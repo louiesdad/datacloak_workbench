@@ -1,6 +1,7 @@
 import { EventEmitter } from 'events';
 import { v4 as uuidv4 } from 'uuid';
 import { AppError } from '../middleware/error.middleware';
+import { getSSEService } from './sse.service';
 
 export interface Job {
   id: string;
@@ -249,6 +250,10 @@ export class JobQueueService extends EventEmitter {
     const updateProgress = (progress: number) => {
       job.progress = Math.max(0, Math.min(100, progress));
       this.emit('job:progress', job);
+      
+      // Send SSE progress event
+      const sseService = getSSEService();
+      sseService.sendJobProgress(job.id, job.progress, `Processing ${job.type}`);
     };
 
     try {
@@ -269,6 +274,10 @@ export class JobQueueService extends EventEmitter {
     job.result = result;
     this.runningJobs.delete(job.id);
     this.emit('job:completed', job);
+    
+    // Send SSE completion event
+    const sseService = getSSEService();
+    sseService.sendJobStatus(job.id, 'completed', result);
   }
 
   /**
@@ -280,6 +289,10 @@ export class JobQueueService extends EventEmitter {
     job.error = error;
     this.runningJobs.delete(job.id);
     this.emit('job:failed', job);
+    
+    // Send SSE failure event
+    const sseService = getSSEService();
+    sseService.sendJobStatus(job.id, 'failed', undefined, error);
   }
 
   /**

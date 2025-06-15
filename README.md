@@ -54,7 +54,11 @@ datacloak-sentiment-workbench/
 - **📊 Security Monitoring**: Real-time compliance scoring and violation tracking
 - **🏗️ Job Queue System**: Background processing for batch operations with priority scheduling
 - **⚡ Chunked File Processing**: 256MB chunk processing for memory-efficient large file handling
-- **🔧 Advanced Error Handling**: Comprehensive error handling with detailed integration tests
+- **🔧 Advanced Error Handling**: Comprehensive error handling with retry logic and recovery strategies
+- **📈 Real-Time Memory Monitoring**: WebSocket-enabled memory tracking with alerts and recommendations
+- **💾 Transform Persistence**: Save, load, and share data transformation configurations
+- **🚀 Streaming Exports**: Memory-efficient exports for datasets of any size
+- **🔄 Export Error Recovery**: Automatic retry with fallback formats and progress tracking
 - **Comprehensive Testing**: 82.1% coverage with 120+ tests (unit + integration + security + error handling)
 - **Complete Documentation**: API reference, architecture guides, deployment docs
 - **Production Ready**: Error handling, validation, logging, health monitoring
@@ -422,6 +426,18 @@ packages/backend/
 - `DELETE /api/v1/data/datasets/:id` - Delete dataset
 - `POST /api/v1/data/export` - Export analysis results
 
+**Transform Operations**:
+- `POST /api/v1/transform/validate` - Validate transform pipeline
+- `POST /api/v1/transform/validate-single` - Validate single operation
+- `GET /api/v1/transform/operations` - Get supported operations
+- `POST /api/v1/transform/save` - Save transform configuration
+- `GET /api/v1/transform/saved` - List saved transforms
+- `PUT /api/v1/transform/saved/:id` - Update saved transform
+- `DELETE /api/v1/transform/saved/:id` - Delete saved transform
+- `GET /api/v1/transform/templates` - Get transform templates
+- `POST /api/v1/transform/import` - Import transform configuration
+- `GET /api/v1/transform/saved/:id/export` - Export transform configuration
+
 **Security & Privacy**:
 - `POST /api/v1/security/detect` - PII detection in text
 - `POST /api/v1/security/mask` - Text masking with PII protection
@@ -442,6 +458,22 @@ packages/backend/
 **Health & Monitoring**:
 - `GET /health` - Basic health check
 - `GET /api/v1/health/status` - Detailed service status
+- `GET /api/v1/monitoring/memory/current` - Current memory metrics
+- `GET /api/v1/monitoring/memory/history` - Memory usage history
+- `GET /api/v1/monitoring/memory/statistics` - Memory statistics and recommendations
+- `POST /api/v1/monitoring/memory/start` - Start memory monitoring
+- `POST /api/v1/monitoring/memory/stop` - Stop memory monitoring
+- `POST /api/v1/monitoring/memory/gc` - Force garbage collection
+- `GET /api/v1/monitoring/memory/export` - Export memory metrics
+- `GET /api/v1/monitoring/system` - System information
+
+**Export & Large Dataset Handling**:
+- `POST /api/v1/export/dataset` - Export dataset with chunking support
+- `GET /api/v1/export/stream` - Stream export for very large datasets
+- `GET /api/v1/export/progress/:exportId` - Get export progress
+- `POST /api/v1/export/cancel/:exportId` - Cancel ongoing export
+- `GET /api/v1/export/errors/statistics` - Export error statistics
+- `POST /api/v1/export/cleanup` - Clean up old export files
 
 ### Database Architecture
 
@@ -458,6 +490,36 @@ CREATE TABLE sentiment_analyses (
 );
 
 -- Dataset metadata with security information
+CREATE TABLE datasets (
+
+-- Transform persistence tables
+CREATE TABLE saved_transforms (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT,
+  operations TEXT NOT NULL, -- JSON array of operations
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  last_used DATETIME,
+  usage_count INTEGER DEFAULT 0,
+  tags TEXT, -- JSON array
+  is_public INTEGER DEFAULT 0,
+  user_id TEXT
+);
+
+CREATE TABLE transform_history (
+  id TEXT PRIMARY KEY,
+  transform_id TEXT,
+  executed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  duration INTEGER,
+  rows_processed INTEGER,
+  success INTEGER,
+  error TEXT,
+  input_summary TEXT, -- JSON
+  output_summary TEXT, -- JSON
+  FOREIGN KEY (transform_id) REFERENCES saved_transforms(id)
+);
+
 CREATE TABLE datasets (
   id TEXT PRIMARY KEY,
   filename TEXT NOT NULL,

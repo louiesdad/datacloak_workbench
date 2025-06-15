@@ -8,6 +8,7 @@ import { VirtualTable, PerformantList } from './VirtualScrollList';
 import { ProgressIndicator } from './ProgressIndicator';
 import { SentimentInsights } from './SentimentInsights';
 import { ExportErrorHandler } from './ExportErrorHandler';
+import { useDebounce } from '../hooks/useDebounce';
 import './ResultExplorer.css';
 
 interface ResultExplorerProps {
@@ -48,6 +49,9 @@ export const ResultExplorer: React.FC<ResultExplorerProps> = ({
   const [selectedColumns, setSelectedColumns] = useState<string[]>([
     'text', 'sentiment', 'score', 'confidence', 'keywords', 'createdAt'
   ]);
+  
+  // Debounce search term for better performance
+  const debouncedSearchTerm = useDebounce(filters.searchTerm, 300);
 
   // Filter and sort results
   const filteredResults = useMemo(() => {
@@ -62,8 +66,8 @@ export const ResultExplorer: React.FC<ResultExplorerProps> = ({
         return false;
       }
 
-      // Search filter
-      if (filters.searchTerm && !result.text.toLowerCase().includes(filters.searchTerm.toLowerCase())) {
+      // Search filter (using debounced value)
+      if (debouncedSearchTerm && !result.text.toLowerCase().includes(debouncedSearchTerm.toLowerCase())) {
         return false;
       }
 
@@ -103,7 +107,7 @@ export const ResultExplorer: React.FC<ResultExplorerProps> = ({
     });
 
     return filtered;
-  }, [results, filters, sortBy, sortDirection]);
+  }, [results, filters.sentiment, filters.dateRange, filters.confidenceMin, debouncedSearchTerm, sortBy, sortDirection]);
 
   // Calculate statistics
   const calculatedStats = useMemo(() => {

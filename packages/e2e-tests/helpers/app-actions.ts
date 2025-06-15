@@ -17,12 +17,22 @@ export class AppActions {
    */
   async uploadFile(filePath: string, method: 'picker' | 'dragdrop' = 'picker') {
     if (method === 'picker') {
-      // Click upload button
-      const uploadButton = this.page.locator('button').filter({ 
-        hasText: /upload|select.*file|browse/i 
-      }).first();
+      // Click upload area - LargeFileUploader uses a clickable div, not a button
+      const uploadArea = this.page.locator('.upload-area, .large-file-uploader, [data-testid="upload-area"]').first();
       
-      await uploadButton.click();
+      // If no upload area found, try button fallback
+      if (!await uploadArea.isVisible({ timeout: 1000 }).catch(() => false)) {
+        const uploadButton = this.page.locator('button').filter({ 
+          hasText: /upload|select.*file|browse/i 
+        }).first();
+        
+        if (await uploadButton.isVisible()) {
+          await uploadButton.click();
+        }
+      } else {
+        // Click the upload area to trigger file input
+        await uploadArea.click();
+      }
       
       // Set file input
       const fileInput = this.page.locator('input[type="file"]');

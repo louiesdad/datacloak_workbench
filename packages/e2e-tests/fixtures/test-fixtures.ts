@@ -15,20 +15,43 @@ export interface TestFixtures {
   apiRequests: MockedRequest[];
 }
 
+// Singleton instances to prevent MSW parallel execution conflicts
+let backendServerInstance: ReturnType<typeof createBackendMockServer> | null = null;
+let openAIServerInstance: ReturnType<typeof createOpenAIMockServer> | null = null;
+
+// Keep track of active test count
+let activeTestCount = 0;
+
 export const test = base.extend<TestFixtures>({
-  // Mock servers
+  // Mock servers with singleton pattern to prevent "already patched" errors
   mockBackend: async ({}, use) => {
-    const server = createBackendMockServer();
-    server.listen({ onUnhandledRequest: 'warn' });
-    await use(server);
-    server.close();
+    activeTestCount++;
+    
+    if (!backendServerInstance) {
+      backendServerInstance = createBackendMockServer();
+      backendServerInstance.listen({ onUnhandledRequest: 'warn' });
+    }
+    
+    await use(backendServerInstance);
+    
+    activeTestCount--;
+    // Only close when all tests are done
+    if (activeTestCount === 0 && backendServerInstance) {
+      backendServerInstance.close();
+      backendServerInstance = null;
+    }
   },
 
   mockOpenAI: async ({}, use) => {
-    const server = createOpenAIMockServer();
-    server.listen({ onUnhandledRequest: 'warn' });
-    await use(server);
-    server.close();
+    if (!openAIServerInstance) {
+      openAIServerInstance = createOpenAIMockServer();
+      openAIServerInstance.listen({ onUnhandledRequest: 'warn' });
+    }
+    
+    await use(openAIServerInstance);
+    
+    // Note: We don't close the OpenAI server in individual tests
+    // It will be closed when the backend server is closed
   },
 
   // Test data directory
@@ -158,19 +181,27 @@ export const waitForJobCompletion = async (page: any, timeout = 60000) => {
 };
 
 export const uploadFile = async (page: any, filePath: string, browserMode: boolean) => {
-  if (browserMode) {
-    // Use the hidden file input for browser mode
-    const fileInput = page.locator('input[type="file"]');
-    await expect(fileInput).toBeAttached();
-    await fileInput.setInputFiles(filePath);
+  // First try to click the upload area (LargeFileUploader uses a clickable div)
+  const uploadArea = page.locator('.upload-area, .large-file-uploader, [data-testid="upload-area"]').first();
+  
+  if (await uploadArea.isVisible({ timeout: 1000 }).catch(() => false)) {
+    // Click the upload area to trigger file input
+    await uploadArea.click();
   } else {
-    // For Electron mode, use the browse files button
-    const browseButton = page.getByRole('button', { name: /browse files/i });
-    await browseButton.click();
+    // Fallback: Look for any button with upload-related text
+    const uploadButton = page.locator('button').filter({ 
+      hasText: /upload|select.*file|browse|choose.*file/i 
+    }).first();
     
-    // Handle the native file dialog (this would need to be mocked in real Electron tests)
-    await page.locator('input[type="file"]').setInputFiles(filePath);
+    if (await uploadButton.isVisible({ timeout: 1000 }).catch(() => false)) {
+      await uploadButton.click();
+    }
   }
+  
+  // Now set the file input (works for both browser and Electron modes)
+  const fileInput = page.locator('input[type="file"]');
+  await expect(fileInput).toBeAttached({ timeout: 5000 });
+  await fileInput.setInputFiles(filePath);
 };
 
 export const mockFileUploadResponse = (mockBackend: any, fileData: any) => {

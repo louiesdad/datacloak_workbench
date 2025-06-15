@@ -7,6 +7,7 @@ import jobRoutes from './jobs.routes';
 import { transformRoutes } from './transform.routes';
 import monitoringRoutes from './monitoring.routes';
 import exportRoutes from './export.routes';
+import sseRoutes from './sse.routes';
 
 export const setupRoutes = (app: Application): void => {
   // Mount routes
@@ -18,4 +19,5 @@ export const setupRoutes = (app: Application): void => {
   app.use('/api/v1/transform', transformRoutes);
   app.use('/api/v1/monitoring', monitoringRoutes);
   app.use('/api/v1/export', exportRoutes);
+  app.use('/api/v1/sse', sseRoutes);
 };

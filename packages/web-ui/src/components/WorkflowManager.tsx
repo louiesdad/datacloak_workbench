@@ -4,7 +4,9 @@ import {
   DataSourcePicker, 
   ProfilerUI,
   type FileProfile,
-  type FieldProfile
+  type FieldProfile,
+  MemoryMonitor,
+  ElectronFeatureMonitor
 } from './index';
 import { 
   TransformDesigner,
@@ -747,6 +749,18 @@ export const WorkflowManager: React.FC = () => {
   return (
     <div className="workflow-manager">
       {renderCurrentStep()}
+      
+      {/* Memory monitor for large dataset handling */}
+      <MemoryMonitor
+        compact={true}
+        showHistory={true}
+        showRecommendations={true}
+        autoHide={false}
+        position="bottom-left"
+      />
+      
+      {/* Electron features monitor */}
+      <ElectronFeatureMonitor />
     </div>
   );
 };

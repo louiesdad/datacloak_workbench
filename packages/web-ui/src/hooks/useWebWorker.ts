@@ -188,6 +188,46 @@ export function useFileProcessor() {
   });
 }
 
+// Specific hook for data transformations
+export function useDataTransformer() {
+  const workerFactory = useCallback(() => {
+    return new Worker(
+      new URL('../workers/dataTransform.worker.ts', import.meta.url),
+      { type: 'module' }
+    );
+  }, []);
+
+  return useWebWorker(workerFactory, {
+    timeout: 120000, // 2 minute timeout for large datasets
+    onProgress: (progress, details) => {
+      console.log(`Data transformation: ${progress}%`, details);
+    },
+    onError: (error) => {
+      console.error('Data transformation error:', error);
+    }
+  });
+}
+
+// Specific hook for sentiment analysis
+export function useSentimentAnalyzer() {
+  const workerFactory = useCallback(() => {
+    return new Worker(
+      new URL('../workers/sentimentAnalysis.worker.ts', import.meta.url),
+      { type: 'module' }
+    );
+  }, []);
+
+  return useWebWorker(workerFactory, {
+    timeout: 300000, // 5 minute timeout for large batches
+    onProgress: (progress, details) => {
+      console.log(`Sentiment analysis: ${progress}%`, details);
+    },
+    onError: (error) => {
+      console.error('Sentiment analysis error:', error);
+    }
+  });
+}
+
 // Performance monitoring
 export const usePerformanceMonitor = () => {
   const [metrics, setMetrics] = useState({

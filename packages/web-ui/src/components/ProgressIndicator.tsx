@@ -20,6 +20,8 @@ export interface ProgressIndicatorProps {
   message?: string;
   /** Variant style */
   variant?: 'default' | 'overlay' | 'inline';
+  /** Custom ARIA label for accessibility */
+  ariaLabel?: string;
 }
 
 export const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
@@ -31,7 +33,8 @@ export const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
   className = '',
   testId,
   message,
-  variant = 'default'
+  variant = 'default',
+  ariaLabel
 }) => {
   const progressValue = Math.min(Math.max(value, 0), 100);
   const isComplete = progressValue >= 100;
@@ -53,7 +56,7 @@ export const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
         aria-valuenow={indeterminate ? undefined : progressValue}
         aria-valuemin={0}
         aria-valuemax={100}
-        aria-label={label || message || 'Loading'}
+        aria-label={ariaLabel || label || message || 'Loading'}
         data-testid={testId}
       >
         <div className="progress-overlay-content">
@@ -82,7 +85,7 @@ export const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
       aria-valuenow={indeterminate ? undefined : progressValue}
       aria-valuemin={0}
       aria-valuemax={100}
-      aria-label={label || 'Progress'}
+      aria-label={ariaLabel || label || 'Progress'}
       data-testid={testId}
     >
       {label && (

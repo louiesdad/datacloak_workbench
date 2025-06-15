@@ -19,6 +19,7 @@ export { ExportErrorHandler } from './ExportErrorHandler';
 export { LargeFileUploader } from './LargeFileUploader';
 export { LargeDatasetExporter } from './LargeDatasetExporter';
 export { MemoryMonitor, MemoryAlert } from './MemoryMonitor';
+export { ElectronFeatureMonitor } from './ElectronFeatureMonitor';
 
 export type { FieldProfile, FileProfile } from './ProfilerUI';
 export type { 
