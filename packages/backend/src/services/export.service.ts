@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { AppError } from '../middleware/error.middleware';
 import { getSQLiteConnection } from '../database/sqlite';
-import { runDuckDB } from '../database/duckdb';
+import { runDuckDB } from '../database/duckdb-pool';
 import * as XLSX from 'xlsx';
 import { v4 as uuidv4 } from 'uuid';
 

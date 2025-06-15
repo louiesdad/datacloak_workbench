@@ -1,5 +1,6 @@
 import { initializeSQLite, getSQLiteConnection } from './sqlite';
-import { initializeDuckDB, getDuckDBConnection } from './duckdb';
+import { initializeDuckDB, getDuckDBConnection } from './duckdb-pool';
+import { duckDBPool } from './duckdb-pool';
 
 export const initializeDatabases = async (): Promise<void> => {
   try {
@@ -27,14 +28,16 @@ export const initializeDatabases = async (): Promise<void> => {
 export const getDatabaseStatus = async (): Promise<{
   sqlite: string;
   duckdb: string;
+  duckdbPool?: any;
 }> => {
   try {
     const sqliteDb = getSQLiteConnection();
-    const duckdbDb = getDuckDBConnection();
+    const poolStats = await duckDBPool.getPoolStats();
     
     return {
       sqlite: sqliteDb ? 'connected' : 'disconnected',
-      duckdb: duckdbDb ? 'connected' : 'disconnected',
+      duckdb: poolStats.poolHealth === 'healthy' ? 'connected' : poolStats.poolHealth,
+      duckdbPool: poolStats
     };
   } catch (error) {
     return {
@@ -45,4 +48,4 @@ export const getDatabaseStatus = async (): Promise<{
 };
 
 export * from './sqlite';
-export * from './duckdb';
+export * from './duckdb-pool';

@@ -47,7 +47,10 @@ export class TransformPersistenceService {
 
   constructor() {
     this.validationService = new TransformValidationService();
-    this.initializeDatabase();
+    // Defer database initialization to avoid blocking constructor
+    this.initializeDatabase().catch(error => {
+      console.warn('Failed to initialize transform persistence database:', error);
+    });
   }
 
   /**
@@ -56,7 +59,8 @@ export class TransformPersistenceService {
   private async initializeDatabase(): Promise<void> {
     const db = getSQLiteConnection();
     if (!db) {
-      throw new AppError('Database connection not available', 500, 'DB_ERROR');
+      console.warn('Database connection not available for transform persistence');
+      return;
     }
 
     try {

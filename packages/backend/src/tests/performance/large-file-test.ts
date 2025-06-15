@@ -8,7 +8,7 @@ import path from 'path';
 import { performance } from 'perf_hooks';
 import { FileStreamService } from '../../services/file-stream.service';
 import { DataService } from '../../services/data.service';
-import { getDuckDBConnection } from '../../database/duckdb';
+import { duckDBPool } from '../../database/duckdb-pool';
 
 interface PerformanceMetrics {
   startTime: number;
@@ -178,15 +178,11 @@ export class LargeFilePerformanceTest {
           });
         }
         
-        // Insert batch into DuckDB
-        const duckDB = getDuckDBConnection();
-        const values = batch.map(item => 
-          `(${item.id}, '${item.text}', '${item.sentiment}', ${item.score}, 0, 0, '${item.id}', '${item.timestamp.toISOString()}')`
-        ).join(',');
-        
-        if (duckDB) {
-          await duckDB.run(
-            `INSERT INTO text_analytics (id, text, sentiment, score, word_count, char_count, batch_id, timestamp) VALUES ${values}`
+        // Insert batch into DuckDB using connection pool
+        for (const item of batch) {
+          await duckDBPool.executeRun(
+            'INSERT INTO text_analytics (text, sentiment, score, word_count, char_count, batch_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [item.text, item.sentiment, item.score, 0, 0, item.id.toString(), item.timestamp.toISOString()]
           );
         }
         
@@ -198,7 +194,6 @@ export class LargeFilePerformanceTest {
 
       // Run analytical queries
       console.log('🔍 Running analytical queries...');
-      const duckDB = getDuckDBConnection();
       
       const queries = [
         'SELECT COUNT(*) as total FROM text_analytics',
@@ -210,9 +205,7 @@ export class LargeFilePerformanceTest {
 
       for (const query of queries) {
         const startTime = performance.now();
-        if (duckDB) {
-          await duckDB.all(query);
-        }
+        await duckDBPool.executeQuery(query);
         const duration = performance.now() - startTime;
         console.log(`✅ Query executed in ${duration.toFixed(2)}ms`);
       }
