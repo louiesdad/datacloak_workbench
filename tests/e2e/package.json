@@ -1,0 +1,36 @@
+{
+  "name": "e2e-tests",
+  "version": "1.0.0",
+  "description": "End-to-end tests for DataCloak Sentiment Workbench",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:ui": "playwright test --ui",
+    "test:install": "playwright install",
+    "test:browser": "playwright test --project=browser-chrome",
+    "test:browsers": "playwright test --project=browser-chrome --project=browser-firefox --project=browser-webkit",
+    "test:electron": "ELECTRON_PATH=/path/to/electron playwright test --project=electron",
+    "test:mobile": "playwright test --project=mobile-chrome",
+    "test:all": "playwright test --project=browser-chrome --project=browser-firefox --project=browser-webkit --project=mobile-chrome",
+    "test:file-upload": "playwright test 01-file-upload.spec.ts",
+    "test:field-detection": "playwright test 02-field-detection.spec.ts",
+    "test:transforms": "playwright test 03-transform-operations.spec.ts",
+    "test:sentiment": "playwright test 04-sentiment-analysis.spec.ts",
+    "test:export": "playwright test 05-results-export.spec.ts",
+    "test:workflow": "playwright test --grep='workflow'",
+    "test:ci": "playwright test --project=browser-chrome --reporter=junit",
+    "report": "playwright show-report",
+    "clean": "rimraf test-results",
+    "setup": "npm run test:install && mkdir -p test-results"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.10.2",
+    "@playwright/test": "^1.47.0",
+    "glob": "^10.4.5",
+    "msw": "^2.10.2",
+    "playwright": "^1.47.0",
+    "rimraf": "^5.0.10"
+  }
+}

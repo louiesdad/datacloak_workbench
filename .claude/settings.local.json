@@ -3,7 +3,28 @@
     "allow": [
       "Bash(mkdir:*)",
       "Bash(chmod:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(npm install:*)",
+      "Bash(mkdir:*)",
+      "Bash(npx playwright:*)",
+      "Bash(npm run test:csv-upload:*)",
+      "Bash(curl:*)",
+      "Bash(npm run setup:*)",
+      "Bash(npm run test:browser:*)",
+      "Bash(npm run test:file-upload:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(timeout 30s npx playwright test --project=browser-chrome --grep=\"should show file requirements\" --timeout=15000)",
+      "Bash(npx playwright test --project=browser-chrome --grep=\"file requirements|navigation|help text\" --timeout=10000)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(cp:*)",
+      "Bash(mv:*)",
+      "Bash(npm init:*)",
+      "Bash(node:*)",
+      "Bash(rm:*)",
+      "Bash(npm test)",
+      "Bash(npm test:*)"
     ],
     "deny": []
   }

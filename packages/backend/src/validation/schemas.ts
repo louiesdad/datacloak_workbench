@@ -82,6 +82,10 @@ export const securitySchemas = {
   }),
 
   scanDataset: Joi.object({
+    datasetId: Joi.string().uuid().required().messages({
+      'string.guid': 'Invalid dataset ID format',
+      'any.required': 'Dataset ID is required',
+    }),
     filePath: Joi.string().trim().min(1).max(1000).required().messages({
       'string.empty': 'File path cannot be empty',
       'string.min': 'File path must be at least 1 character long', 

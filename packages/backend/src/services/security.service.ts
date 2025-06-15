@@ -1,33 +1,12 @@
-// Import types and implementations directly
-interface PIIDetectionResult {
-  fieldName: string;
-  piiType: string;
-  confidence: number;
-  sample: string;
-  masked: string;
-}
-
-interface MaskingResult {
-  originalText: string;
-  maskedText: string;
-  detectedPII: PIIDetectionResult[];
-  metadata: {
-    processingTime: number;
-    fieldsProcessed: number;
-    piiItemsFound: number;
-  };
-}
-
-interface SecurityAuditResult {
-  timestamp: Date;
-  fileProcessed: string;
-  piiItemsDetected: number;
-  maskingAccuracy: number;
-  encryptionStatus: 'enabled' | 'disabled';
-  complianceScore: number;
-  violations: string[];
-  recommendations: string[];
-}
+// Import from the security package
+import { 
+  DataCloakBridge,
+  NativeDataCloakBridge,
+  PIIDetectionResult,
+  MaskingResult,
+  SecurityAuditResult,
+  DataCloakConfig
+} from '@dsw/security';
 import { AppError } from '../middleware/error.middleware';
 import { getSQLiteConnection } from '../database/sqlite';
 import { v4 as uuidv4 } from 'uuid';
@@ -59,117 +38,19 @@ export interface SecurityMetrics {
   recentEvents: SecurityEvent[];
 }
 
-// Simple DataCloak Mock Implementation
-class SimpleDataCloakMock {
-  private initialized = false;
-  private readonly PII_PATTERNS = {
-    EMAIL: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g,
-    PHONE: /\b(?:\+?1[-.\s]?)?\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})\b/g,
-    SSN: /\b(?!000|666|9\d{2})\d{3}-?(?!00)\d{2}-?(?!0000)\d{4}\b/g,
-    CREDIT_CARD: /\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13}|3[0-9]{13}|6(?:011|5[0-9]{2})[0-9]{12})\b/g,
-    NAME: /\b[A-Z][a-z]+ [A-Z][a-z]+\b/g,
-    DATE_OF_BIRTH: /\b(?:0[1-9]|1[0-2])[-/](?:0[1-9]|[12]\d|3[01])[-/](?:19|20)\d{2}\b/g
-  };
-
-  private readonly MASKING_STRATEGIES: Record<string, (text: string) => string> = {
-    EMAIL: (text: string) => text.replace(/(.{1,3})[^@]*(@.*)/, '$1****$2'),
-    PHONE: () => 'XXX-XXX-XXXX',
-    SSN: () => 'XXX-XX-XXXX',
-    CREDIT_CARD: (text: string) => '**** **** **** ' + text.slice(-4),
-    NAME: () => '[NAME]',
-    DATE_OF_BIRTH: () => 'XX/XX/XXXX'
-  };
-
-  async detectPII(text: string): Promise<PIIDetectionResult[]> {
-    const results: PIIDetectionResult[] = [];
-    
-    Object.entries(this.PII_PATTERNS).forEach(([piiType, pattern]) => {
-      const matches = text.match(pattern);
-      if (matches) {
-        matches.forEach(match => {
-          const maskingFn = this.MASKING_STRATEGIES[piiType];
-          results.push({
-            fieldName: 'detected_field',
-            piiType,
-            confidence: Math.random() * 0.4 + 0.6,
-            sample: match,
-            masked: maskingFn ? maskingFn(match) : '[MASKED]'
-          });
-        });
-      }
-    });
-
-    return results;
-  }
-
-  async maskText(text: string): Promise<MaskingResult> {
-    const startTime = Date.now();
-    const detectedPII = await this.detectPII(text);
-    
-    let maskedText = text;
-    detectedPII.forEach(pii => {
-      maskedText = maskedText.replace(pii.sample, pii.masked);
-    });
-
-    return {
-      originalText: text,
-      maskedText,
-      detectedPII,
-      metadata: {
-        processingTime: Date.now() - startTime,
-        fieldsProcessed: 1,
-        piiItemsFound: detectedPII.length
-      }
-    };
-  }
-
-  async auditSecurity(filePath: string): Promise<SecurityAuditResult> {
-    const mockPIICount = Math.floor(Math.random() * 100);
-    const mockAccuracy = Math.random() * 0.1 + 0.9;
-    const mockComplianceScore = Math.random() * 0.2 + 0.8;
-
-    const violations = mockComplianceScore < 0.9 ? [
-      'Potential PII exposure in field: customer_notes',
-      'Insufficient encryption for sensitive data'
-    ] : [];
-
-    const recommendations = [
-      'Enable field-level encryption for sensitive columns',
-      'Implement data retention policies',
-      'Regular PII scanning recommended'
-    ];
-
-    return {
-      timestamp: new Date(),
-      fileProcessed: filePath,
-      piiItemsDetected: mockPIICount,
-      maskingAccuracy: mockAccuracy,
-      encryptionStatus: Math.random() > 0.5 ? 'enabled' : 'disabled',
-      complianceScore: mockComplianceScore,
-      violations,
-      recommendations
-    };
-  }
-
-  async initialize(): Promise<void> {
-    this.initialized = true;
-  }
-
-  getVersion(): string {
-    return '1.0.0-mock';
-  }
-
-  isAvailable(): boolean {
-    return this.initialized;
-  }
-}
 
 export class SecurityService {
-  private dataCloakBridge: SimpleDataCloakMock;
+  private dataCloakBridge: DataCloakBridge;
   private initialized = false;
 
   constructor() {
-    this.dataCloakBridge = new SimpleDataCloakMock();
+    // Use NativeDataCloakBridge with fallback to mock
+    this.dataCloakBridge = new NativeDataCloakBridge({
+      fallbackToMock: true,
+      useSystemBinary: true,
+      timeout: 30000,
+      retryAttempts: 3
+    });
   }
 
   async initialize(): Promise<void> {

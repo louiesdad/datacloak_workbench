@@ -109,6 +109,61 @@ export class JobController {
     }
   }
 
+  async getJobProgress(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { jobId } = req.params;
+      const job = this.jobQueue.getJob(jobId);
+
+      if (!job) {
+        throw new AppError('Job not found', 404, 'JOB_NOT_FOUND');
+      }
+
+      // Calculate detailed progress information
+      const progressDetails = this.calculateProgressDetails(job);
+
+      res.json({
+        success: true,
+        data: {
+          jobId: job.id,
+          status: job.status,
+          progress: job.progress,
+          details: progressDetails,
+          timestamps: {
+            created: job.createdAt.toISOString(),
+            started: job.startedAt?.toISOString(),
+            completed: job.completedAt?.toISOString()
+          }
+        }
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getJobEvents(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { jobId } = req.params;
+      const job = this.jobQueue.getJob(jobId);
+
+      if (!job) {
+        throw new AppError('Job not found', 404, 'JOB_NOT_FOUND');
+      }
+
+      // Generate job event timeline
+      const events = this.generateJobEvents(job);
+
+      res.json({
+        success: true,
+        data: {
+          jobId: job.id,
+          events
+        }
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async getJobs(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { status, type, limit = 50 } = req.query;
@@ -230,5 +285,122 @@ export class JobController {
       error: job.error,
       result: job.result
     };
+  }
+
+  private calculateProgressDetails(job: any): any {
+    const now = new Date();
+    const details: any = {
+      phase: this.getJobPhase(job),
+      percentage: job.progress,
+    };
+
+    // Calculate timing information
+    if (job.startedAt) {
+      const elapsedMs = now.getTime() - job.startedAt.getTime();
+      details.elapsedTime = {
+        seconds: Math.floor(elapsedMs / 1000),
+        humanReadable: this.formatDuration(elapsedMs)
+      };
+
+      // Estimate remaining time based on progress
+      if (job.progress > 0 && job.progress < 100) {
+        const estimatedTotalMs = (elapsedMs / job.progress) * 100;
+        const remainingMs = estimatedTotalMs - elapsedMs;
+        details.estimatedTimeRemaining = {
+          seconds: Math.floor(remainingMs / 1000),
+          humanReadable: this.formatDuration(remainingMs)
+        };
+      }
+    }
+
+    // Add job-specific progress details
+    if (job.type === 'sentiment_analysis_batch' && job.data) {
+      const totalTexts = job.data.texts?.length || 0;
+      const processedTexts = Math.floor((job.progress / 100) * totalTexts);
+      details.itemsProcessed = processedTexts;
+      details.totalItems = totalTexts;
+      details.remainingItems = totalTexts - processedTexts;
+    }
+
+    return details;
+  }
+
+  private generateJobEvents(job: any): any[] {
+    const events = [];
+
+    events.push({
+      type: 'created',
+      timestamp: job.createdAt.toISOString(),
+      description: `Job ${job.type} created with priority ${job.priority}`
+    });
+
+    if (job.startedAt) {
+      events.push({
+        type: 'started',
+        timestamp: job.startedAt.toISOString(),
+        description: 'Job processing started'
+      });
+    }
+
+    // Add progress milestones
+    if (job.progress > 0) {
+      const milestones = [25, 50, 75];
+      milestones.forEach(milestone => {
+        if (job.progress >= milestone) {
+          events.push({
+            type: 'progress',
+            timestamp: job.startedAt ? 
+              new Date(job.startedAt.getTime() + (milestone / 100) * 
+                (job.completedAt ? job.completedAt.getTime() - job.startedAt.getTime() : Date.now() - job.startedAt.getTime())
+              ).toISOString() : 
+              new Date().toISOString(),
+            description: `${milestone}% completed`
+          });
+        }
+      });
+    }
+
+    if (job.completedAt) {
+      events.push({
+        type: job.status,
+        timestamp: job.completedAt.toISOString(),
+        description: `Job ${job.status}${job.error ? ': ' + job.error : ''}`
+      });
+    }
+
+    return events.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+  }
+
+  private getJobPhase(job: any): string {
+    switch (job.status) {
+      case 'pending':
+        return 'Queued';
+      case 'running':
+        if (job.progress < 25) return 'Initializing';
+        if (job.progress < 75) return 'Processing';
+        return 'Finalizing';
+      case 'completed':
+        return 'Completed';
+      case 'failed':
+        return 'Failed';
+      case 'cancelled':
+        return 'Cancelled';
+      default:
+        return 'Unknown';
+    }
+  }
+
+  private formatDuration(ms: number): string {
+    const seconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+
+    if (hours > 0) {
+      return `${hours}h ${minutes % 60}m ${seconds % 60}s`;
+    } else if (minutes > 0) {
+      return `${minutes}m ${seconds % 60}s`;
+    } else {
+      return `${seconds}s`;
+    }
   }
 }

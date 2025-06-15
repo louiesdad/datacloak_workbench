@@ -19,10 +19,24 @@ export const errorHandler = (
   res: Response<ErrorResponse>,
   _next: NextFunction
 ): void => {
-  const isAppError = err instanceof AppError;
-  const statusCode = isAppError ? err.statusCode : 500;
-  const message = err.message || 'Internal Server Error';
-  const code = isAppError ? err.code : 'INTERNAL_ERROR';
+  let statusCode: number;
+  let message: string;
+  let code: string;
+
+  if (err instanceof AppError) {
+    statusCode = err.statusCode;
+    message = err.message;
+    code = err.code || 'INTERNAL_ERROR';
+  } else if (err instanceof SyntaxError && 'body' in err) {
+    // Handle JSON parsing errors
+    statusCode = 400;
+    message = 'Invalid JSON format';
+    code = 'INVALID_JSON';
+  } else {
+    statusCode = 500;
+    message = err.message || 'Internal Server Error';
+    code = 'INTERNAL_ERROR';
+  }
 
   console.error('Error:', {
     name: err.name,

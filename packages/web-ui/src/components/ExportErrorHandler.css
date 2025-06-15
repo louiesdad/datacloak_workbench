@@ -1,0 +1,379 @@
+.export-error-handler {
+  position: relative;
+}
+
+/* Export Progress Overlay */
+.export-progress-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.export-progress-modal {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  min-width: 400px;
+  max-width: 90vw;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  animation: slideIn 0.3s ease-out;
+}
+
+.export-progress-modal h3 {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #334155;
+  text-align: center;
+}
+
+.export-progress-bar {
+  margin-bottom: 1.5rem;
+}
+
+.cancel-export-button {
+  width: 100%;
+  padding: 0.75rem;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.cancel-export-button:hover {
+  background: #dc2626;
+}
+
+.cancel-export-button:active {
+  transform: translateY(1px);
+}
+
+/* Export Error Display */
+.export-error-display {
+  margin-top: 1rem;
+  border-left: 4px solid #ef4444;
+  background: #fef2f2;
+}
+
+.export-error-display .error-suggestions {
+  background: #fef7f7;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.export-error-display .error-suggestions h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #7f1d1d;
+}
+
+.export-error-display .suggestion-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.export-error-display .suggestion-item {
+  padding: 0.5rem 0;
+  color: #991b1b;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.export-error-display .suggestion-item::before {
+  content: '💡';
+  flex-shrink: 0;
+}
+
+/* Fallback Format Options */
+.fallback-formats {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+}
+
+.fallback-formats h5 {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #0369a1;
+}
+
+.fallback-format-buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.fallback-format-button {
+  padding: 0.5rem 1rem;
+  background: white;
+  border: 1px solid #0ea5e9;
+  color: #0369a1;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.fallback-format-button:hover {
+  background: #0ea5e9;
+  color: white;
+  transform: translateY(-1px);
+}
+
+/* Memory Warning */
+.memory-warning {
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1rem 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.memory-warning-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+.memory-warning-content h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #92400e;
+}
+
+.memory-warning-content p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #a16207;
+  line-height: 1.4;
+}
+
+/* Size Limit Information */
+.size-info {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1rem 0;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.size-info-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.size-info-row:last-child {
+  margin-bottom: 0;
+}
+
+.size-info-label {
+  font-weight: 500;
+}
+
+.size-info-value {
+  font-family: 'Monaco', 'Consolas', monospace;
+  font-weight: 600;
+}
+
+.size-warning {
+  color: #dc2626;
+}
+
+.size-ok {
+  color: #059669;
+}
+
+/* Chunked Export Info */
+.chunked-export-info {
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1rem 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.chunked-export-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+.chunked-export-content h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #0369a1;
+}
+
+.chunked-export-content p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #0284c7;
+  line-height: 1.4;
+}
+
+/* Export Options */
+.export-options-panel {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin: 1rem 0;
+}
+
+.export-options-panel h4 {
+  margin: 0 0 1rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.export-option-group {
+  margin-bottom: 1rem;
+}
+
+.export-option-group:last-child {
+  margin-bottom: 0;
+}
+
+.export-option-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #64748b;
+  margin-bottom: 0.5rem;
+}
+
+.export-option-input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.export-option-select {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  background: white;
+}
+
+.export-option-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .export-progress-modal {
+    min-width: 90vw;
+    margin: 1rem;
+  }
+  
+  .fallback-format-buttons {
+    flex-direction: column;
+  }
+  
+  .fallback-format-button {
+    text-align: center;
+  }
+  
+  .size-info-row {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+}
+
+/* Animations */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.export-progress-modal {
+  animation: slideIn 0.3s ease-out;
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .export-progress-overlay {
+    background: rgba(0, 0, 0, 0.8);
+  }
+  
+  .export-progress-modal {
+    border: 2px solid #000;
+  }
+  
+  .memory-warning,
+  .chunked-export-info,
+  .fallback-formats {
+    border: 2px solid currentColor;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .export-progress-modal,
+  .cancel-export-button,
+  .fallback-format-button {
+    animation: none;
+    transition: none;
+  }
+  
+  .cancel-export-button:active,
+  .fallback-format-button:hover {
+    transform: none;
+  }
+}

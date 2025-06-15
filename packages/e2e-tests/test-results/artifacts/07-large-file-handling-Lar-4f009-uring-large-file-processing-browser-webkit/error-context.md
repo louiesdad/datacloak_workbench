@@ -1,0 +1,85 @@
+# Page snapshot
+
+```yaml
+- complementary:
+  - navigation:
+    - heading "DataCloak Sentiment Workbench" [level=1]
+    - paragraph: Secure data processing with automatic PII detection
+    - button "Upload Data - completed": Upload Data Select and upload your data files Complete
+    - text: →
+    - button "Data Profile - current": Data Profile Review field types and PII detection Active
+    - text: →
+    - button "Transform - pending": Transform Optional data transformation Ready
+    - text: →
+    - button "Configure - pending (disabled)" [disabled]: Configure Set up sentiment analysis Pending
+    - text: →
+    - button "Execute - pending (disabled)" [disabled]: Execute Run sentiment analysis Pending
+    - text: →
+    - button "Results - pending (disabled)" [disabled]: Results View and export results Pending
+    - text: "Workflow Progress: 1 of 6 steps completed"
+    - button "← Start Over"
+- main:
+  - heading "Data Profile & PII Detection" [level=1]
+  - paragraph: Review the automatically detected field types and PII information.
+  - heading "Data Profile Analysis" [level=2]
+  - text: 1 file analyzed ▼
+  - strong: medium-test.csv
+  - text: 617.4 KB 1,000 rows 5 fields 🔒 2 PII
+  - table:
+    - rowgroup:
+      - row "Select all fields Field Name Type Statistics Sample Values Actions":
+        - cell "Select all fields":
+          - checkbox "Select all fields"
+        - cell "Field Name"
+        - cell "Type"
+        - cell "Statistics"
+        - cell "Sample Values"
+        - cell "Actions"
+    - rowgroup:
+      - row "🔢 customer_id number 100.0% 1,000 rows, 0 null 1,000 unique values 12345 67890 11111":
+        - cell:
+          - checkbox
+        - cell "🔢 customer_id"
+        - cell "number"
+        - cell "100.0% 1,000 rows, 0 null 1,000 unique values"
+        - cell "12345 67890 11111"
+        - cell
+      - row "📝 review_text string 99.5% 1,000 rows, 5 null 995 unique values Great product, highly recommend! Poor quality, disappointed Average experience":
+        - cell:
+          - checkbox
+        - cell "📝 review_text"
+        - cell "string"
+        - cell "99.5% 1,000 rows, 5 null 995 unique values"
+        - cell "Great product, highly recommend! Poor quality, disappointed Average experience"
+        - cell
+      - row "📝 email 🔒 Email string 99.5% 1,000 rows, 5 null 995 unique values john.doe@example.com jane.smith@company.com user@domain.org Mask PII":
+        - cell:
+          - checkbox
+        - cell "📝 email 🔒 Email"
+        - cell "string"
+        - cell "99.5% 1,000 rows, 5 null 995 unique values"
+        - cell "john.doe@example.com jane.smith@company.com user@domain.org"
+        - cell "Mask PII":
+          - checkbox "Mask PII"
+          - text: Mask PII
+      - row "📝 phone_number 🔒 Phone string 95.0% 1,000 rows, 50 null 950 unique values (555) 123-4567 555-987-6543 +1-555-555-5555 Mask PII":
+        - cell:
+          - checkbox
+        - cell "📝 phone_number 🔒 Phone"
+        - cell "string"
+        - cell "95.0% 1,000 rows, 50 null 950 unique values"
+        - cell "(555) 123-4567 555-987-6543 +1-555-555-5555"
+        - cell "Mask PII":
+          - checkbox "Mask PII"
+          - text: Mask PII
+      - row "🔢 rating number 100.0% 1,000 rows, 0 null 5 unique values 5 3 4":
+        - cell:
+          - checkbox
+        - cell "🔢 rating"
+        - cell "number"
+        - cell "100.0% 1,000 rows, 0 null 5 unique values"
+        - cell "5 3 4"
+        - cell
+  - button "Skip to Sentiment Analysis"
+  - button "Continue to Transform"
+```

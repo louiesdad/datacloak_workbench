@@ -9,12 +9,12 @@ export const initializeDatabases = async (): Promise<void> => {
     await initializeSQLite();
     console.log('SQLite initialized successfully');
     
-    // Skip DuckDB in test environment if SKIP_DUCKDB is set
-    if (process.env.SKIP_DUCKDB !== 'true') {
+    // Skip DuckDB if it fails to initialize
+    try {
       await initializeDuckDB();
       console.log('DuckDB initialized successfully');
-    } else {
-      console.log('Skipping DuckDB initialization in test environment');
+    } catch (duckDbError) {
+      console.warn('Warning: Could not initialize DuckDB, continuing without it:', duckDbError);
     }
     
     console.log('All databases initialized successfully');

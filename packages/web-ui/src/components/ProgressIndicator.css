@@ -1,0 +1,234 @@
+/* Progress Indicator Styles */
+.progress-indicator {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Size variants */
+.progress-indicator--small {
+  font-size: 0.75rem;
+}
+
+.progress-indicator--medium {
+  font-size: 0.875rem;
+}
+
+.progress-indicator--large {
+  font-size: 1rem;
+}
+
+/* Variant styles */
+.progress-indicator--overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9998;
+  backdrop-filter: blur(4px);
+}
+
+.progress-indicator--inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Progress overlay content */
+.progress-overlay-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  color: white;
+  text-align: center;
+}
+
+/* Progress label */
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #374151;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.progress-percentage {
+  font-weight: 600;
+  color: #3b82f6;
+}
+
+/* Progress track */
+.progress-track {
+  width: 100%;
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-indicator--small .progress-track {
+  height: 4px;
+}
+
+.progress-indicator--large .progress-track {
+  height: 12px;
+}
+
+/* Progress bar */
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%);
+  border-radius: inherit;
+  transition: width 0.3s ease;
+  position: relative;
+}
+
+.progress-bar--indeterminate {
+  width: 30%;
+  animation: progressIndeterminate 2s ease-in-out infinite;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    #3b82f6 50%, 
+    transparent 100%
+  );
+}
+
+@keyframes progressIndeterminate {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(300%);
+  }
+}
+
+/* Complete state */
+.progress-indicator--complete .progress-bar {
+  background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+}
+
+/* Progress message */
+.progress-message {
+  color: #64748b;
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.progress-overlay-content .progress-message {
+  color: white;
+  font-size: 1.125rem;
+  font-weight: 500;
+}
+
+/* Spinner styles */
+.spinner {
+  display: inline-block;
+  position: relative;
+}
+
+.spinner--small {
+  width: 16px;
+  height: 16px;
+}
+
+.spinner--medium {
+  width: 24px;
+  height: 24px;
+}
+
+.spinner--large {
+  width: 32px;
+  height: 32px;
+}
+
+.progress-spinner {
+  width: 60px;
+  height: 60px;
+  position: relative;
+}
+
+.spinner-ring {
+  width: 100%;
+  height: 100%;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top: 3px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.progress-spinner .spinner-ring {
+  border: 6px solid rgba(255, 255, 255, 0.3);
+  border-top: 6px solid #667eea;
+}
+
+@keyframes spin {
+  0% { 
+    transform: rotate(0deg); 
+  }
+  100% { 
+    transform: rotate(360deg); 
+  }
+}
+
+/* Accessibility */
+.progress-indicator:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .progress-track {
+    background: #000;
+    border: 1px solid #666;
+  }
+  
+  .progress-bar {
+    background: #fff;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .progress-bar {
+    transition: none;
+  }
+  
+  .progress-bar--indeterminate {
+    animation: none;
+    background: #3b82f6;
+  }
+  
+  .spinner-ring {
+    animation: none;
+    border-top-color: #3b82f6;
+  }
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .progress-indicator--overlay {
+    padding: 1rem;
+  }
+  
+  .progress-overlay-content {
+    max-width: 280px;
+  }
+  
+  .progress-message {
+    font-size: 1rem;
+  }
+}

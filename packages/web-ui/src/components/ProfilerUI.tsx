@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { FileInfo } from '../platform-bridge';
+import { DataPreview } from './DataPreview';
+import { VirtualTable, PerformantList } from './VirtualScrollList';
 import './ProfilerUI.css';
 
 export interface FieldProfile {
@@ -97,23 +99,23 @@ const FieldRow: React.FC<{
   const completionRate = ((field.totalCount - field.nullCount) / field.totalCount * 100).toFixed(1);
   
   return (
-    <tr className={`field-row ${isSelected ? 'selected' : ''} ${field.piiDetection.isPII ? 'has-pii' : ''}`}>
-      <td className="field-select">
+    <div className={`field-row ${isSelected ? 'selected' : ''} ${field.piiDetection.isPII ? 'has-pii' : ''}`}>
+      <div className="field-select">
         <input
           type="checkbox"
           checked={isSelected}
           onChange={(e) => onFieldToggle?.(fileIndex, field.name, e.target.checked)}
         />
-      </td>
-      <td className="field-name">
+      </div>
+      <div className="field-name">
         <div className="field-name-content">
           <FieldTypeIcon type={field.type} />
           <span className="name">{field.name}</span>
           <PIIBadge field={field} />
         </div>
-      </td>
-      <td className="field-type">{field.type}</td>
-      <td className="field-stats">
+      </div>
+      <div className="field-type">{field.type}</div>
+      <div className="field-stats">
         <div className="completion-rate">
           <div className="completion-bar">
             <div 
@@ -131,8 +133,8 @@ const FieldRow: React.FC<{
             {field.uniqueCount.toLocaleString()} unique values
           </div>
         )}
-      </td>
-      <td className="field-samples">
+      </div>
+      <div className="field-samples">
         <div className="samples">
           {field.samples.slice(0, 3).map((sample, idx) => (
             <span key={idx} className="sample">{sample}</span>
@@ -141,8 +143,8 @@ const FieldRow: React.FC<{
             <span className="sample-more">+{field.samples.length - 3} more</span>
           )}
         </div>
-      </td>
-      <td className="field-actions">
+      </div>
+      <div className="field-actions">
         {field.piiDetection.isPII && (
           <label className="pii-mask-toggle">
             <input
@@ -153,8 +155,8 @@ const FieldRow: React.FC<{
             <span className="toggle-text">Mask PII</span>
           </label>
         )}
-      </td>
-    </tr>
+      </div>
+    </div>
   );
 };
 
@@ -261,32 +263,36 @@ export const ProfilerUI: React.FC<ProfilerUIProps> = ({
 
             {isExpanded && (
               <div className="fields-table-container">
-                <table className="fields-table">
-                  <thead>
-                    <tr>
-                      <th className="select-col">
-                        <input
-                          type="checkbox"
-                          checked={selectedFieldCount === profile.fields.length}
-                          onChange={(e) => {
-                            profile.fields.forEach(field => {
-                              onFieldToggle?.(fileIndex, field.name, e.target.checked);
-                            });
-                          }}
-                          title="Select all fields"
-                        />
-                      </th>
-                      <th>Field Name</th>
-                      <th>Type</th>
-                      <th>Statistics</th>
-                      <th>Sample Values</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {profile.fields.map((field) => (
+                <div className="fields-table-header">
+                  <div className="select-col">
+                    <input
+                      type="checkbox"
+                      checked={selectedFieldCount === profile.fields.length}
+                      onChange={(e) => {
+                        profile.fields.forEach(field => {
+                          onFieldToggle?.(fileIndex, field.name, e.target.checked);
+                        });
+                      }}
+                      title="Select all fields"
+                    />
+                  </div>
+                  <div className="field-header">Field Name</div>
+                  <div className="type-header">Type</div>
+                  <div className="stats-header">Statistics</div>
+                  <div className="samples-header">Sample Values</div>
+                  <div className="actions-header">Actions</div>
+                </div>
+                
+                <PerformantList
+                  items={profile.fields}
+                  height={Math.min(400, profile.fields.length * 60 + 20)}
+                  estimatedItemHeight={60}
+                  threshold={20}
+                  className="fields-virtual-list"
+                  testId={`fields-list-${fileIndex}`}
+                  renderItem={(field, index) => (
+                    <div className="field-row-container">
                       <FieldRow
-                        key={field.name}
                         field={field}
                         fileIndex={fileIndex}
                         isSelected={selectedFields[getFieldKey(fileIndex, field.name)] || false}
@@ -294,10 +300,17 @@ export const ProfilerUI: React.FC<ProfilerUIProps> = ({
                         onFieldToggle={onFieldToggle}
                         onPIIToggle={onPIIToggle}
                       />
-                    ))}
-                  </tbody>
-                </table>
+                    </div>
+                  )}
+                />
               </div>
+            )}
+            
+            {isExpanded && (
+              <DataPreview 
+                fileProfile={profile}
+                maxRows={10}
+              />
             )}
           </div>
         );

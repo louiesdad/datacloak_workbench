@@ -123,12 +123,21 @@ export const Navigation: React.FC<NavigationProps> = ({ className }) => {
           return (
             <div key={step.id} className="step-container">
               <button
-                className={`workflow-step ${status} ${!canNavigate ? 'disabled' : ''}`}
+                className={`workflow-step step ${status} ${status === 'current' ? 'active' : ''} ${!canNavigate ? 'disabled' : ''}`}
                 onClick={() => handleStepClick(step.id)}
                 disabled={!canNavigate}
                 aria-current={status === 'current' ? 'step' : undefined}
+                data-step={step.id}
+                title={
+                  !canNavigate 
+                    ? `Complete ${steps[steps.findIndex(s => s.id === currentStep)]?.label || 'current step'} before proceeding`
+                    : status === 'completed' 
+                      ? `Return to ${step.label}`
+                      : step.description
+                }
+                aria-label={`${step.label} - ${status} ${!canNavigate ? '(disabled)' : ''}`}
               >
-                <div className="step-icon">
+                <div className="step-icon" aria-hidden="true">
                   {getStepIcon(step, status)}
                 </div>
                 <div className="step-content">

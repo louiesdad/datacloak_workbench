@@ -30,17 +30,29 @@ export interface AnalysisBatch {
   updatedAt: string;
 }
 
+export interface FieldStatistics {
+  name: string;
+  type: string;
+  sampleValues: any[];
+  nullCount: number;
+  totalCount: number;
+  uniqueCount: number;
+  completeness: number; // percentage of non-null values
+  uniqueness: number; // percentage of unique values
+  mostCommonValue?: any;
+  mostCommonValueCount?: number;
+  minLength?: number;
+  maxLength?: number;
+  averageLength?: number;
+  piiDetected?: boolean;
+  piiType?: string;
+  warnings?: string[];
+}
+
 export interface UploadResult {
   dataset: Dataset;
   previewData: any[];
-  fieldInfo: {
-    name: string;
-    type: string;
-    sampleValues: any[];
-    nullCount: number;
-    piiDetected?: boolean;
-    piiType?: string;
-  }[];
+  fieldInfo: FieldStatistics[];
   securityScan?: {
     piiItemsDetected: number;
     complianceScore: number;
@@ -297,13 +309,61 @@ export class DataService {
   }> {
     return new Promise((resolve, reject) => {
       const results: any[] = [];
+      let lineCount = 0;
+      let headerCount = 0;
+      
+      // First, validate the CSV structure
+      try {
+        this.validateCsvStructure(filePath);
+      } catch (error) {
+        reject(error);
+        return;
+      }
       
       fs.createReadStream(filePath)
         .pipe(csv())
+        .on('headers', (headers: string[]) => {
+          headerCount = headers.length;
+          
+          // Validate headers
+          if (headers.length === 0) {
+            reject(new AppError('CSV file has no headers', 400, 'MALFORMED_CSV'));
+            return;
+          }
+          
+          // Check for empty header names
+          const emptyHeaders = headers.filter(h => !h || h.trim() === '');
+          if (emptyHeaders.length > 0) {
+            reject(new AppError('CSV file contains empty column names', 400, 'MALFORMED_CSV'));
+            return;
+          }
+          
+          // Check for duplicate headers
+          const duplicateHeaders = headers.filter((h, i) => headers.indexOf(h) !== i);
+          if (duplicateHeaders.length > 0) {
+            reject(new AppError(`CSV file contains duplicate column names: ${duplicateHeaders.join(', ')}`, 400, 'MALFORMED_CSV'));
+            return;
+          }
+        })
         .on('data', (data: any) => {
+          lineCount++;
+          
+          // Validate row structure
+          const columns = Object.keys(data);
+          if (columns.length !== headerCount) {
+            reject(new AppError(`Row ${lineCount} has incorrect number of columns. Expected ${headerCount}, got ${columns.length}`, 400, 'MALFORMED_CSV'));
+            return;
+          }
+          
           results.push(data);
         })
         .on('end', () => {
+          // Validate we have data
+          if (results.length === 0) {
+            reject(new AppError('CSV file contains no data rows', 400, 'MALFORMED_CSV'));
+            return;
+          }
+          
           const previewData = results.slice(0, previewSize);
           const fieldInfo = this.analyzeFields(results);
           resolve({
@@ -312,7 +372,16 @@ export class DataService {
             recordCount: results.length,
           });
         })
-        .on('error', reject);
+        .on('error', (error) => {
+          // Transform CSV parsing errors into user-friendly messages
+          if (error.message.includes('Invalid Record Length')) {
+            reject(new AppError('CSV file has inconsistent column counts between rows', 400, 'MALFORMED_CSV'));
+          } else if (error.message.includes('Unexpected Error')) {
+            reject(new AppError('CSV file is corrupted or has invalid format', 400, 'MALFORMED_CSV'));
+          } else {
+            reject(new AppError(`Invalid CSV format: ${error.message}`, 400, 'MALFORMED_CSV'));
+          }
+        });
     });
   }
 
@@ -336,33 +405,142 @@ export class DataService {
     };
   }
 
-  private analyzeFields(data: any[]): { name: string; type: string; sampleValues: any[]; nullCount: number }[] {
+  private validateCsvStructure(filePath: string): void {
+    const fileContent = fs.readFileSync(filePath, 'utf8');
+    
+    // Check if file is empty
+    if (!fileContent || fileContent.trim().length === 0) {
+      throw new AppError('CSV file is empty', 400, 'MALFORMED_CSV');
+    }
+    
+    // Check for common CSV issues
+    const lines = fileContent.split('\n').filter(line => line.trim().length > 0);
+    
+    if (lines.length === 0) {
+      throw new AppError('CSV file contains no valid lines', 400, 'MALFORMED_CSV');
+    }
+    
+    // Check first line (header) for basic structure
+    const firstLine = lines[0];
+    
+    // Very basic CSV format check - ensure we have some commas or structure
+    if (!firstLine.includes(',') && !firstLine.includes('\t') && !firstLine.includes(';')) {
+      throw new AppError('File does not appear to be a valid CSV format', 400, 'MALFORMED_CSV');
+    }
+    
+    // Check for binary content (indicates this might not be a text CSV)
+    const binaryPattern = /[\x00-\x08\x0E-\x1F\x7F-\xFF]/;
+    if (binaryPattern.test(fileContent.substring(0, 1000))) {
+      throw new AppError('File contains binary data and is not a valid CSV format', 400, 'MALFORMED_CSV');
+    }
+  }
+
+  private analyzeFields(data: any[]): FieldStatistics[] {
     if (data.length === 0) return [];
 
     const fields = Object.keys(data[0]);
     return fields.map(fieldName => {
-      const values = data.map(row => row[fieldName]).filter(val => val !== null && val !== undefined && val !== '');
-      const nullCount = data.length - values.length;
-      const sampleValues = values.slice(0, 5);
-
-      // Simple type inference
-      let type = 'string';
-      if (values.length > 0) {
-        const firstValue = values[0];
-        if (!isNaN(Number(firstValue)) && !isNaN(parseFloat(firstValue))) {
-          type = Number.isInteger(Number(firstValue)) ? 'integer' : 'number';
-        } else if (firstValue === 'true' || firstValue === 'false') {
-          type = 'boolean';
-        } else if (Date.parse(firstValue)) {
-          type = 'date';
+      const allValues = data.map(row => row[fieldName]);
+      const nonNullValues = allValues.filter(val => val !== null && val !== undefined && val !== '');
+      const nullCount = data.length - nonNullValues.length;
+      const totalCount = data.length;
+      
+      // Calculate uniqueness
+      const uniqueValues = [...new Set(nonNullValues)];
+      const uniqueCount = uniqueValues.length;
+      
+      // Calculate completeness and uniqueness percentages
+      const completeness = totalCount > 0 ? Math.round((nonNullValues.length / totalCount) * 100) : 0;
+      const uniqueness = nonNullValues.length > 0 ? Math.round((uniqueCount / nonNullValues.length) * 100) : 0;
+      
+      // Find most common value
+      const valueCounts = nonNullValues.reduce((acc, val) => {
+        acc[val] = (acc[val] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+      
+      let mostCommonValue;
+      let mostCommonValueCount = 0;
+      for (const [value, count] of Object.entries(valueCounts)) {
+        if (count > mostCommonValueCount) {
+          mostCommonValue = value;
+          mostCommonValueCount = count;
         }
       }
+      
+      // Calculate string length statistics
+      let minLength, maxLength, averageLength;
+      if (nonNullValues.length > 0) {
+        const stringValues = nonNullValues.map(val => String(val));
+        const lengths = stringValues.map(str => str.length);
+        minLength = Math.min(...lengths);
+        maxLength = Math.max(...lengths);
+        averageLength = Math.round(lengths.reduce((sum, len) => sum + len, 0) / lengths.length);
+      }
+
+      // Enhanced type inference
+      let type = 'string';
+      if (nonNullValues.length > 0) {
+        const sample = nonNullValues.slice(0, Math.min(100, nonNullValues.length));
+        const numericCount = sample.filter(val => !isNaN(Number(val)) && !isNaN(parseFloat(String(val)))).length;
+        const dateCount = sample.filter(val => {
+          const dateVal = Date.parse(String(val));
+          return !isNaN(dateVal) && isNaN(Number(val));
+        }).length;
+        const booleanCount = sample.filter(val => 
+          String(val).toLowerCase() === 'true' || String(val).toLowerCase() === 'false'
+        ).length;
+        const emailCount = sample.filter(val => 
+          /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(val))
+        ).length;
+        
+        // Determine type based on majority
+        const sampleSize = sample.length;
+        if (emailCount / sampleSize > 0.8) {
+          type = 'email';
+        } else if (numericCount / sampleSize > 0.8) {
+          // Check if all numeric values are integers
+          const isInteger = sample.every(val => Number.isInteger(Number(val)));
+          type = isInteger ? 'integer' : 'number';
+        } else if (dateCount / sampleSize > 0.8) {
+          type = 'date';
+        } else if (booleanCount / sampleSize > 0.8) {
+          type = 'boolean';
+        }
+      }
+
+      // Generate warnings for data quality issues
+      const warnings: string[] = [];
+      if (completeness < 50) {
+        warnings.push(`Low data completeness: ${completeness}% of values are missing`);
+      }
+      if (uniqueness < 10 && totalCount > 10) {
+        warnings.push(`Low data uniqueness: only ${uniqueness}% of values are unique`);
+      }
+      if (fieldName.trim() === '') {
+        warnings.push('Column has empty name');
+      }
+      if (totalCount === nullCount) {
+        warnings.push('Column contains only null values');
+      }
+
+      const sampleValues = nonNullValues.slice(0, 5);
 
       return {
         name: fieldName,
         type,
         sampleValues,
         nullCount,
+        totalCount,
+        uniqueCount,
+        completeness,
+        uniqueness,
+        mostCommonValue,
+        mostCommonValueCount,
+        minLength,
+        maxLength,
+        averageLength,
+        warnings: warnings.length > 0 ? warnings : undefined,
       };
     });
   }
@@ -535,40 +713,86 @@ export class DataService {
   }
 
   private async enhanceFieldInfoWithPII(
-    fieldInfo: any[], 
+    fieldInfo: FieldStatistics[], 
     _previewData: any[]
-  ): Promise<any[]> {
+  ): Promise<FieldStatistics[]> {
     if (!fieldInfo || fieldInfo.length === 0) return fieldInfo;
 
     try {
-      const enhancedFieldInfo = [];
+      const enhancedFieldInfo: FieldStatistics[] = [];
       
       for (const field of fieldInfo) {
         // Create sample text from field values for PII detection
         const sampleText = field.sampleValues
           .filter((val: any) => val != null && val !== '')
-          .slice(0, 10) // Take first 10 values
+          .slice(0, 20) // Take more samples for better detection
           .join(' ');
 
         let piiDetected = false;
         let piiType = undefined;
+        let piiConfidence = 0;
 
         if (sampleText.length > 0) {
           try {
             const piiResults = await this.securityService.detectPII(sampleText);
             if (piiResults.length > 0) {
               piiDetected = true;
-              piiType = piiResults[0].piiType; // Use the first detected PII type
+              // Find the highest confidence PII type
+              const highestConfidencePII = piiResults.reduce((prev, current) => 
+                (prev.confidence > current.confidence) ? prev : current
+              );
+              piiType = highestConfidencePII.piiType;
+              piiConfidence = highestConfidencePII.confidence;
             }
           } catch (error) {
             console.warn(`PII detection failed for field ${field.name}:`, error);
           }
         }
 
+        // Enhanced PII detection based on field name and type
+        if (!piiDetected) {
+          const fieldNameLower = field.name.toLowerCase();
+          if (fieldNameLower.includes('email') || field.type === 'email') {
+            piiDetected = true;
+            piiType = 'EMAIL';
+            piiConfidence = 0.8;
+          } else if (fieldNameLower.includes('phone') || fieldNameLower.includes('tel')) {
+            piiDetected = true;
+            piiType = 'PHONE';
+            piiConfidence = 0.7;
+          } else if (fieldNameLower.includes('ssn') || fieldNameLower.includes('social')) {
+            piiDetected = true;
+            piiType = 'SSN';
+            piiConfidence = 0.9;
+          } else if (fieldNameLower.includes('name') && fieldNameLower !== 'filename') {
+            piiDetected = true;
+            piiType = 'NAME';
+            piiConfidence = 0.6;
+          } else if (fieldNameLower.includes('address') || fieldNameLower.includes('street')) {
+            piiDetected = true;
+            piiType = 'ADDRESS';
+            piiConfidence = 0.7;
+          } else if (fieldNameLower.includes('birth') || fieldNameLower.includes('dob')) {
+            piiDetected = true;
+            piiType = 'DATE_OF_BIRTH';
+            piiConfidence = 0.8;
+          }
+        }
+
+        // Add PII warnings to existing warnings
+        const warnings = [...(field.warnings || [])];
+        if (piiDetected) {
+          warnings.push(`Contains PII: ${piiType} (confidence: ${Math.round(piiConfidence * 100)}%)`);
+          if (piiConfidence > 0.8) {
+            warnings.push('High-risk PII detected - consider masking or encryption');
+          }
+        }
+
         enhancedFieldInfo.push({
           ...field,
           piiDetected,
-          piiType
+          piiType,
+          warnings: warnings.length > 0 ? warnings : undefined,
         });
       }
 

@@ -1,0 +1,170 @@
+{
+  "config": {
+    "configFile": "/Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/playwright.config.ts",
+    "rootDir": "/Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/tests",
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": "/Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/fixtures/global-setup.ts",
+    "globalTeardown": "/Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/fixtures/global-teardown.ts",
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {},
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "html",
+        {
+          "outputFolder": "./test-results/html"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "./test-results/results.json"
+        }
+      ],
+      [
+        "junit",
+        {
+          "outputFile": "./test-results/junit.xml"
+        }
+      ],
+      [
+        "list",
+        null
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "/Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/test-results/artifacts",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "browser-chrome",
+        "name": "browser-chrome",
+        "testDir": "/Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "/.*\\.spec\\.ts$/"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "/Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/test-results/artifacts",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "browser-firefox",
+        "name": "browser-firefox",
+        "testDir": "/Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "/.*\\.spec\\.ts$/"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "/Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/test-results/artifacts",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "browser-webkit",
+        "name": "browser-webkit",
+        "testDir": "/Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "/.*\\.spec\\.ts$/"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "/Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/test-results/artifacts",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "mobile-chrome",
+        "name": "mobile-chrome",
+        "testDir": "/Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "/01-file-upload\\.spec\\.ts|02-field-detection\\.spec\\.ts/"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.53.0",
+    "workers": 6,
+    "webServer": null
+  },
+  "suites": [],
+  "errors": [
+    {
+      "message": "Error: Cannot find module '../mocks/backend-mock'\nRequire stack:\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/fixtures/test-fixtures.ts\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/tests/02-file-upload.spec.ts\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/node_modules/playwright/lib/transform/transform.js\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/node_modules/playwright/lib/common/configLoader.js\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/node_modules/playwright/lib/program.js\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/node_modules/.bin/playwright",
+      "stack": "Error: Cannot find module '../mocks/backend-mock'\nRequire stack:\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/fixtures/test-fixtures.ts\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/tests/02-file-upload.spec.ts\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/node_modules/playwright/lib/transform/transform.js\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/node_modules/playwright/lib/common/configLoader.js\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/node_modules/playwright/lib/program.js\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/node_modules/.bin/playwright\n    at Object.<anonymous> (/Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/fixtures/test-fixtures.ts:2:1)\n    at Object.<anonymous> (/Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/tests/02-file-upload.spec.ts:1:1)",
+      "location": {
+        "file": "/Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/fixtures/test-fixtures.ts",
+        "column": 1,
+        "line": 2
+      },
+      "snippet": "\u001b[90m   at \u001b[39m../fixtures/test-fixtures.ts:2\n\n  1 | import { test as base, expect } from '@playwright/test';\n> 2 | import { createBackendMockServer } from '../mocks/backend-mock';\n    | ^\n  3 | import { createOpenAIMockServer } from '../mocks/openai-mock';\n  4 | import { createTestFiles, cleanupTestFiles, createMockPlatformBridge } from '../utils/test-data';\n  5 | import type { MockedRequest } from 'msw';"
+    },
+    {
+      "message": "Error: Cannot find module '../mocks/backend-mock'\nRequire stack:\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/fixtures/test-fixtures.ts\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/tests/03-pii-detection.spec.ts\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/node_modules/playwright/lib/transform/transform.js\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/node_modules/playwright/lib/common/configLoader.js\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/node_modules/playwright/lib/program.js\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/node_modules/.bin/playwright",
+      "stack": "Error: Cannot find module '../mocks/backend-mock'\nRequire stack:\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/fixtures/test-fixtures.ts\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/tests/03-pii-detection.spec.ts\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/node_modules/playwright/lib/transform/transform.js\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/node_modules/playwright/lib/common/configLoader.js\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/node_modules/playwright/lib/program.js\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/node_modules/.bin/playwright\n    at Object.<anonymous> (/Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/fixtures/test-fixtures.ts:2:1)\n    at Object.<anonymous> (/Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/tests/03-pii-detection.spec.ts:1:1)",
+      "location": {
+        "file": "/Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/fixtures/test-fixtures.ts",
+        "column": 1,
+        "line": 2
+      },
+      "snippet": "\u001b[90m   at \u001b[39m../fixtures/test-fixtures.ts:2\n\n  1 | import { test as base, expect } from '@playwright/test';\n> 2 | import { createBackendMockServer } from '../mocks/backend-mock';\n    | ^\n  3 | import { createOpenAIMockServer } from '../mocks/openai-mock';\n  4 | import { createTestFiles, cleanupTestFiles, createMockPlatformBridge } from '../utils/test-data';\n  5 | import type { MockedRequest } from 'msw';"
+    },
+    {
+      "message": "Error: Cannot find module '../mocks/backend-mock'\nRequire stack:\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/fixtures/test-fixtures.ts\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/tests/04-transform-operations.spec.ts\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/node_modules/playwright/lib/transform/transform.js\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/node_modules/playwright/lib/common/configLoader.js\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/node_modules/playwright/lib/program.js\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/node_modules/.bin/playwright",
+      "stack": "Error: Cannot find module '../mocks/backend-mock'\nRequire stack:\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/fixtures/test-fixtures.ts\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/tests/04-transform-operations.spec.ts\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/node_modules/playwright/lib/transform/transform.js\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/node_modules/playwright/lib/common/configLoader.js\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/node_modules/playwright/lib/program.js\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/node_modules/.bin/playwright\n    at Object.<anonymous> (/Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/fixtures/test-fixtures.ts:2:1)\n    at Object.<anonymous> (/Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/tests/04-transform-operations.spec.ts:1:1)",
+      "location": {
+        "file": "/Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/fixtures/test-fixtures.ts",
+        "column": 1,
+        "line": 2
+      },
+      "snippet": "\u001b[90m   at \u001b[39m../fixtures/test-fixtures.ts:2\n\n  1 | import { test as base, expect } from '@playwright/test';\n> 2 | import { createBackendMockServer } from '../mocks/backend-mock';\n    | ^\n  3 | import { createOpenAIMockServer } from '../mocks/openai-mock';\n  4 | import { createTestFiles, cleanupTestFiles, createMockPlatformBridge } from '../utils/test-data';\n  5 | import type { MockedRequest } from 'msw';"
+    },
+    {
+      "message": "Error: Cannot find module '../mocks/backend-mock'\nRequire stack:\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/fixtures/test-fixtures.ts\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/tests/05-sentiment-analysis.spec.ts\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/node_modules/playwright/lib/transform/transform.js\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/node_modules/playwright/lib/common/configLoader.js\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/node_modules/playwright/lib/program.js\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/node_modules/.bin/playwright",
+      "stack": "Error: Cannot find module '../mocks/backend-mock'\nRequire stack:\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/fixtures/test-fixtures.ts\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/tests/05-sentiment-analysis.spec.ts\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/node_modules/playwright/lib/transform/transform.js\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/node_modules/playwright/lib/common/configLoader.js\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/node_modules/playwright/lib/program.js\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/node_modules/.bin/playwright\n    at Object.<anonymous> (/Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/fixtures/test-fixtures.ts:2:1)\n    at Object.<anonymous> (/Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/tests/05-sentiment-analysis.spec.ts:1:1)",
+      "location": {
+        "file": "/Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/fixtures/test-fixtures.ts",
+        "column": 1,
+        "line": 2
+      },
+      "snippet": "\u001b[90m   at \u001b[39m../fixtures/test-fixtures.ts:2\n\n  1 | import { test as base, expect } from '@playwright/test';\n> 2 | import { createBackendMockServer } from '../mocks/backend-mock';\n    | ^\n  3 | import { createOpenAIMockServer } from '../mocks/openai-mock';\n  4 | import { createTestFiles, cleanupTestFiles, createMockPlatformBridge } from '../utils/test-data';\n  5 | import type { MockedRequest } from 'msw';"
+    },
+    {
+      "message": "Error: Cannot find module '../mocks/backend-mock'\nRequire stack:\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/fixtures/test-fixtures.ts\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/tests/06-results-export.spec.ts\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/node_modules/playwright/lib/transform/transform.js\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/node_modules/playwright/lib/common/configLoader.js\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/node_modules/playwright/lib/program.js\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/node_modules/.bin/playwright",
+      "stack": "Error: Cannot find module '../mocks/backend-mock'\nRequire stack:\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/fixtures/test-fixtures.ts\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/tests/06-results-export.spec.ts\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/node_modules/playwright/lib/transform/transform.js\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/node_modules/playwright/lib/common/configLoader.js\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/node_modules/playwright/lib/program.js\n- /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/node_modules/.bin/playwright\n    at Object.<anonymous> (/Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/fixtures/test-fixtures.ts:2:1)\n    at Object.<anonymous> (/Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/tests/06-results-export.spec.ts:1:1)",
+      "location": {
+        "file": "/Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/fixtures/test-fixtures.ts",
+        "column": 1,
+        "line": 2
+      },
+      "snippet": "\u001b[90m   at \u001b[39m../fixtures/test-fixtures.ts:2\n\n  1 | import { test as base, expect } from '@playwright/test';\n> 2 | import { createBackendMockServer } from '../mocks/backend-mock';\n    | ^\n  3 | import { createOpenAIMockServer } from '../mocks/openai-mock';\n  4 | import { createTestFiles, cleanupTestFiles, createMockPlatformBridge } from '../utils/test-data';\n  5 | import type { MockedRequest } from 'msw';"
+    }
+  ],
+  "stats": {
+    "startTime": "2025-06-15T16:58:02.775Z",
+    "duration": 1471.3700000000001,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

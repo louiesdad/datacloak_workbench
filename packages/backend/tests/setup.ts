@@ -3,10 +3,10 @@ import { jest, beforeEach, afterAll } from '@jest/globals';
 
 // Set test environment
 process.env.NODE_ENV = 'test';
-// Use file-based in-memory database for better test isolation
-process.env.SQLITE_DB_PATH = 'file::memory:?cache=shared';
-// Skip DuckDB in tests for now to avoid native module issues
-process.env.SKIP_DUCKDB = 'true';
+// Use unique in-memory database for each test run
+process.env.SQLITE_DB_PATH = `file::memory:${Math.random()}?cache=shared`;
+// DuckDB will use :memory: mode in test environment (see config/env.ts)
+process.env.SKIP_DUCKDB = 'false';
 
 // Global test timeout
 jest.setTimeout(30000); // Increased timeout for database operations

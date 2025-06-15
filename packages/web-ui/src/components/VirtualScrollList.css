@@ -1,0 +1,216 @@
+/* Virtual Scroll List Styles */
+.virtual-scroll-list {
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+  width: 100%;
+}
+
+.virtual-scroll-spacer {
+  position: relative;
+  width: 100%;
+}
+
+.virtual-scroll-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  will-change: transform;
+}
+
+.virtual-scroll-item {
+  width: 100%;
+  overflow: hidden;
+}
+
+/* Virtual Table Styles */
+.virtual-table {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: white;
+}
+
+.virtual-table-header {
+  display: flex;
+  background: #f8fafc;
+  border-bottom: 2px solid #e2e8f0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  height: 48px;
+  min-height: 48px;
+}
+
+.virtual-table-header-cell {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  color: #374151;
+  border-right: 1px solid #e2e8f0;
+  flex: 1;
+  min-width: 0;
+}
+
+.virtual-table-header-cell:last-child {
+  border-right: none;
+}
+
+.virtual-table-body {
+  flex: 1;
+}
+
+.virtual-table-row {
+  display: flex;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background-color 0.15s ease;
+}
+
+.virtual-table-row:hover {
+  background: #f8fafc;
+}
+
+.virtual-table-row.selected {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.virtual-table-row.clickable {
+  cursor: pointer;
+}
+
+.virtual-table-cell {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  color: #374151;
+  border-right: 1px solid #f1f5f9;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.virtual-table-cell:last-child {
+  border-right: none;
+}
+
+/* Performant List Styles */
+.performant-list {
+  width: 100%;
+}
+
+.performant-list-item {
+  width: 100%;
+}
+
+/* Performance optimizations */
+.virtual-scroll-list,
+.virtual-table {
+  transform: translateZ(0); /* Force hardware acceleration */
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+}
+
+.virtual-scroll-content {
+  contain: layout style paint; /* CSS Containment for better performance */
+}
+
+/* Scrollbar styling */
+.virtual-scroll-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.virtual-scroll-list::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.virtual-scroll-list::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.virtual-scroll-list::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Loading state */
+.virtual-scroll-list.loading {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.virtual-scroll-list.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 32px;
+  height: 32px;
+  margin: -16px 0 0 -16px;
+  border: 3px solid #e2e8f0;
+  border-top: 3px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .virtual-table-header-cell,
+  .virtual-table-cell {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+  }
+  
+  .virtual-table-header {
+    height: 40px;
+    min-height: 40px;
+  }
+  
+  .virtual-scroll-list::-webkit-scrollbar {
+    width: 6px;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .virtual-table {
+    border-color: #000;
+  }
+  
+  .virtual-table-header {
+    background: #000;
+    color: #fff;
+  }
+  
+  .virtual-table-row:hover {
+    background: #f0f0f0;
+  }
+  
+  .virtual-table-row.selected {
+    background: #000;
+    color: #fff;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .virtual-table-row {
+    transition: none;
+  }
+  
+  .virtual-scroll-list.loading::after {
+    animation: none;
+  }
+}

@@ -96,7 +96,7 @@ export class SecurityController {
 
   async scanDataset(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { datasetId } = req.params;
+      const { datasetId } = req.query as { datasetId: string };
       const { filePath } = req.body;
 
       if (!datasetId) {

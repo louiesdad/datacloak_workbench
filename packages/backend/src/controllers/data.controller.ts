@@ -8,20 +8,34 @@ export class DataController {
   private dataService = new DataService();
 
   async uploadData(req: Request, res: Response): Promise<void> {
+    console.log('Upload request received. Files:', req.files);
+    console.log('Request headers:', req.headers);
+    
     const file = req.file;
     
     if (!file) {
+      console.error('No file found in request');
+      console.error('Request body:', req.body);
       throw new AppError('No file provided', 400, 'NO_FILE');
     }
 
-    const uploadResult = await this.dataService.uploadDataset(file);
+    console.log(`Processing file: ${file.originalname} (${file.size} bytes)`);
     
-    const result: SuccessResponse = {
-      data: uploadResult,
-      message: 'Data uploaded successfully',
-    };
-    
-    res.status(201).json(result);
+    try {
+      const uploadResult = await this.dataService.uploadDataset(file);
+      
+      console.log('File processed successfully:', uploadResult);
+      
+      const result: SuccessResponse = {
+        data: uploadResult,
+        message: 'Data uploaded successfully',
+      };
+      
+      res.status(201).json(result);
+    } catch (error) {
+      console.error('Error processing file:', error);
+      throw error;
+    }
   }
 
   async getDatasets(req: Request, res: Response): Promise<void> {

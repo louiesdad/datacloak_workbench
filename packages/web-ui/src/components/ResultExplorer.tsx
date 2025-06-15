@@ -4,6 +4,10 @@ import type {
   SentimentStatistics,
   ExportDataRequest 
 } from '../../../../shared/contracts/api';
+import { VirtualTable, PerformantList } from './VirtualScrollList';
+import { ProgressIndicator } from './ProgressIndicator';
+import { SentimentInsights } from './SentimentInsights';
+import { ExportErrorHandler } from './ExportErrorHandler';
 import './ResultExplorer.css';
 
 interface ResultExplorerProps {
@@ -30,7 +34,7 @@ export const ResultExplorer: React.FC<ResultExplorerProps> = ({
   onExport,
   onClose
 }) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'details' | 'charts' | 'export'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'details' | 'insights' | 'charts' | 'export'>('overview');
   const [filters, setFilters] = useState<FilterOptions>({
     sentiment: 'all',
     dateRange: 'all',
@@ -39,9 +43,11 @@ export const ResultExplorer: React.FC<ResultExplorerProps> = ({
   });
   const [selectedResults, setSelectedResults] = useState<string[]>([]);
   const [statistics, setStatistics] = useState<SentimentStatistics | null>(null);
-  const [isExporting, setIsExporting] = useState(false);
   const [sortBy, setSortBy] = useState<'date' | 'confidence' | 'score'>('date');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [selectedColumns, setSelectedColumns] = useState<string[]>([
+    'text', 'sentiment', 'score', 'confidence', 'keywords', 'createdAt'
+  ]);
 
   // Filter and sort results
   const filteredResults = useMemo(() => {
@@ -172,60 +178,10 @@ export const ResultExplorer: React.FC<ResultExplorerProps> = ({
   }, [filteredResults]);
 
   const handleExport = async (format: 'csv' | 'excel' | 'json') => {
-    setIsExporting(true);
-    try {
-      if (onExport) {
-        await onExport(format);
-      }
-      
-      // Alternative: Generate export data locally
-      const exportData = selectedResults.length > 0 
-        ? filteredResults.filter(r => selectedResults.includes(r.id))
-        : filteredResults;
-
-      const blob = generateExportBlob(exportData, format);
-      downloadBlob(blob, `sentiment-results.${format}`);
-      
-    } catch (error) {
-      console.error('Export failed:', error);
-    } finally {
-      setIsExporting(false);
+    // This is now handled by ExportErrorHandler
+    if (onExport) {
+      await onExport(format);
     }
-  };
-
-  const generateExportBlob = (data: SentimentResult[], format: string): Blob => {
-    switch (format) {
-      case 'csv':
-        const csvContent = [
-          'Text,Sentiment,Score,Confidence,Keywords,Created At',
-          ...data.map(r => [
-            `"${r.text.replace(/"/g, '""')}"`,
-            r.sentiment,
-            r.score,
-            r.confidence,
-            `"${(r.keywords || []).join(', ')}"`,
-            r.createdAt
-          ].join(','))
-        ].join('\n');
-        return new Blob([csvContent], { type: 'text/csv' });
-      
-      case 'json':
-        return new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-      
-      default:
-        throw new Error('Unsupported export format');
-    }
-  };
-
-  const downloadBlob = (blob: Blob, filename: string) => {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
   };
 
   const toggleResultSelection = (resultId: string) => {
@@ -366,6 +322,55 @@ export const ResultExplorer: React.FC<ResultExplorerProps> = ({
                 </div>
               </div>
             </div>
+            
+            {/* Quick export buttons */}
+            <div className="quick-export-section">
+              <h4>Quick Export</h4>
+              <div className="quick-export-buttons">
+                <button
+                  className="export-quick-button"
+                  onClick={() => {
+                    const exportData = selectedResults.length > 0 
+                      ? filteredResults.filter(r => selectedResults.includes(r.id))
+                      : filteredResults;
+                    exportHandler.exportData(exportData, 'csv', 'sentiment-results', { selectedColumns });
+                  }}
+                  disabled={exportHandler.isExporting}
+                  data-testid="quick-export-csv"
+                  title="Export all results as CSV"
+                >
+                  📊 CSV
+                </button>
+                <button
+                  className="export-quick-button"
+                  onClick={() => {
+                    const exportData = selectedResults.length > 0 
+                      ? filteredResults.filter(r => selectedResults.includes(r.id))
+                      : filteredResults;
+                    exportHandler.exportData(exportData, 'excel', 'sentiment-results', { selectedColumns });
+                  }}
+                  disabled={exportHandler.isExporting}
+                  data-testid="quick-export-excel"
+                  title="Export all results as Excel"
+                >
+                  📋 Excel
+                </button>
+                <button
+                  className="export-quick-button"
+                  onClick={() => {
+                    const exportData = selectedResults.length > 0 
+                      ? filteredResults.filter(r => selectedResults.includes(r.id))
+                      : filteredResults;
+                    exportHandler.exportData(exportData, 'json', 'sentiment-results', { selectedColumns });
+                  }}
+                  disabled={exportHandler.isExporting}
+                  data-testid="quick-export-json"
+                  title="Export all results as JSON"
+                >
+                  📄 JSON
+                </button>
+              </div>
+            </div>
           </div>
         );
 
@@ -402,10 +407,15 @@ export const ResultExplorer: React.FC<ResultExplorerProps> = ({
               </div>
             </div>
 
-            <div className="results-list">
-              {filteredResults.map(result => (
+            <PerformantList
+              items={filteredResults}
+              height={600}
+              estimatedItemHeight={120}
+              threshold={50}
+              className="results-list"
+              testId="results-list"
+              renderItem={(result, index) => (
                 <div 
-                  key={result.id} 
                   className={`result-item ${selectedResults.includes(result.id) ? 'selected' : ''}`}
                 >
                   <div className="result-header">
@@ -460,8 +470,29 @@ export const ResultExplorer: React.FC<ResultExplorerProps> = ({
                     </div>
                   )}
                 </div>
-              ))}
-            </div>
+              )}
+            />
+          </div>
+        );
+
+      case 'insights':
+        return (
+          <div className="insights-tab">
+            <SentimentInsights
+              results={filteredResults}
+              onExportInsights={async (insights) => {
+                // Could export insights as JSON or PDF
+                const blob = new Blob([JSON.stringify(insights, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'sentiment-insights.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+              }}
+            />
           </div>
         );
 
@@ -486,45 +517,192 @@ export const ResultExplorer: React.FC<ResultExplorerProps> = ({
         return (
           <div className="export-tab">
             <div className="export-options">
-              <h4>Export Options</h4>
-              <p>
+              <h4>Export Sentiment Analysis Results</h4>
+              <p className="export-description">
                 Export {selectedResults.length > 0 ? selectedResults.length : filteredResults.length} results
-                {selectedResults.length > 0 ? ' (selected)' : ' (all filtered)'}
+                {selectedResults.length > 0 ? ' (selected items)' : ' (all filtered items)'}
               </p>
 
               <div className="export-formats">
-                <button
-                  className="export-button csv"
-                  onClick={() => handleExport('csv')}
-                  disabled={isExporting}
-                >
-                  <span className="export-icon">📊</span>
-                  <span>Export as CSV</span>
-                </button>
+                <div className="format-option">
+                  <button
+                    className="export-button csv"
+                    onClick={() => {
+                      const exportData = selectedResults.length > 0 
+                        ? filteredResults.filter(r => selectedResults.includes(r.id))
+                        : filteredResults;
+                      exportHandler.exportData(exportData, 'csv', 'sentiment-results', { selectedColumns });
+                    }}
+                    disabled={exportHandler.isExporting}
+                    data-testid="export-csv"
+                    aria-label="Export as CSV"
+                  >
+                    <span className="export-icon">📊</span>
+                    <div className="export-details">
+                      <span className="format-name">CSV Format</span>
+                      <span className="format-description">Comma-separated values, compatible with Excel and Google Sheets</span>
+                    </div>
+                  </button>
+                </div>
                 
-                <button
-                  className="export-button excel"
-                  onClick={() => handleExport('excel')}
-                  disabled={isExporting}
-                >
-                  <span className="export-icon">📋</span>
-                  <span>Export as Excel</span>
-                </button>
+                <div className="format-option">
+                  <button
+                    className="export-button excel"
+                    onClick={() => {
+                      const exportData = selectedResults.length > 0 
+                        ? filteredResults.filter(r => selectedResults.includes(r.id))
+                        : filteredResults;
+                      exportHandler.exportData(exportData, 'excel', 'sentiment-results', { selectedColumns });
+                    }}
+                    disabled={exportHandler.isExporting}
+                    data-testid="export-excel"
+                    aria-label="Export as Excel"
+                  >
+                    <span className="export-icon">📋</span>
+                    <div className="export-details">
+                      <span className="format-name">Excel Format</span>
+                      <span className="format-description">Tab-separated format optimized for Microsoft Excel</span>
+                    </div>
+                  </button>
+                </div>
                 
-                <button
-                  className="export-button json"
-                  onClick={() => handleExport('json')}
-                  disabled={isExporting}
-                >
-                  <span className="export-icon">📄</span>
-                  <span>Export as JSON</span>
-                </button>
+                <div className="format-option">
+                  <button
+                    className="export-button json"
+                    onClick={() => {
+                      const exportData = selectedResults.length > 0 
+                        ? filteredResults.filter(r => selectedResults.includes(r.id))
+                        : filteredResults;
+                      exportHandler.exportData(exportData, 'json', 'sentiment-results', { selectedColumns });
+                    }}
+                    disabled={exportHandler.isExporting}
+                    data-testid="export-json"
+                    aria-label="Export as JSON"
+                  >
+                    <span className="export-icon">📄</span>
+                    <div className="export-details">
+                      <span className="format-name">JSON Format</span>
+                      <span className="format-description">Structured data format for developers and APIs</span>
+                    </div>
+                  </button>
+                </div>
               </div>
 
-              {isExporting && (
+              <div className="export-columns">
+                <h5>Select columns to export:</h5>
+                <div className="column-selection">
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={selectedColumns.includes('text')}
+                      onChange={() => {
+                        setSelectedColumns(prev => 
+                          prev.includes('text') 
+                            ? prev.filter(c => c !== 'text')
+                            : [...prev, 'text']
+                        );
+                      }}
+                    />
+                    Text content
+                  </label>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={selectedColumns.includes('sentiment')}
+                      onChange={() => {
+                        setSelectedColumns(prev => 
+                          prev.includes('sentiment') 
+                            ? prev.filter(c => c !== 'sentiment')
+                            : [...prev, 'sentiment']
+                        );
+                      }}
+                    />
+                    Sentiment classification
+                  </label>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={selectedColumns.includes('score')}
+                      onChange={() => {
+                        setSelectedColumns(prev => 
+                          prev.includes('score') 
+                            ? prev.filter(c => c !== 'score')
+                            : [...prev, 'score']
+                        );
+                      }}
+                    />
+                    Sentiment score
+                  </label>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={selectedColumns.includes('confidence')}
+                      onChange={() => {
+                        setSelectedColumns(prev => 
+                          prev.includes('confidence') 
+                            ? prev.filter(c => c !== 'confidence')
+                            : [...prev, 'confidence']
+                        );
+                      }}
+                    />
+                    Confidence score
+                  </label>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={selectedColumns.includes('keywords')}
+                      onChange={() => {
+                        setSelectedColumns(prev => 
+                          prev.includes('keywords') 
+                            ? prev.filter(c => c !== 'keywords')
+                            : [...prev, 'keywords']
+                        );
+                      }}
+                    />
+                    Extracted keywords
+                  </label>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={selectedColumns.includes('createdAt')}
+                      onChange={() => {
+                        setSelectedColumns(prev => 
+                          prev.includes('createdAt') 
+                            ? prev.filter(c => c !== 'createdAt')
+                            : [...prev, 'createdAt']
+                        );
+                      }}
+                    />
+                    Creation timestamp
+                  </label>
+                  {results.some(r => r.emotions) && (
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={selectedColumns.includes('emotions')}
+                        onChange={() => {
+                          setSelectedColumns(prev => 
+                            prev.includes('emotions') 
+                              ? prev.filter(c => c !== 'emotions')
+                              : [...prev, 'emotions']
+                          );
+                        }}
+                      />
+                      Emotion analysis
+                    </label>
+                  )}
+                </div>
+              </div>
+
+              {exportHandler.isExporting && (
                 <div className="export-progress">
-                  <div className="spinner"></div>
-                  <span>Preparing export...</span>
+                  <ProgressIndicator
+                    value={exportHandler.progress}
+                    label={exportHandler.currentOperation}
+                    size="medium"
+                    showPercentage
+                    testId="export-progress"
+                  />
                 </div>
               )}
             </div>
@@ -537,18 +715,24 @@ export const ResultExplorer: React.FC<ResultExplorerProps> = ({
   };
 
   return (
-    <div className="result-explorer">
-      <div className="explorer-header">
-        <div className="header-left">
-          <h2>Sentiment Analysis Results</h2>
-          <p>{results.length} total results</p>
-        </div>
-        <div className="header-actions">
-          {onClose && (
-            <button className="close-button" onClick={onClose}>×</button>
-          )}
-        </div>
-      </div>
+    <ExportErrorHandler
+      fallbackFormats={['csv', 'json', 'txt']}
+      maxRetries={3}
+      chunkSize={10000}
+    >
+      {(exportHandler) => (
+        <div className="result-explorer">
+          <div className="explorer-header">
+            <div className="header-left">
+              <h2>Sentiment Analysis Results</h2>
+              <p>{results.length} total results</p>
+            </div>
+            <div className="header-actions">
+              {onClose && (
+                <button className="close-button" onClick={onClose}>×</button>
+              )}
+            </div>
+          </div>
 
       <div className="filters-section">
         <div className="filter-group">
@@ -602,7 +786,7 @@ export const ResultExplorer: React.FC<ResultExplorerProps> = ({
       </div>
 
       <div className="explorer-tabs">
-        {(['overview', 'details', 'charts', 'export'] as const).map(tab => (
+        {(['overview', 'details', 'insights', 'charts', 'export'] as const).map(tab => (
           <button
             key={tab}
             className={`tab ${activeTab === tab ? 'active' : ''}`}
@@ -613,9 +797,11 @@ export const ResultExplorer: React.FC<ResultExplorerProps> = ({
         ))}
       </div>
 
-      <div className="tab-content">
-        {renderTabContent()}
-      </div>
-    </div>
+          <div className="tab-content">
+            {renderTabContent()}
+          </div>
+        </div>
+      )}
+    </ExportErrorHandler>
   );
 };

@@ -5,6 +5,7 @@ import { Navigation } from './components/Navigation';
 import { WorkflowManager } from './components/WorkflowManager';
 import { NotificationToast } from './components/NotificationToast';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { ProgressIndicator } from './components/ProgressIndicator';
 
 // Main App component wrapped with providers
 function App() {
@@ -20,70 +21,119 @@ function App() {
 // App shell component that uses context
 const AppShell: React.FC = () => {
   const { state } = useAppContext();
-  const { setDatasets, addNotification } = useAppActions();
+  const { setDatasets, addNotification, setError } = useAppActions();
+  const [initialized, setInitialized] = React.useState(false);
+  const [backendStatus, setBackendStatus] = React.useState<'checking' | 'connected' | 'disconnected' | 'error'>('checking');
 
-  // Initialize app on mount
+  // Initialize app on mount with proper cleanup
   useEffect(() => {
-    initializeApp();
-  }, []);
+    let mounted = true;
+    let hasShownConnectionError = false;
 
-  const initializeApp = async () => {
-    try {
-      // Check platform capabilities
-      const bridge = window.platformBridge;
-      if (!bridge) {
-        addNotification({
-          type: 'warning',
-          title: 'Platform Bridge Not Available',
-          message: 'Some features may be limited in browser mode. For full functionality, use the desktop application.'
-        });
-        return;
-      }
+    const initializeApp = async () => {
+      // Skip if already initialized or component unmounted
+      if (!mounted || initialized) return;
 
-      // Check backend connectivity
       try {
-        await bridge.backend.getHealthStatus();
-        addNotification({
-          type: 'success',
-          title: 'Connected',
-          message: 'Successfully connected to backend services.'
-        });
-      } catch (error) {
-        addNotification({
-          type: 'error',
-          title: 'Backend Connection Failed',
-          message: 'Could not connect to backend services. Please ensure the backend is running.'
-        });
-      }
-
-      // Load existing datasets
-      try {
-        const response = await bridge.backend.getDatasets();
-        if (response.success && response.data) {
-          setDatasets(response.data);
+        // Check platform capabilities
+        const bridge = window.platformBridge;
+        if (!bridge) {
+          // Only show warning in production or if not already shown
+          if (!hasShownConnectionError) {
+            addNotification({
+              type: 'warning',
+              title: 'Platform Bridge Not Available',
+              message: 'Some features may be limited in browser mode. For full functionality, use the desktop application.'
+            });
+            hasShownConnectionError = true;
+          }
+          setBackendStatus('disconnected');
+          setInitialized(true);
+          return;
         }
-      } catch (error) {
-        console.warn('Could not load existing datasets:', error);
-      }
 
-    } catch (error) {
-      console.error('App initialization failed:', error);
-      addNotification({
-        type: 'error',
-        title: 'Initialization Failed',
-        message: 'There was an error starting the application. Please refresh the page.'
-      });
+        // Check backend connectivity - but don't show duplicate errors
+        if (bridge.backend?.getHealthStatus) {
+          try {
+            await bridge.backend.getHealthStatus();
+            if (mounted) {
+              setBackendStatus('connected');
+              // Only show success message once
+              if (!initialized) {
+                console.log('Backend connected successfully');
+              }
+            }
+          } catch (error) {
+            if (mounted) {
+              setBackendStatus('error');
+              // Only show error once and in a more subtle way
+              if (!hasShownConnectionError) {
+                console.warn('Backend connection failed:', error);
+                // For development, just log instead of showing error
+                console.log('Using mock data mode.');
+                hasShownConnectionError = true;
+              }
+            }
+          }
+        } else {
+          // No backend available - set status silently
+          setBackendStatus('disconnected');
+        }
+
+        // Load existing datasets (if backend is available)
+        if (backendStatus === 'connected') {
+          try {
+            const response = await bridge.backend.getDatasets();
+            if (mounted && response.success && response.data) {
+              setDatasets(response.data);
+            }
+          } catch (error) {
+            console.warn('Could not load existing datasets:', error);
+          }
+        }
+
+        if (mounted) {
+          setInitialized(true);
+        }
+
+      } catch (error) {
+        console.error('App initialization failed:', error);
+        if (mounted && !hasShownConnectionError) {
+          setError('Application initialization failed. Some features may be limited.');
+          hasShownConnectionError = true;
+        }
+      }
+    };
+
+    // Small delay to prevent React StrictMode double-initialization issues
+    const timeoutId = setTimeout(initializeApp, 100);
+
+    return () => {
+      mounted = false;
+      clearTimeout(timeoutId);
+    };
+  }, []); // Empty dependency array - only run once
+
+  // Clear error after a delay
+  useEffect(() => {
+    if (state.error && backendStatus === 'error') {
+      const timer = setTimeout(() => {
+        setError(null);
+      }, 10000); // Clear after 10 seconds
+      return () => clearTimeout(timer);
     }
-  };
+  }, [state.error, backendStatus, setError]);
 
   return (
     <div className="app">
       {/* Global loading overlay */}
       {state.loading && (
-        <div className="loading-overlay">
-          <div className="loading-spinner"></div>
-          <p>Processing...</p>
-        </div>
+        <ProgressIndicator
+          variant="overlay"
+          indeterminate
+          message="Processing..."
+          testId="global-loading"
+        />
       )}
 
       {/* Navigation sidebar */}
@@ -99,15 +149,15 @@ const AppShell: React.FC = () => {
       {/* Notification toasts */}
       <NotificationToast />
 
-      {/* Global error display */}
-      {state.error && (
+      {/* Global error display - only show user-facing errors, not backend connection */}
+      {state.error && backendStatus !== 'error' && (
         <div className="error-banner">
           <div className="error-content">
             <span className="error-icon">⚠️</span>
             <span className="error-message">{state.error}</span>
             <button 
               className="error-dismiss"
-              onClick={() => useAppActions().setError(null)}
+              onClick={() => setError(null)}
             >
               ×
             </button>

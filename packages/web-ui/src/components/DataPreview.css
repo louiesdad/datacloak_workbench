@@ -1,0 +1,146 @@
+.data-preview {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-top: 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.preview-header h4 {
+  margin: 0;
+  color: #1a202c;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.preview-info {
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.preview-table-container {
+  overflow-x: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+}
+
+.preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.preview-table th {
+  background: #f8fafc;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 2px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+.preview-table th .header-content {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.preview-table th .field-name {
+  color: #1a202c;
+}
+
+.preview-table th .field-type {
+  color: #64748b;
+  font-size: 0.75rem;
+  font-weight: normal;
+  background: #e2e8f0;
+  padding: 0.125rem 0.375rem;
+  border-radius: 3px;
+}
+
+.preview-table th .pii-indicator {
+  font-size: 0.875rem;
+  cursor: help;
+}
+
+.preview-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.preview-table tr:hover {
+  background: #f8fafc;
+}
+
+.cell-value {
+  color: #374151;
+}
+
+.cell-value em {
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.masked-value {
+  color: #94a3b8;
+  letter-spacing: 0.05em;
+}
+
+/* Field type specific styling */
+.field-number {
+  text-align: right;
+}
+
+.field-boolean .cell-value {
+  color: #3b82f6;
+  font-weight: 500;
+}
+
+.field-date .cell-value {
+  font-family: monospace;
+}
+
+.preview-actions {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.toggle-preview-button {
+  padding: 0.5rem 1rem;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.toggle-preview-button:hover {
+  background: #2563eb;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .preview-table {
+    font-size: 0.75rem;
+  }
+  
+  .preview-table th,
+  .preview-table td {
+    padding: 0.5rem;
+  }
+  
+  .preview-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}

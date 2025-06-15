@@ -4,6 +4,9 @@ import { dataRoutes } from './data.routes';
 import { healthRoutes } from './health.routes';
 import securityRoutes from './security.routes';
 import jobRoutes from './jobs.routes';
+import { transformRoutes } from './transform.routes';
+import monitoringRoutes from './monitoring.routes';
+import exportRoutes from './export.routes';
 
 export const setupRoutes = (app: Application): void => {
   // Mount routes
@@ -12,4 +15,7 @@ export const setupRoutes = (app: Application): void => {
   app.use('/api/v1/health', healthRoutes);
   app.use('/api/v1/security', securityRoutes);
   app.use('/api/v1/jobs', jobRoutes);
+  app.use('/api/v1/transform', transformRoutes);
+  app.use('/api/v1/monitoring', monitoringRoutes);
+  app.use('/api/v1/export', exportRoutes);
 };

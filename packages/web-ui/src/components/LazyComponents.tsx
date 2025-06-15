@@ -1,5 +1,6 @@
 import React, { Suspense } from 'react';
 import { createLazyComponent, preloadComponent } from '../utils/performance';
+import { ErrorBoundary } from './ErrorBoundary';
 import './LazyComponents.css';
 
 // Loading fallback component
@@ -42,12 +43,12 @@ const withLazyLoading = <P extends object>(
 
     return (
       <Suspense fallback={<LoadingFallback message={loadingMessage} />}>
-        <React.ErrorBoundary
+        <ErrorBoundary
           fallback={<ErrorFallback error={new Error('Component failed to render')} retry={retry} />}
           onError={setError}
         >
           <LazyComponent key={retryKey} {...props} ref={ref} />
-        </React.ErrorBoundary>
+        </ErrorBoundary>
       </Suspense>
     );
   });

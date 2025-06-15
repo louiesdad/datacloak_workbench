@@ -10,6 +10,8 @@ import type {
 } from '../types/transforms';
 import { TransformOperationEditor } from './TransformOperationEditor';
 import { TransformPreviewPanel } from './TransformPreviewPanel';
+import { ApiErrorDisplay } from './ApiErrorDisplay';
+import { useApiErrorHandler, type ApiError } from '../hooks/useApiErrorHandler';
 import './TransformDesigner.css';
 
 interface TransformDesignerProps {
@@ -49,6 +51,8 @@ export const TransformDesigner: React.FC<TransformDesignerProps> = ({
   const [validation, setValidation] = useState<TransformValidation | null>(null);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [selectedOperationId, setSelectedOperationId] = useState<string | null>(null);
+  const [apiError, setApiError] = useState<ApiError | null>(null);
+  const { handleApiError } = useApiErrorHandler();
   
   // Undo/Redo state
   const undoRedoRef = useRef<UndoRedoManager>(createUndoRedoManager({
@@ -174,16 +178,22 @@ export const TransformDesigner: React.FC<TransformDesignerProps> = ({
     if (!onPreviewRequested) return;
     
     setIsPreviewLoading(true);
+    setApiError(null); // Clear previous errors
     try {
       const previewResult = await onPreviewRequested(pipeline);
       setPreview(previewResult);
     } catch (error) {
-      console.error('Preview error:', error);
+      const apiError = handleApiError(error, {
+        operation: 'transform preview',
+        component: 'TransformDesigner',
+        userMessage: 'Failed to generate transform preview'
+      });
+      setApiError(apiError);
       setPreview(null);
     } finally {
       setIsPreviewLoading(false);
     }
-  }, [onPreviewRequested, pipeline]);
+  }, [onPreviewRequested, pipeline, handleApiError]);
 
   const requestValidation = useCallback(async () => {
     if (!onValidationRequested) return;
@@ -191,11 +201,20 @@ export const TransformDesigner: React.FC<TransformDesignerProps> = ({
     try {
       const validationResult = await onValidationRequested(pipeline);
       setValidation(validationResult);
+      // Clear errors on successful validation
+      if (apiError?.code === 'VALIDATION_ERROR') {
+        setApiError(null);
+      }
     } catch (error) {
-      console.error('Validation error:', error);
+      const apiError = handleApiError(error, {
+        operation: 'transform validation',
+        component: 'TransformDesigner',
+        userMessage: 'Failed to validate transform pipeline'
+      });
+      setApiError(apiError);
       setValidation(null);
     }
-  }, [onValidationRequested, pipeline]);
+  }, [onValidationRequested, pipeline, handleApiError, apiError]);
 
   // Auto-validate when pipeline changes
   useEffect(() => {
@@ -393,6 +412,25 @@ export const TransformDesigner: React.FC<TransformDesignerProps> = ({
           />
         </div>
       </div>
+
+      {/* API Error Display */}
+      <ApiErrorDisplay
+        error={apiError}
+        context="Transform Operations"
+        onRetry={() => {
+          if (apiError?.code === 'VALIDATION_ERROR') {
+            requestValidation();
+          } else if (apiError?.code === 'PREVIEW_ERROR') {
+            requestPreview();
+          } else {
+            // Generic retry - try both validation and preview
+            requestValidation();
+            requestPreview();
+          }
+        }}
+        onDismiss={() => setApiError(null)}
+        showDetails={true}
+      />
     </div>
   );
 };

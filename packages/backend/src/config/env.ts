@@ -14,7 +14,7 @@ export const config = {
       path: process.env.SQLITE_DB_PATH || './data/sqlite.db',
     },
     duckdb: {
-      path: process.env.DUCKDB_PATH || './data/duckdb.db',
+      path: process.env.NODE_ENV === 'test' ? ':memory:' : (process.env.DUCKDB_PATH || './data/duckdb.db'),
     },
   },
   logging: {

@@ -1,24 +1,31 @@
 import { Request, Response } from 'express';
 import { SuccessResponse } from '../types';
 import { SentimentService } from '../services/sentiment.service';
+import { CostEstimationService } from '../services/cost-estimation.service';
 import { sentimentAnalysisSchema, batchSentimentAnalysisSchema, paginationSchema } from '../validation/schemas';
 import { AppError } from '../middleware/error.middleware';
 
 export class SentimentController {
   private sentimentService = new SentimentService();
+  private costEstimationService = new CostEstimationService();
 
   async analyzeSentiment(req: Request, res: Response): Promise<void> {
     const { error, value } = sentimentAnalysisSchema.validate(req.body);
     if (error) {
-      throw new AppError(error.details[0].message, 400, 'VALIDATION_ERROR');
+      // Check if the error is about missing text field
+      const errorMessage = error.details[0].message;
+      if (error.details[0].context?.key === 'text' && error.details[0].type === 'any.required') {
+        throw new AppError('text is required', 400, 'VALIDATION_ERROR');
+      }
+      throw new AppError(errorMessage, 400, 'VALIDATION_ERROR');
     }
 
-    const { text } = value;
-    const analysis = await this.sentimentService.analyzeSentiment(text);
+    const { text, enablePIIMasking = true, model = 'basic' } = value;
+    const analysis = await this.sentimentService.analyzeSentiment(text, enablePIIMasking, model);
     
     const result: SuccessResponse = {
       data: analysis,
-      message: 'Sentiment analysis completed',
+      message: `Sentiment analysis completed using ${analysis.model} model`,
     };
     
     res.json(result);
@@ -27,15 +34,19 @@ export class SentimentController {
   async batchAnalyzeSentiment(req: Request, res: Response): Promise<void> {
     const { error, value } = batchSentimentAnalysisSchema.validate(req.body);
     if (error) {
+      // Check if the error is about batch size exceeding limit
+      if (error.details[0].type === 'array.max' && error.details[0].context?.limit === 1000) {
+        throw new AppError('Cannot process more than 1000 texts in a single batch', 400, 'BATCH_TOO_LARGE');
+      }
       throw new AppError(error.details[0].message, 400, 'VALIDATION_ERROR');
     }
 
-    const { texts } = value;
-    const analyses = await this.sentimentService.batchAnalyzeSentiment(texts);
+    const { texts, model = 'basic' } = value;
+    const analyses = await this.sentimentService.batchAnalyzeSentiment(texts, model);
     
     const result: SuccessResponse = {
       data: analyses,
-      message: 'Batch sentiment analysis completed',
+      message: `Batch sentiment analysis completed for ${analyses.length} texts using ${model} model`,
     };
     
     res.json(result);
@@ -48,16 +59,292 @@ export class SentimentController {
     }
 
     const { page, pageSize } = value;
-    const result = await this.sentimentService.getAnalysisHistory(page, pageSize);
+    
+    // Extract filter parameters
+    const filter: any = {};
+    if (req.query.sentiment) filter.sentiment = req.query.sentiment;
+    if (req.query.dateFrom) filter.dateFrom = req.query.dateFrom;
+    if (req.query.dateTo) filter.dateTo = req.query.dateTo;
+    if (req.query.minConfidence) filter.minConfidence = parseFloat(req.query.minConfidence as string);
+    if (req.query.maxConfidence) filter.maxConfidence = parseFloat(req.query.maxConfidence as string);
+    if (req.query.minScore) filter.minScore = parseFloat(req.query.minScore as string);
+    if (req.query.maxScore) filter.maxScore = parseFloat(req.query.maxScore as string);
+    if (req.query.piiDetected !== undefined) filter.piiDetected = req.query.piiDetected === 'true';
+    if (req.query.batchId) filter.batchId = req.query.batchId;
+    
+    const result = await this.sentimentService.getAnalysisHistory(
+      page, 
+      pageSize, 
+      Object.keys(filter).length > 0 ? filter : undefined
+    );
     
     res.json(result);
   }
 
-  async getStatistics(_req: Request, res: Response): Promise<void> {
-    const statistics = await this.sentimentService.getStatistics();
+  async getStatistics(req: Request, res: Response): Promise<void> {
+    const includeTrends = req.query.includeTrends === 'true';
+    const statistics = await this.sentimentService.getStatistics(includeTrends);
     
     const result: SuccessResponse = {
       data: statistics,
+    };
+    
+    res.json(result);
+  }
+
+  async estimateCost(req: Request, res: Response): Promise<void> {
+    const { textCount, model, averageTextLength, includePIIProcessing } = req.body;
+    
+    // Validate required fields
+    if (!textCount || typeof textCount !== 'number' || textCount <= 0) {
+      throw new AppError('textCount is required and must be a positive number', 400, 'VALIDATION_ERROR');
+    }
+    
+    if (!model || typeof model !== 'string') {
+      throw new AppError('model is required and must be a string', 400, 'VALIDATION_ERROR');
+    }
+
+    try {
+      const estimation = await this.costEstimationService.estimateCost({
+        textCount,
+        model: model as any,
+        averageTextLength: averageTextLength || 100,
+        includePIIProcessing: includePIIProcessing !== false // Default to true
+      });
+
+      const result: SuccessResponse = {
+        data: estimation,
+        message: 'Cost estimation completed',
+      };
+      
+      res.json(result);
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError('Failed to calculate cost estimation', 500, 'COST_ESTIMATION_ERROR');
+    }
+  }
+
+  async compareCosts(req: Request, res: Response): Promise<void> {
+    const { textCount } = req.query;
+    
+    if (!textCount || isNaN(Number(textCount)) || Number(textCount) <= 0) {
+      throw new AppError('textCount query parameter is required and must be a positive number', 400, 'VALIDATION_ERROR');
+    }
+
+    try {
+      const comparisons = await this.costEstimationService.compareCosts(Number(textCount));
+
+      const result: SuccessResponse = {
+        data: {
+          textCount: Number(textCount),
+          modelComparisons: comparisons
+        },
+        message: 'Cost comparison completed',
+      };
+      
+      res.json(result);
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError('Failed to compare costs', 500, 'COST_COMPARISON_ERROR');
+    }
+  }
+
+  async getAnalysisById(req: Request, res: Response): Promise<void> {
+    const { id } = req.params;
+    
+    if (!id || isNaN(Number(id))) {
+      throw new AppError('Valid analysis ID is required', 400, 'VALIDATION_ERROR');
+    }
+
+    const result = await this.sentimentService.getAnalysisById(Number(id));
+    
+    if (!result) {
+      throw new AppError('Analysis not found', 404, 'ANALYSIS_NOT_FOUND');
+    }
+
+    const response: SuccessResponse = {
+      data: result,
+    };
+    
+    res.json(response);
+  }
+
+  async deleteAnalysisResults(req: Request, res: Response): Promise<void> {
+    const { ids } = req.body;
+    
+    if (!Array.isArray(ids) || ids.length === 0) {
+      throw new AppError('IDs array is required', 400, 'VALIDATION_ERROR');
+    }
+
+    // Validate all IDs are numbers
+    const numericIds = ids.map(id => {
+      const numId = Number(id);
+      if (isNaN(numId)) {
+        throw new AppError('All IDs must be valid numbers', 400, 'VALIDATION_ERROR');
+      }
+      return numId;
+    });
+
+    const result = await this.sentimentService.deleteAnalysisResults(numericIds);
+    
+    const response: SuccessResponse = {
+      data: result,
+      message: `${result.deleted} analysis results deleted successfully`,
+    };
+    
+    res.json(response);
+  }
+
+  async exportAnalysisResults(req: Request, res: Response): Promise<void> {
+    const { format = 'json' } = req.query;
+    
+    if (format !== 'json' && format !== 'csv') {
+      throw new AppError('Format must be either json or csv', 400, 'VALIDATION_ERROR');
+    }
+
+    // Extract filter parameters (same as getAnalysisHistory)
+    const filter: any = {};
+    if (req.query.sentiment) filter.sentiment = req.query.sentiment;
+    if (req.query.dateFrom) filter.dateFrom = req.query.dateFrom;
+    if (req.query.dateTo) filter.dateTo = req.query.dateTo;
+    if (req.query.minConfidence) filter.minConfidence = parseFloat(req.query.minConfidence as string);
+    if (req.query.maxConfidence) filter.maxConfidence = parseFloat(req.query.maxConfidence as string);
+    if (req.query.minScore) filter.minScore = parseFloat(req.query.minScore as string);
+    if (req.query.maxScore) filter.maxScore = parseFloat(req.query.maxScore as string);
+    if (req.query.piiDetected !== undefined) filter.piiDetected = req.query.piiDetected === 'true';
+    if (req.query.batchId) filter.batchId = req.query.batchId;
+
+    const exportResult = await this.sentimentService.exportAnalysisResults(
+      format as 'json' | 'csv',
+      Object.keys(filter).length > 0 ? filter : undefined
+    );
+
+    if (format === 'csv') {
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', 'attachment; filename="sentiment_analysis_results.csv"');
+      res.send(exportResult.data);
+    } else {
+      const response: SuccessResponse = {
+        data: exportResult.data,
+        message: `${exportResult.recordCount} records exported successfully`,
+      };
+      res.json(response);
+    }
+  }
+
+  async getAnalysisInsights(_req: Request, res: Response): Promise<void> {
+    const insights = await this.sentimentService.getAnalysisInsights();
+    
+    const result: SuccessResponse = {
+      data: insights,
+    };
+    
+    res.json(result);
+  }
+
+  async testOpenAIConnection(_req: Request, res: Response): Promise<void> {
+    const connectionResult = await this.sentimentService.testOpenAIConnection();
+    
+    const result: SuccessResponse = {
+      data: connectionResult,
+      message: connectionResult.connected 
+        ? 'OpenAI connection successful' 
+        : 'OpenAI connection failed'
+    };
+    
+    res.json(result);
+  }
+
+  async getOpenAIStatus(_req: Request, res: Response): Promise<void> {
+    const status = await this.sentimentService.getOpenAIStatus();
+    
+    const result: SuccessResponse = {
+      data: status,
+    };
+    
+    res.json(result);
+  }
+
+  async updateOpenAIConfig(req: Request, res: Response): Promise<void> {
+    const { model, maxTokens, temperature, timeout } = req.body;
+    
+    // Validate configuration parameters
+    const config: any = {};
+    
+    if (model) {
+      if (typeof model !== 'string') {
+        throw new AppError('Model must be a string', 400, 'VALIDATION_ERROR');
+      }
+      config.model = model;
+    }
+    
+    if (maxTokens !== undefined) {
+      if (!Number.isInteger(maxTokens) || maxTokens < 1 || maxTokens > 4000) {
+        throw new AppError('Max tokens must be an integer between 1 and 4000', 400, 'VALIDATION_ERROR');
+      }
+      config.maxTokens = maxTokens;
+    }
+    
+    if (temperature !== undefined) {
+      if (typeof temperature !== 'number' || temperature < 0 || temperature > 2) {
+        throw new AppError('Temperature must be a number between 0 and 2', 400, 'VALIDATION_ERROR');
+      }
+      config.temperature = temperature;
+    }
+    
+    if (timeout !== undefined) {
+      if (!Number.isInteger(timeout) || timeout < 1000 || timeout > 120000) {
+        throw new AppError('Timeout must be an integer between 1000 and 120000 ms', 400, 'VALIDATION_ERROR');
+      }
+      config.timeout = timeout;
+    }
+
+    const updateResult = this.sentimentService.updateOpenAIConfig(config);
+    
+    if (!updateResult.success) {
+      throw new AppError(updateResult.error || 'Failed to update configuration', 500, 'CONFIG_UPDATE_ERROR');
+    }
+    
+    const result: SuccessResponse = {
+      data: { updated: Object.keys(config) },
+      message: 'OpenAI configuration updated successfully',
+    };
+    
+    res.json(result);
+  }
+
+  async getAvailableModels(_req: Request, res: Response): Promise<void> {
+    const models = this.sentimentService.getAvailableModels();
+    
+    const result: SuccessResponse = {
+      data: models,
+    };
+    
+    res.json(result);
+  }
+
+  async testDataCloakFlow(_req: Request, res: Response): Promise<void> {
+    const testResult = await this.sentimentService.testDataCloakFlow();
+    
+    const result: SuccessResponse = {
+      data: testResult,
+      message: testResult.success 
+        ? 'DataCloak flow test completed successfully' 
+        : 'DataCloak flow test failed'
+    };
+    
+    res.json(result);
+  }
+
+  async getDataCloakStats(_req: Request, res: Response): Promise<void> {
+    const stats = await this.sentimentService.getDataCloakStats();
+    
+    const result: SuccessResponse = {
+      data: stats,
     };
     
     res.json(result);
