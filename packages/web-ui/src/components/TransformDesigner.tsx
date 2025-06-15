@@ -355,7 +355,7 @@ export const TransformDesigner: React.FC<TransformDesignerProps> = ({
             </div>
           </div>
 
-          <div className="operations-list" data-testid="operations-list">
+          <div className="operations-list" data-testid="transform-operations">
             {pipeline.operations.length === 0 ? (
               <div className="empty-operations">
                 <div className="empty-icon">🔧</div>
@@ -459,7 +459,7 @@ export const TransformDesigner: React.FC<TransformDesignerProps> = ({
           )}
         </div>
 
-        <div className="preview-panel">
+        <div className="preview-panel" data-testid="transform-preview">
           <TransformPreviewPanel
             preview={preview}
             isLoading={isPreviewLoading}

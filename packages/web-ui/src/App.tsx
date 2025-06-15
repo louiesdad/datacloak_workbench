@@ -6,6 +6,7 @@ import { WorkflowManager } from './components/WorkflowManager';
 import { NotificationToast } from './components/NotificationToast';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ProgressIndicator } from './components/ProgressIndicator';
+import { RealTimeDashboard } from './components/RealTimeDashboard';
 
 // Main App component wrapped with providers
 function App() {
@@ -24,6 +25,7 @@ const AppShell: React.FC = () => {
   const { setDatasets, addNotification, setError } = useAppActions();
   const [initialized, setInitialized] = React.useState(false);
   const [backendStatus, setBackendStatus] = React.useState<'checking' | 'connected' | 'disconnected' | 'error'>('checking');
+  const [showAdvancedFeatures, setShowAdvancedFeatures] = React.useState(false);
 
   // Initialize app on mount with proper cleanup
   useEffect(() => {
@@ -124,6 +126,19 @@ const AppShell: React.FC = () => {
     }
   }, [state.error, backendStatus]);
 
+  // Listen for advanced features toggle event
+  useEffect(() => {
+    const handleShowAdvancedFeatures = () => {
+      setShowAdvancedFeatures(true);
+    };
+
+    window.addEventListener('show-advanced-features', handleShowAdvancedFeatures);
+
+    return () => {
+      window.removeEventListener('show-advanced-features', handleShowAdvancedFeatures);
+    };
+  }, []);
+
   return (
     <div className="app">
       {/* Global loading overlay */}
@@ -161,6 +176,24 @@ const AppShell: React.FC = () => {
             >
               ×
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Advanced Features Dashboard - Modal overlay */}
+      {showAdvancedFeatures && (
+        <div className="advanced-features-modal" data-testid="advanced-features-modal">
+          <div className="modal-backdrop" onClick={() => setShowAdvancedFeatures(false)} />
+          <div className="modal-content">
+            <button 
+              className="modal-close"
+              onClick={() => setShowAdvancedFeatures(false)}
+              data-testid="close-advanced-features"
+              aria-label="Close advanced features"
+            >
+              ×
+            </button>
+            <RealTimeDashboard />
           </div>
         </div>
       )}

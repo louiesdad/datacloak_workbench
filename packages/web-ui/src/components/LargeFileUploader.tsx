@@ -396,7 +396,7 @@ export const LargeFileUploader: React.FC<LargeFileUploaderProps> = ({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={() => !disabled && fileInputRef.current?.click()}
-        data-testid="upload-area"
+        data-testid="file-drop-zone"
         role="button"
         tabIndex={disabled ? -1 : 0}
         aria-label={`Upload area. Click to select ${multiple ? 'files' : 'file'} or drag and drop here`}
@@ -416,7 +416,7 @@ export const LargeFileUploader: React.FC<LargeFileUploaderProps> = ({
           onChange={handleFileSelect}
           disabled={disabled}
           style={{ display: 'none' }}
-          data-testid="file-input"
+          data-testid="file-input-button"
           aria-label={`Select ${multiple ? 'files' : 'file'} to upload`}
           aria-describedby="file-restrictions"
         />

@@ -390,6 +390,7 @@ export const RunWizard: React.FC<RunWizardProps> = ({
                   ...prev,
                   sentimentOptions: { ...prev.sentimentOptions, model: e.target.value as any }
                 }))}
+                data-testid="model-selector"
               >
                 <option value="basic">Basic (Fast, Lower Cost)</option>
                 <option value="advanced">Advanced (Balanced)</option>
@@ -509,7 +510,7 @@ export const RunWizard: React.FC<RunWizardProps> = ({
                 <p>Calculating costs...</p>
               </div>
             ) : costEstimation ? (
-              <div className="cost-estimation" data-testid="cost-estimation">
+              <div className="cost-estimation" data-testid="cost-estimate">
                 <h4>Cost Estimation</h4>
                 <div className="cost-breakdown">
                   <div className="cost-main">
@@ -593,7 +594,7 @@ export const RunWizard: React.FC<RunWizardProps> = ({
   };
 
   return (
-    <div className="run-wizard">
+    <div className="run-wizard" data-testid="sentiment-analysis-control">
       <div className="wizard-header">
         <h2>Sentiment Analysis Wizard</h2>
         <div className="step-indicators">
@@ -659,7 +660,7 @@ export const RunWizard: React.FC<RunWizardProps> = ({
           className="wizard-button primary"
           onClick={handleNext}
           disabled={!canProceedToNext() || isRunning}
-          data-testid="wizard-next-button"
+          data-testid={currentStep === 4 ? "run-analysis-button" : "wizard-next-button"}
           data-step={currentStep}
           aria-label={currentStep === 4 ? 'Start sentiment analysis' : 'Next step'}
         >

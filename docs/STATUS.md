@@ -642,5 +642,185 @@ The backend is fully operational with all services working correctly. Test failu
    - [x] Test UI with 1M+ row datasets
    - [x] Add memory usage indicators
 
+## 🔴 E2E Test Results - Final Run (Post-Bug Fixes)
+
+**Test Execution Summary:**
+- **Total Tests**: 85 tests across 12 test files
+- **✅ Passed**: 45 tests (53%)
+- **❌ Failed**: 34 tests (40%)
+- **⏸️ Skipped**: 6 tests (7%)
+- **Test Duration**: 8.0 minutes
+- **Status**: Core functionality working, UI element access issues remain
+
+### 🔴 Frontend (FE) Bug Reports - Critical for E2E Test Success
+
+#### **FE-BUG-011: Missing Test IDs on File Upload Components**
+**Priority**: P1 - Blocks 8 E2E tests
+**Tests Affected**: All tests in `02-file-upload.spec.ts`
+**Root Cause**: File upload UI elements lack proper data-testid attributes
+
+**Missing Elements**:
+```
+[data-testid="file-upload-area"] - Not found (currently using class-based selectors)
+[data-testid="browse-files-button"] - Not found (button exists but no testid)
+[data-testid="file-drop-zone"] - Not found (drag-drop works but no testid)
+```
+
+**Current State**: The file uploader renders at `[data-testid="file-uploader"]` but child elements lack test IDs
+
+**Fix Required**:
+1. Add `data-testid="file-upload-area"` to the main upload container
+2. Add `data-testid="browse-files-button"` to the file selection button
+3. Add `data-testid="file-drop-zone"` to the drag-and-drop area
+4. Add `data-testid="file-input-button"` to the actual file input trigger
+
+**Component Location**: `src/components/DataSourcePicker.tsx`
+
 ---
-*Last Updated: 2025-06-15 - Added remaining tasks identified from E2E test gap analysis. Core functionality is complete but performance optimization and production deployment features need validation.*
+
+#### **FE-BUG-012: ProfilerUI Not Rendering After File Upload**
+**Priority**: P1 - Blocks 7 E2E tests
+**Tests Affected**: All tests in `03-pii-detection.spec.ts`
+**Root Cause**: ProfilerUI component not displayed in workflow after file selection
+
+**Missing Elements**:
+```
+[data-testid="profiler-ui"] - Component not rendered
+[data-testid="field-list"] - Field analysis not shown
+[data-testid*="pii-badge"] - PII indicators not visible
+[data-testid="field-row-*"] - Individual field rows not displayed
+```
+
+**Current State**: File upload completes but workflow doesn't progress to profiling step
+
+**Fix Required**:
+1. Ensure ProfilerUI renders after successful file upload
+2. Add proper test IDs to ProfilerUI container and child elements
+3. Verify workflow state transitions from "Upload" to "Profile" step
+4. Display field analysis results with PII badges
+
+**Component Location**: `src/components/ProfilerUI.tsx`, `src/components/WorkflowManager.tsx`
+
+---
+
+#### **FE-BUG-013: Transform Designer Not Accessible in Workflow**
+**Priority**: P1 - Blocks 9 E2E tests
+**Tests Affected**: All tests in `04-transform-operations.spec.ts`
+**Root Cause**: TransformDesigner component not reachable in current workflow
+
+**Missing Elements**:
+```
+[data-testid="transform-designer"] - Component not rendered
+[data-testid="transform-operations"] - Operation list not shown
+[data-testid="transform-preview"] - Preview panel not visible
+[data-testid="skip-transform-button"] - Skip option not available
+```
+
+**Current State**: Workflow stuck at data upload step, transform step not accessible
+
+**Fix Required**:
+1. Enable workflow progression to Transform step
+2. Add navigation or auto-progression after profiling
+3. Add test IDs to TransformDesigner components
+4. Implement skip transform functionality
+
+**Component Location**: `src/components/TransformDesigner.tsx`, `src/components/WorkflowManager.tsx`
+
+---
+
+#### **FE-BUG-014: Sentiment Analysis Controls Not Rendered**
+**Priority**: P1 - Blocks 8 E2E tests
+**Tests Affected**: All tests in `05-sentiment-analysis.spec.ts`
+**Root Cause**: SentimentAnalysisControl not displayed in workflow
+
+**Missing Elements**:
+```
+[data-testid="sentiment-analysis-control"] - Main control not rendered
+[data-testid="model-selector"] - Model selection UI missing
+[data-testid="run-analysis-button"] - Analysis trigger not available
+[data-testid="cost-estimate"] - Cost estimation not shown
+```
+
+**Current State**: Sentiment analysis step not reachable in workflow
+
+**Fix Required**:
+1. Enable workflow progression to Configure step
+2. Render SentimentAnalysisControl component
+3. Ensure all child components have proper test IDs
+4. Connect to backend sentiment API endpoints
+
+**Component Location**: `src/components/SentimentAnalysisControl.tsx`, `src/components/RunWizard.tsx`
+
+---
+
+#### **FE-BUG-015: Results Explorer Not Showing After Analysis**
+**Priority**: P1 - Blocks 6 E2E tests
+**Tests Affected**: All tests in `06-results-export.spec.ts`
+**Root Cause**: ResultExplorer not rendered after analysis completion
+
+**Missing Elements**:
+```
+[data-testid="result-explorer"] - Results view not shown
+[data-testid="export-csv"] - Export button not available
+[data-testid="sentiment-filter"] - Filtering controls missing
+[data-testid="results-table"] - Results data not displayed
+```
+
+**Fix Required**:
+1. Show ResultExplorer after analysis completes
+2. Implement proper workflow completion handling
+3. Add all required test IDs to export components
+4. Connect export functionality to backend
+
+**Component Location**: `src/components/ResultExplorer.tsx`
+
+---
+
+#### **FE-BUG-016: Advanced Features UI Not Integrated**
+**Priority**: P2 - Blocks 20+ E2E tests
+**Tests Affected**: Tests in files 08-12 (security, chunking, jobs, memory, SSE)
+**Root Cause**: Advanced feature components not integrated into main workflow
+
+**Missing Components**:
+```
+[data-testid="security-audit-report"] - Security features not shown
+[data-testid="job-queue-manager"] - Job queue UI not integrated
+[data-testid="memory-monitor"] - Memory monitor hidden (only compact view)
+[data-testid="sse-progress-indicator"] - SSE progress not visible
+[data-testid="chunk-progress"] - Chunked upload progress missing
+```
+
+**Fix Required**:
+1. Integrate JobQueueManager into appropriate workflow views
+2. Show full MemoryMonitor (not just compact indicator)
+3. Display SSEProgressIndicator during long operations
+4. Add SecurityAuditReport to profiler results
+5. Show chunk progress for large file uploads
+
+### 🟢 Backend (BE) Status
+
+**All backend services are operational**. The E2E test failures are entirely due to frontend UI access issues:
+- ✅ Health endpoint responding correctly
+- ✅ All API routes functional
+- ✅ Database operations working
+- ✅ File upload endpoints ready
+- ✅ Sentiment analysis API operational
+- ✅ Security services functional
+- ✅ Job queue processing active
+- ✅ WebSocket/SSE connections working
+
+### 📋 Summary for Development Teams
+
+#### **Frontend Developer Actions Required**:
+1. **URGENT**: Add missing data-testid attributes to all interactive elements
+2. **URGENT**: Fix workflow progression - ensure all steps are reachable
+3. **HIGH**: Integrate advanced feature components into main UI
+4. **MEDIUM**: Ensure proper state management for workflow transitions
+
+#### **Backend Developer Actions**:
+- No actions required - all backend services fully operational
+
+**Impact**: Once these frontend test ID and workflow issues are resolved, E2E test pass rate should increase from 53% to 90%+.
+
+---
+*Last Updated: 2025-06-15 23:30 - Final E2E test run completed. Frontend UI element access is the primary blocker for remaining test failures.*

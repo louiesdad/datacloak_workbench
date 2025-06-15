@@ -200,6 +200,18 @@ export const Navigation: React.FC<NavigationProps> = ({ className }) => {
         )}
       </div>
 
+      {/* Advanced Features */}
+      <div className="advanced-features-section">
+        <button
+          className="nav-action advanced"
+          onClick={() => window.dispatchEvent(new CustomEvent('show-advanced-features'))}
+          data-testid="advanced-features-button"
+          title="View real-time monitoring, progress tracking, and advanced features"
+        >
+          🎛️ Advanced Features
+        </button>
+      </div>
+
       {/* App version */}
       <CompactAppVersion className="navigation-version" />
     </nav>

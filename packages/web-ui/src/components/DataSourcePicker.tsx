@@ -318,18 +318,29 @@ export const DataSourcePicker: React.FC<DataSourcePickerProps> = ({
           multiple={false}
           className="data-source-uploader"
         >
-          <div className="upload-area-content">
-            <div className="upload-icon">📁</div>
-            <div className="upload-text">
-              <div className="primary-text">Choose data files to upload</div>
-              <div className="secondary-text">
-                Drag and drop files here, or click to browse
+          <div className="upload-area-content" data-testid="file-upload-area">
+            <button 
+              className="browse-files-button"
+              data-testid="browse-files-button"
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                // Will be handled by parent's onClick
+              }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+            >
+              <div className="upload-icon">📁</div>
+              <div className="upload-text">
+                <div className="primary-text">Choose data files to upload</div>
+                <div className="secondary-text">
+                  Drag and drop files here, or click to browse
+                </div>
               </div>
-              <div className="file-requirements" id="file-requirements">
-                <div>Supported formats: {acceptedFormats.join(', ')}</div>
-                <div>Maximum file size: {maxSizeGB}GB per file</div>
-                <div>Large files will be uploaded in chunks for reliability</div>
-              </div>
+            </button>
+            <div className="file-requirements" id="file-requirements">
+              <div>Supported formats: {acceptedFormats.join(', ')}</div>
+              <div>Maximum file size: {maxSizeGB}GB per file</div>
+              <div>Large files will be uploaded in chunks for reliability</div>
             </div>
           </div>
         </LargeFileUploader>

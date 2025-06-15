@@ -156,7 +156,7 @@ export const ProfilerUI: React.FC<ProfilerUIProps> = ({
   onPIIToggle,
   selectedFields = {},
   piiMaskingSettings = {}
-) => {
+}) => {
   const [expandedFiles, setExpandedFiles] = useState<Set<number>>(new Set());
   const [showSecurityAudit, setShowSecurityAudit] = useState(false);
 
@@ -223,7 +223,7 @@ export const ProfilerUI: React.FC<ProfilerUIProps> = ({
   }
 
   return (
-    <div className="profiler-ui">
+    <div className="profiler-ui" data-testid="profiler-ui">
       <div className="profiler-header">
         <div className="header-main">
           <h2>Data Profile Analysis</h2>
@@ -311,7 +311,8 @@ export const ProfilerUI: React.FC<ProfilerUIProps> = ({
                   estimatedItemHeight={60}
                   threshold={20}
                   className="fields-virtual-list"
-                  testId={`fields-list-${fileIndex}`}
+                  testId={`field-list`}
+                  data-testid="field-list"
                   renderItem={(field, index) => (
                     <div className="field-row-container">
                       <FieldRow

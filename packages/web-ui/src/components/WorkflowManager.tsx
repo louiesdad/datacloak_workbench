@@ -581,6 +581,7 @@ export const WorkflowManager: React.FC = () => {
                   <button 
                     className="secondary-button"
                     onClick={handleSkipTransform}
+                    data-testid="skip-transform-button"
                   >
                     Skip Transform
                   </button>
@@ -601,6 +602,7 @@ export const WorkflowManager: React.FC = () => {
                   <button 
                     className="secondary-button"
                     onClick={handleSkipTransform}
+                    data-testid="skip-transform-button"
                   >
                     Skip Transform
                   </button>

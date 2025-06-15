@@ -276,7 +276,7 @@ export const SecurityAuditReport: React.FC<SecurityAuditReportProps> = ({
                 />
               </div>
               <div className="confidence-details">
-                <span className="confidence-label">Low Confidence (<60%)</span>
+                <span className="confidence-label">Low Confidence (&lt;60%)</span>
                 <span className="confidence-count">{auditData.confidenceDistribution.low} fields</span>
               </div>
             </div>

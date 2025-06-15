@@ -413,8 +413,9 @@ export const ResultExplorer: React.FC<ResultExplorerProps> = ({
               </div>
             </div>
 
-            <PerformantList
-              items={filteredResults}
+            <div data-testid="results-table">
+              <PerformantList
+                items={filteredResults}
               height={600}
               estimatedItemHeight={120}
               threshold={50}
@@ -478,6 +479,7 @@ export const ResultExplorer: React.FC<ResultExplorerProps> = ({
                 </div>
               )}
             />
+            </div>
           </div>
         );
 
@@ -734,7 +736,7 @@ export const ResultExplorer: React.FC<ResultExplorerProps> = ({
       chunkSize={10000}
     >
       {(exportHandler) => (
-        <div className="result-explorer">
+        <div className="result-explorer" data-testid="result-explorer">
           <div className="explorer-header">
             <div className="header-left">
               <h2>Sentiment Analysis Results</h2>
