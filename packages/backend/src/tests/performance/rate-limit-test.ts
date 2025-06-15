@@ -107,7 +107,7 @@ export class RateLimitTest {
       // Simulate a rate-limited request
       try {
         // Force multiple rapid requests to trigger rate limit
-        const promises = [];
+        const promises: Promise<any>[] = [];
         for (let i = 0; i < 10; i++) {
           promises.push(this.openAIService.analyzeSentiment({
             text: `Test text ${i}`,
@@ -141,12 +141,18 @@ export class RateLimitTest {
       
       const startTime = performance.now();
       const results = {
-        completed: 0,
-        rateLimited: 0,
-        failed: 0
+        successfulRequests: 0,
+        rateLimitedRequests: 0,
+        failedRequests: 0,
+        retrySuccesses: 0,
+        errors: [] as Array<{
+          timestamp: number;
+          error: string;
+          type: string;
+        }>
       };
 
-      const promises = [];
+      const promises: Promise<void>[] = [];
       for (let i = 0; i < batchSize; i++) {
         const promise = this.makeTestRequest(results, startTime + i * 100);
         promises.push(promise);
@@ -158,11 +164,11 @@ export class RateLimitTest {
       await Promise.all(promises);
       
       const duration = (performance.now() - startTime) / 1000;
-      const effectiveRate = results.completed / duration;
+      const effectiveRate = results.successfulRequests / duration;
       
-      console.log(`  ✅ Completed: ${results.completed}/${batchSize}`);
+      console.log(`  ✅ Completed: ${results.successfulRequests}/${batchSize}`);
       console.log(`  ⚡ Effective rate: ${effectiveRate.toFixed(2)} req/s`);
-      console.log(`  🚦 Rate limited: ${results.rateLimited} times`);
+      console.log(`  🚦 Rate limited: ${results.rateLimitedRequests} times`);
       
       if (effectiveRate > this.requestsPerSecond + 0.5) {
         console.log(`  ⚠️  WARNING: Effective rate exceeds limit!`);
@@ -201,7 +207,12 @@ export class RateLimitTest {
     for (const scenario of errorScenarios) {
       console.log(`\n  Testing ${scenario.name}...`);
       
-      const service = new OpenAIService(scenario.config);
+      const service = new OpenAIService({
+        model: 'gpt-3.5-turbo',
+        maxTokens: 50,
+        temperature: 0,
+        ...scenario.config
+      });
       
       try {
         await service.analyzeSentiment({
@@ -247,11 +258,13 @@ export class RateLimitTest {
         }
       } else {
         results.failedRequests++;
-        results.errors.push({
-          timestamp,
-          error: error.message,
-          type: error.openaiError?.type || 'unknown'
-        });
+        if (results.errors) {
+          results.errors.push({
+            timestamp,
+            error: error.message,
+            type: error.openaiError?.type || 'unknown'
+          });
+        }
       }
     }
   }

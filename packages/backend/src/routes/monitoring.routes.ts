@@ -1,8 +1,6 @@
 import { Router } from 'express';
 import { MonitoringController } from '../controllers/monitoring.controller';
-import { asyncHandler } from '../middleware/async.middleware';
-import { validateRequest } from '../middleware/validation.middleware';
-import { body } from 'express-validator';
+import { asyncHandler, validate } from '../middleware/async.middleware';
 
 const router = Router();
 const controller = new MonitoringController();
@@ -44,12 +42,13 @@ router.get(
  */
 router.post(
   '/memory/start',
-  [
-    body('warning').optional().isInt({ min: 0, max: 100 }),
-    body('critical').optional().isInt({ min: 0, max: 100 }),
-    body('maxHeapSize').optional().isInt({ min: 0 })
-  ],
-  validateRequest,
+  validate({
+    body: {
+      warning: 'optional',
+      critical: 'optional',
+      maxHeapSize: 'optional'
+    }
+  }),
   asyncHandler(controller.startMonitoring.bind(controller))
 );
 

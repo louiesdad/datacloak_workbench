@@ -167,7 +167,7 @@ export class LargeFilePerformanceTest {
 
       // Insert data in batches
       for (let i = 0; i < testSize; i += batchSize) {
-        const batch = [];
+        const batch: any[] = [];
         for (let j = 0; j < batchSize && i + j < testSize; j++) {
           batch.push({
             id: i + j,
@@ -184,9 +184,11 @@ export class LargeFilePerformanceTest {
           `(${item.id}, '${item.text}', '${item.sentiment}', ${item.score}, 0, 0, '${item.id}', '${item.timestamp.toISOString()}')`
         ).join(',');
         
-        await duckDB.run(
-          `INSERT INTO text_analytics (id, text, sentiment, score, word_count, char_count, batch_id, timestamp) VALUES ${values}`
-        );
+        if (duckDB) {
+          await duckDB.run(
+            `INSERT INTO text_analytics (id, text, sentiment, score, word_count, char_count, batch_id, timestamp) VALUES ${values}`
+          );
+        }
         
         if ((i / batchSize) % 10 === 0) {
           const progress = (i / testSize) * 100;
@@ -208,7 +210,9 @@ export class LargeFilePerformanceTest {
 
       for (const query of queries) {
         const startTime = performance.now();
-        await duckDB.all(query);
+        if (duckDB) {
+          await duckDB.all(query);
+        }
         const duration = performance.now() - startTime;
         console.log(`✅ Query executed in ${duration.toFixed(2)}ms`);
       }
@@ -236,7 +240,7 @@ export class LargeFilePerformanceTest {
     writeStream.write('id,text,category,timestamp,value\n');
     
     for (let i = 0; i < totalRows; i += batchSize) {
-      const batch = [];
+      const batch: string[] = [];
       for (let j = 0; j < batchSize && i + j < totalRows; j++) {
         const row = [
           i + j,
@@ -275,13 +279,23 @@ export class LargeFilePerformanceTest {
     }
   }
 
-  private async simulateDataProcessing(data: any[]): Promise<void> {
-    // Simulate data processing
-    // Data is already parsed, just process it
-    for (const row of data) {
-      // Simulate some work on each row
-      if (row.text && typeof row.text === 'string') {
-        row.processedLength = row.text.length;
+  private async simulateDataProcessing(data: any[] | string): Promise<void> {
+    // Handle different data types
+    if (typeof data === 'string') {
+      // For string data (like from Buffer.toString()), just process the length
+      const textLength = data.length;
+      // Simulate processing time based on text length
+      await new Promise(resolve => setTimeout(resolve, Math.min(textLength / 1000, 100)));
+      return;
+    }
+
+    // For array data (already parsed), process each row
+    if (Array.isArray(data)) {
+      for (const row of data) {
+        // Simulate some work on each row
+        if (row && typeof row === 'object' && row.text && typeof row.text === 'string') {
+          row.processedLength = row.text.length;
+        }
       }
     }
 

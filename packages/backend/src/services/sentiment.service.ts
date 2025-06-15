@@ -260,7 +260,6 @@ export class SentimentService {
       throw new AppError('Batch size cannot exceed 1000 texts', 400, 'BATCH_TOO_LARGE');
     }
 
-    const startTime = Date.now();
     const results: SentimentAnalysisResult[] = [];
     const batchId = uuidv4();
 
@@ -821,32 +820,6 @@ export class SentimentService {
     }
   }
 
-  /**
-   * Update OpenAI configuration
-   */
-  updateOpenAIConfig(config: {
-    model?: string;
-    maxTokens?: number;
-    temperature?: number;
-    timeout?: number;
-  }): { success: boolean; error?: string } {
-    if (!this.openaiService) {
-      return {
-        success: false,
-        error: 'OpenAI service not configured'
-      };
-    }
-
-    try {
-      this.openaiService.updateConfig(config);
-      return { success: true };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to update configuration'
-      };
-    }
-  }
 
   /**
    * Get available models and configurations

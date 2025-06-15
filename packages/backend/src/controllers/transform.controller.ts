@@ -464,7 +464,8 @@ export class TransformController {
       }
 
       const result: SuccessResponse = {
-        message: 'Transform deleted successfully'
+        message: 'Transform deleted successfully',
+        data: { deleted: true }
       };
 
       res.json(result);

@@ -22,10 +22,10 @@ export class RateLimiterService {
   private readonly maxTokens: number;
   private readonly refillRate: number;
   private readonly intervalMs: number;
-  private requestQueue: Array<{
-    resolve: (value: boolean) => void;
-    timestamp: number;
-  }> = [];
+  // private requestQueue: Array<{
+  //   resolve: (value: boolean) => void;
+  //   timestamp: number;
+  // }> = [];
 
   constructor(options: RateLimiterOptions) {
     this.maxTokens = options.maxBurst || options.maxRequests;
@@ -129,7 +129,7 @@ export class RateLimiterService {
   reset(): void {
     this.tokens = this.maxTokens;
     this.lastRefill = Date.now();
-    this.requestQueue = [];
+    // this.requestQueue = [];
   }
 
   /**

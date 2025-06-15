@@ -111,13 +111,13 @@ export class DataService {
       let securityScan;
       try {
         await this.securityService.initialize();
-        const scanResult = await this.securityService.scanDataset(datasetId, filePath);
+        const scanResult = await this.securityService.scanDataset(datasetId);
         
         securityScan = {
-          piiItemsDetected: scanResult.auditResult.piiItemsDetected,
-          complianceScore: scanResult.auditResult.complianceScore,
-          riskLevel: scanResult.piiSummary.riskLevel,
-          recommendations: scanResult.piiSummary.recommendations
+          piiItemsDetected: scanResult.piiItemsDetected,
+          complianceScore: scanResult.complianceScore,
+          riskLevel: this.getRiskLevel(scanResult.complianceScore),
+          recommendations: scanResult.recommendations
         };
 
         // Enhance field info with PII detection
@@ -142,9 +142,9 @@ export class DataService {
           file.size,
           recordCount,
           file.mimetype,
-          scanResult.auditResult.piiItemsDetected > 0 ? 1 : 0,
-          scanResult.auditResult.complianceScore,
-          scanResult.piiSummary.riskLevel
+          scanResult.piiItemsDetected > 0 ? 1 : 0,
+          scanResult.complianceScore,
+          this.getRiskLevel(scanResult.complianceScore)
         );
 
         // Get the created dataset
@@ -206,7 +206,7 @@ export class DataService {
 
   private async parseFile(filePath: string, mimeType: string): Promise<{
     previewData: any[];
-    fieldInfo: { name: string; type: string; sampleValues: any[]; nullCount: number }[];
+    fieldInfo: FieldStatistics[];
     recordCount: number;
   }> {
     const previewSize = 100; // Number of rows to preview
@@ -228,7 +228,7 @@ export class DataService {
 
   private async parseFileWithStreaming(filePath: string, mimeType: string, previewSize: number): Promise<{
     previewData: any[];
-    fieldInfo: { name: string; type: string; sampleValues: any[]; nullCount: number }[];
+    fieldInfo: FieldStatistics[];
     recordCount: number;
   }> {
     let previewData: any[] = [];
@@ -304,7 +304,7 @@ export class DataService {
 
   private async parseCsvFile(filePath: string, previewSize: number): Promise<{
     previewData: any[];
-    fieldInfo: { name: string; type: string; sampleValues: any[]; nullCount: number }[];
+    fieldInfo: FieldStatistics[];
     recordCount: number;
   }> {
     return new Promise((resolve, reject) => {
@@ -387,7 +387,7 @@ export class DataService {
 
   private parseExcelFile(filePath: string, previewSize: number): {
     previewData: any[];
-    fieldInfo: { name: string; type: string; sampleValues: any[]; nullCount: number }[];
+    fieldInfo: FieldStatistics[];
     recordCount: number;
   } {
     const workbook = XLSX.readFile(filePath);
@@ -462,9 +462,9 @@ export class DataService {
       let mostCommonValue;
       let mostCommonValueCount = 0;
       for (const [value, count] of Object.entries(valueCounts)) {
-        if (count > mostCommonValueCount) {
+        if ((count as number) > mostCommonValueCount) {
           mostCommonValue = value;
-          mostCommonValueCount = count;
+          mostCommonValueCount = count as number;
         }
       }
       
@@ -729,7 +729,7 @@ export class DataService {
           .join(' ');
 
         let piiDetected = false;
-        let piiType = undefined;
+        let piiType: string | undefined = undefined;
         let piiConfidence = 0;
 
         if (sampleText.length > 0) {
@@ -801,5 +801,15 @@ export class DataService {
       console.warn('Failed to enhance field info with PII detection:', error);
       return fieldInfo;
     }
+  }
+
+  /**
+   * Get risk level based on compliance score
+   */
+  private getRiskLevel(complianceScore: number): string {
+    if (complianceScore >= 0.9) return 'low';
+    if (complianceScore >= 0.7) return 'medium';
+    if (complianceScore >= 0.5) return 'high';
+    return 'critical';
   }
 }

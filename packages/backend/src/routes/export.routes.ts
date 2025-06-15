@@ -1,8 +1,6 @@
 import { Router } from 'express';
 import { ExportController } from '../controllers/export.controller';
-import { asyncHandler } from '../middleware/async.middleware';
-import { validateRequest } from '../middleware/validation.middleware';
-import { body, query } from 'express-validator';
+import { asyncHandler, validate } from '../middleware/async.middleware';
 
 const router = Router();
 const controller = new ExportController();
@@ -19,15 +17,16 @@ const controller = new ExportController();
  */
 router.post(
   '/dataset',
-  [
-    body('tableName').notEmpty().withMessage('Table name is required'),
-    body('format').isIn(['csv', 'json', 'excel']).withMessage('Invalid format'),
-    body('columns').optional().isArray(),
-    body('filters').optional().isObject(),
-    body('chunkSize').optional().isInt({ min: 1000, max: 1000000 }),
-    body('maxRows').optional().isInt({ min: 1 })
-  ],
-  validateRequest,
+  validate({
+    body: {
+      tableName: 'required',
+      format: ['csv', 'json', 'excel'],
+      columns: 'optional',
+      filters: 'optional',
+      chunkSize: 'optional',
+      maxRows: 'optional'
+    }
+  }),
   asyncHandler(controller.exportDataset.bind(controller))
 );
 
@@ -41,13 +40,14 @@ router.post(
  */
 router.get(
   '/stream',
-  [
-    query('tableName').notEmpty().withMessage('Table name is required'),
-    query('format').isIn(['csv', 'json']).withMessage('Invalid format for streaming'),
-    query('columns').optional(),
-    query('filters').optional()
-  ],
-  validateRequest,
+  validate({
+    query: {
+      tableName: 'required',
+      format: ['csv', 'json'],
+      columns: 'optional',
+      filters: 'optional'
+    }
+  }),
   asyncHandler(controller.streamExport.bind(controller))
 );
 
@@ -85,10 +85,11 @@ router.get(
  */
 router.post(
   '/cleanup',
-  [
-    body('maxAgeHours').optional().isInt({ min: 1, max: 168 })
-  ],
-  validateRequest,
+  validate({
+    body: {
+      maxAgeHours: 'optional'
+    }
+  }),
   asyncHandler(controller.cleanupExports.bind(controller))
 );
 

@@ -133,16 +133,16 @@ export class CostEstimationService {
     };
   }
 
-  private getProcessingTimePerText(model: string): number {
+  private getProcessingTimePerText(model: CostEstimationRequest['model']): number {
     // Processing time per text in seconds (including API latency)
-    const baseTimes = {
+    const baseTimes: Record<CostEstimationRequest['model'], number> = {
       'gpt-3.5-turbo': 0.5,
       'gpt-4': 2.0,
       'gpt-4-turbo': 1.0,
       'claude-3': 1.5,
       'text-davinci-003': 1.2
     };
-    return baseTimes[model as keyof typeof baseTimes] || 1.0;
+    return baseTimes[model];
   }
 
   private generateRecommendations(
@@ -183,7 +183,7 @@ export class CostEstimationService {
 
   private calculateLimits(request: CostEstimationRequest): { maxTextsPerBatch: number; estimatedMemoryUsage: string } {
     // Calculate safe batch size based on model and text count
-    const modelLimits = {
+    const modelLimits: Record<CostEstimationRequest['model'], number> = {
       'gpt-3.5-turbo': 1000,
       'gpt-4': 500,
       'gpt-4-turbo': 750,
@@ -192,7 +192,7 @@ export class CostEstimationService {
     };
     
     const maxTextsPerBatch = Math.min(
-      modelLimits[request.model] || 500,
+      modelLimits[request.model],
       Math.max(100, Math.floor(request.textCount / 10))
     );
     
@@ -207,9 +207,16 @@ export class CostEstimationService {
   }
 
   async getCostForModel(textCount: number, model: string): Promise<number> {
+    // Validate model type
+    const validModels: CostEstimationRequest['model'][] = ['gpt-3.5-turbo', 'gpt-4', 'gpt-4-turbo', 'claude-3', 'text-davinci-003'];
+    
+    if (!validModels.includes(model as CostEstimationRequest['model'])) {
+      throw new AppError(`Unsupported model: ${model}`, 400, 'UNSUPPORTED_MODEL');
+    }
+    
     const request: CostEstimationRequest = {
       textCount,
-      model: model as any,
+      model: model as CostEstimationRequest['model'],
       averageTextLength: 100,
       includePIIProcessing: true
     };
@@ -224,14 +231,19 @@ export class CostEstimationService {
     processingTime: number;
     recommended?: boolean;
   }[]> {
-    const models = Object.keys(this.MODEL_PRICING);
-    const comparisons = [];
+    const models = Object.keys(this.MODEL_PRICING) as CostEstimationRequest['model'][];
+    const comparisons: {
+      model: string;
+      cost: number;
+      processingTime: number;
+      recommended: boolean;
+    }[] = [];
     
     for (const model of models) {
       try {
         const estimation = await this.estimateCost({
           textCount,
-          model: model as any,
+          model,
           averageTextLength: 100,
           includePIIProcessing: true
         });
@@ -244,6 +256,7 @@ export class CostEstimationService {
         });
       } catch (error) {
         // Skip unsupported models
+        console.warn(`Failed to estimate cost for model ${model}:`, error);
       }
     }
     

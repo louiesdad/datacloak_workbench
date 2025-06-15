@@ -299,10 +299,11 @@ export class MemoryMonitorService extends EventEmitter {
   private setupGCMonitoring(): void {
     if (global.gc) {
       const originalGC = global.gc;
-      global.gc = () => {
+      // Override the global gc function to add monitoring
+      (global as any).gc = () => {
         this.gcCount++;
         this.emit('gc:performed', { count: this.gcCount });
-        return originalGC();
+        originalGC();
       };
     }
   }

@@ -107,7 +107,7 @@ export class SecurityController {
         throw new AppError('File path is required and must be a string', 400, 'INVALID_FILE_PATH');
       }
 
-      const result = await this.securityService.scanDataset(datasetId, filePath);
+      const result = await this.securityService.scanDataset(datasetId);
 
       res.json({
         success: true,
@@ -153,17 +153,25 @@ export class SecurityController {
         throw new AppError('Page size cannot exceed 100', 400, 'PAGE_SIZE_TOO_LARGE');
       }
 
-      const result = await this.securityService.getAuditHistory(page, pageSize);
+      const limit = page * pageSize;
+      const data = await this.securityService.getAuditHistory(limit);
 
       res.json({
         success: true,
-        data: result,
+        data: {
+          data,
+          pagination: {
+            page,
+            pageSize,
+            total: data.length
+          }
+        },
         summary: {
-          totalAudits: result.pagination.total,
-          averageComplianceScore: result.data.length > 0 
-            ? result.data.reduce((sum, audit) => sum + audit.complianceScore, 0) / result.data.length
+          totalAudits: data.length,
+          averageComplianceScore: data.length > 0 
+            ? data.reduce((sum, audit) => sum + audit.complianceScore, 0) / data.length
             : 0,
-          criticalIssues: result.data.filter(audit => audit.complianceScore < 0.7).length
+          criticalIssues: data.filter(audit => audit.complianceScore < 0.7).length
         }
       });
     } catch (error) {
@@ -214,14 +222,14 @@ export class SecurityController {
   }
 
   private generateDatasetRecommendations(scanResult: any): string[] {
-    const recommendations = [...scanResult.auditResult.recommendations];
+    const recommendations = [...scanResult.recommendations];
     
-    if (scanResult.piiSummary.piiFields > 0) {
+    if (scanResult.piiItemsDetected > 0) {
       recommendations.push('Consider implementing field-level encryption for PII columns');
       recommendations.push('Enable automatic PII masking for sentiment analysis');
     }
 
-    if (scanResult.auditResult.complianceScore < 0.8) {
+    if (scanResult.complianceScore < 0.8) {
       recommendations.push('Review data handling procedures to improve compliance');
       recommendations.push('Implement additional data retention policies');
     }

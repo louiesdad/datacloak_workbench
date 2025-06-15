@@ -46,6 +46,77 @@ export interface DatasetSchema {
 export class TransformValidationService {
 
   /**
+   * Validate a single transform operation (alias for validateSingleOperation)
+   */
+  validateTransform(operation: TransformOperation, data: any[]): TransformValidationResult {
+    // Create a basic schema from the data
+    const schema = this.inferSchemaFromData(data);
+    
+    // Use synchronous validation for simple cases
+    const errors: TransformValidationError[] = [];
+    const warnings: TransformValidationWarning[] = [];
+
+    // Basic operation validation
+    if (!operation.id) {
+      errors.push({
+        operationId: operation.id || 'unknown',
+        operationType: operation.type,
+        field: 'id',
+        message: 'Operation ID is required',
+        code: 'MISSING_OPERATION_ID'
+      });
+    }
+
+    if (!operation.type) {
+      errors.push({
+        operationId: operation.id,
+        operationType: operation.type || 'unknown',
+        field: 'type',
+        message: 'Operation type is required',
+        code: 'MISSING_OPERATION_TYPE'
+      });
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors,
+      warnings
+    };
+  }
+
+  /**
+   * Infer schema from sample data
+   */
+  private inferSchemaFromData(data: any[]): DatasetSchema {
+    if (!data || data.length === 0) {
+      return { columns: [], rowCount: 0 };
+    }
+
+    const sample = data[0];
+    const columns = Object.keys(sample).map(key => ({
+      name: key,
+      type: this.inferDataType(sample[key]),
+      nullable: true,
+      unique: false
+    }));
+
+    return {
+      columns,
+      rowCount: data.length
+    };
+  }
+
+  /**
+   * Infer data type from value
+   */
+  private inferDataType(value: any): 'string' | 'number' | 'boolean' | 'date' {
+    if (typeof value === 'number') return 'number';
+    if (typeof value === 'boolean') return 'boolean';
+    if (value instanceof Date || !isNaN(Date.parse(value))) return 'date';
+    return 'string';
+  }
+
+  /**
    * Validate a complete transform pipeline
    */
   async validateTransformPipeline(

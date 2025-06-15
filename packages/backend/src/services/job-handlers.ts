@@ -29,7 +29,7 @@ export const createSentimentAnalysisBatchHandler = (
     const batchSize = 100;
     for (let i = 0; i < texts.length; i += batchSize) {
       const batch = texts.slice(i, i + batchSize);
-      const batchResults = [];
+      const batchResults: any[] = [];
 
       for (const text of batch) {
         try {
@@ -151,7 +151,7 @@ export const createSecurityScanHandler = (
 
       if (scanType === 'full') {
         // Full security scan with detailed analysis
-        const scanResult = await securityService.scanDataset(datasetId, filePath);
+        const scanResult = await securityService.scanDataset(datasetId);
         updateProgress(80);
 
         // Generate additional security metrics
@@ -163,10 +163,10 @@ export const createSecurityScanHandler = (
           scanResult,
           auditResult,
           summary: {
-            piiItemsDetected: scanResult.auditResult.piiItemsDetected,
-            complianceScore: scanResult.auditResult.complianceScore,
-            riskLevel: scanResult.piiSummary.riskLevel,
-            recommendations: scanResult.piiSummary.recommendations
+            piiItemsDetected: scanResult.piiItemsDetected,
+            complianceScore: scanResult.complianceScore,
+            riskLevel: scanResult.complianceScore >= 0.8 ? 'low' : scanResult.complianceScore >= 0.6 ? 'medium' : 'high',
+            recommendations: scanResult.recommendations
           }
         };
       } else {

@@ -230,7 +230,7 @@ export class ExportService {
 
     switch (options.format) {
       case 'csv':
-        size = await this.exportToCsv(data, exportPath, options.includeHeaders && chunkIndex === 0);
+        size = await this.exportToCsv(data, exportPath, (options.includeHeaders ?? true) && chunkIndex === 0);
         break;
       case 'json':
         size = await this.exportToJson(data, exportPath);
@@ -397,7 +397,7 @@ export class ExportService {
    */
   private async exportToExcel(data: any[], filePath: string, includeHeaders: boolean): Promise<number> {
     const workbook = XLSX.utils.book_new();
-    const worksheet = XLSX.utils.json_to_sheet(data, { header: includeHeaders ? undefined : 1 });
+    const worksheet = XLSX.utils.json_to_sheet(data, includeHeaders ? {} : { skipHeader: true });
     
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Data');
     XLSX.writeFile(workbook, filePath);
@@ -513,6 +513,10 @@ export class ExportService {
     let isFirstChunk = true;
     let isDone = false;
 
+    // Bind service methods to avoid 'this' context issues
+    const getDataChunk = this.getDataChunk.bind(this);
+    const dataToCSVString = this.dataToCSVString.bind(this);
+
     const stream = new Readable({
       async read() {
         if (isDone) {
@@ -521,7 +525,7 @@ export class ExportService {
         }
 
         try {
-          const data = await this.getDataChunk(tableName, options, offset, chunkSize);
+          const data = await getDataChunk(tableName, options, offset, chunkSize);
           
           if (data.length === 0) {
             isDone = true;
@@ -533,7 +537,7 @@ export class ExportService {
           
           switch (options.format) {
             case 'csv':
-              chunk = this.dataToCSVString(data, isFirstChunk && options.includeHeaders !== false);
+              chunk = dataToCSVString(data, isFirstChunk && options.includeHeaders !== false);
               break;
             case 'json':
               if (isFirstChunk) {

@@ -40,11 +40,11 @@ export class OpenAIService {
 
   constructor(config: OpenAIConfig) {
     this.config = {
-      model: 'gpt-3.5-turbo',
       maxTokens: 150,
       temperature: 0.1,
       timeout: 30000,
-      ...config
+      ...config,
+      model: config.model || 'gpt-3.5-turbo'
     };
 
     if (!this.config.apiKey) {
@@ -166,7 +166,7 @@ export class OpenAIService {
 
     const errorCode = errorData.error?.code || response.status.toString();
     const errorMessage = errorData.error?.message || response.statusText;
-    const errorType = errorData.error?.type || 'api_error';
+    // const errorType = errorData.error?.type || 'api_error';
 
     switch (response.status) {
       case 401:
@@ -313,7 +313,7 @@ Text to analyze: "${text.replace(/"/g, '\\"')}"`;
    */
   async testConnection(): Promise<{ connected: boolean; model: string; error?: string }> {
     try {
-      const testResponse = await this.makeOpenAIRequest({
+      await this.makeOpenAIRequest({
         model: this.config.model,
         messages: [
           { role: 'user', content: 'Test connection. Reply with just "OK".' }

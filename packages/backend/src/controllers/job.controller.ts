@@ -326,18 +326,22 @@ export class JobController {
   }
 
   private generateJobEvents(job: any): any[] {
-    const events = [];
+    const events: Array<{
+      type: string;
+      timestamp: string;
+      description: string;
+    }> = [];
 
     events.push({
       type: 'created',
-      timestamp: job.createdAt.toISOString(),
+      timestamp: job.createdAt instanceof Date ? job.createdAt.toISOString() : job.createdAt,
       description: `Job ${job.type} created with priority ${job.priority}`
     });
 
     if (job.startedAt) {
       events.push({
         type: 'started',
-        timestamp: job.startedAt.toISOString(),
+        timestamp: job.startedAt instanceof Date ? job.startedAt.toISOString() : job.startedAt,
         description: 'Job processing started'
       });
     }
@@ -347,13 +351,23 @@ export class JobController {
       const milestones = [25, 50, 75];
       milestones.forEach(milestone => {
         if (job.progress >= milestone) {
+          let progressTimestamp: string;
+          
+          if (job.startedAt) {
+            const startTime = job.startedAt instanceof Date ? job.startedAt.getTime() : new Date(job.startedAt).getTime();
+            const endTime = job.completedAt ? 
+              (job.completedAt instanceof Date ? job.completedAt.getTime() : new Date(job.completedAt).getTime()) :
+              Date.now();
+            const duration = endTime - startTime;
+            const milestoneTime = startTime + (milestone / 100) * duration;
+            progressTimestamp = new Date(milestoneTime).toISOString();
+          } else {
+            progressTimestamp = new Date().toISOString();
+          }
+          
           events.push({
             type: 'progress',
-            timestamp: job.startedAt ? 
-              new Date(job.startedAt.getTime() + (milestone / 100) * 
-                (job.completedAt ? job.completedAt.getTime() - job.startedAt.getTime() : Date.now() - job.startedAt.getTime())
-              ).toISOString() : 
-              new Date().toISOString(),
+            timestamp: progressTimestamp,
             description: `${milestone}% completed`
           });
         }
