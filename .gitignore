@@ -55,3 +55,6 @@ coverage/
 # Electron builder
 out/
 electron-builder.env
+
+# Large test files
+packages/e2e-tests/fixtures/large-test.csv
