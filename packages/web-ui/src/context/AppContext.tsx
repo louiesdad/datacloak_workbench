@@ -249,7 +249,7 @@ export const useAppContext = () => {
 export const useAppActions = () => {
   const { dispatch } = useAppContext();
   
-  return {
+  return React.useMemo(() => ({
     // Navigation
     setStep: (step: WorkflowStep) => dispatch({ type: 'SET_STEP', payload: step }),
     completeStep: (step: WorkflowStep) => dispatch({ type: 'COMPLETE_STEP', payload: step }),
@@ -290,5 +290,5 @@ export const useAppActions = () => {
     // Reset
     resetWorkflow: () => dispatch({ type: 'RESET_WORKFLOW' }),
     resetAll: () => dispatch({ type: 'RESET_ALL' })
-  };
+  }), [dispatch]);
 };

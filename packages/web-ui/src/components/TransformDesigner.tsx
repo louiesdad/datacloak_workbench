@@ -248,9 +248,11 @@ export const TransformDesigner: React.FC<TransformDesignerProps> = ({
 
   // Auto-validate when pipeline changes
   useEffect(() => {
-    const timeoutId = setTimeout(requestValidation, 300);
+    const timeoutId = setTimeout(() => {
+      requestValidation();
+    }, 300);
     return () => clearTimeout(timeoutId);
-  }, [requestValidation]);
+  }, [pipeline.operations, sourceSchema]);
 
   // Keyboard shortcuts
   useEffect(() => {

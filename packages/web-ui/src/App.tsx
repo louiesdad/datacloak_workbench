@@ -122,7 +122,7 @@ const AppShell: React.FC = () => {
       }, 10000); // Clear after 10 seconds
       return () => clearTimeout(timer);
     }
-  }, [state.error, backendStatus, setError]);
+  }, [state.error, backendStatus]);
 
   return (
     <div className="app">

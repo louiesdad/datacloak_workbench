@@ -85,9 +85,13 @@ export const SSEProgressIndicator: React.FC<SSEProgressIndicatorProps> = ({
     });
 
     reconnectTimeoutRef.current = setTimeout(() => {
+      // Use a ref to avoid circular dependency
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+      }
       connect();
     }, reconnectInterval);
-  }, [connectionState.reconnectAttempts, reconnectAttempts, reconnectInterval]);
+  }, [connectionState.reconnectAttempts, reconnectAttempts, reconnectInterval, updateConnectionState]);
 
   const connect = useCallback(() => {
     cleanup();
@@ -140,24 +144,32 @@ export const SSEProgressIndicator: React.FC<SSEProgressIndicatorProps> = ({
         console.error('SSE connection error:', error);
         updateConnectionState({ status: 'error', error: 'Connection failed' });
         
-        if (connectionState.reconnectAttempts < reconnectAttempts) {
-          addNotification({
-            type: 'warning',
-            message: `Connection lost. Retrying... (${connectionState.reconnectAttempts + 1}/${reconnectAttempts})`,
-            duration: 3000
-          });
-          handleReconnect();
-        } else {
-          addNotification({
-            type: 'error',
-            message: 'Real-time connection failed permanently',
-            duration: 5000
-          });
-          
-          if (onError) {
-            onError(new Error('SSE connection failed'));
+        // Use state to check reconnect attempts instead of callback dependency
+        setConnectionState(prevState => {
+          if (prevState.reconnectAttempts < reconnectAttempts) {
+            addNotification({
+              type: 'warning',
+              message: `Connection lost. Retrying... (${prevState.reconnectAttempts + 1}/${reconnectAttempts})`,
+              duration: 3000
+            });
+            
+            // Schedule reconnection without circular dependency
+            setTimeout(() => {
+              handleReconnect();
+            }, reconnectInterval);
+          } else {
+            addNotification({
+              type: 'error',
+              message: 'Real-time connection failed permanently',
+              duration: 5000
+            });
+            
+            if (onError) {
+              onError(new Error('SSE connection failed'));
+            }
           }
-        }
+          return prevState;
+        });
       };
 
       // Custom event listeners for different progress types
@@ -188,7 +200,7 @@ export const SSEProgressIndicator: React.FC<SSEProgressIndicatorProps> = ({
         onError(error);
       }
     }
-  }, [endpoint, onProgress, onComplete, onError, reconnectAttempts, addNotification, cleanup, handleReconnect]);
+  }, [endpoint, onProgress, onComplete, onError, reconnectAttempts, reconnectInterval, addNotification, cleanup, addToHistory, updateConnectionState]);
 
   const startMonitoring = useCallback(() => {
     setIsActive(true);
@@ -208,10 +220,8 @@ export const SSEProgressIndicator: React.FC<SSEProgressIndicatorProps> = ({
       startMonitoring();
     }
 
-    return () => {
-      cleanup();
-    };
-  }, [autoStart, startMonitoring, cleanup]);
+    return cleanup;
+  }, [autoStart]);
 
   const getConnectionStatusColor = () => {
     switch (connectionState.status) {

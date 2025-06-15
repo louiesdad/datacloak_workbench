@@ -162,73 +162,59 @@ export function useMemoryMonitor(options: MemoryMonitorOptions = {}) {
   const checkThresholds = useCallback((stats: MemoryStats) => {
     const { percentage } = stats;
     
-    if (percentage >= thresholds.emergency) {
-      if (alertLevel !== 'emergency') {
-        setAlertLevel('emergency');
-        config.onEmergency(stats);
-        
-        addNotification({
-          type: 'error',
-          message: `Critical memory usage: ${percentage.toFixed(1)}% - Emergency cleanup triggered`,
-          duration: 8000
-        });
-        
-        if (config.autoCleanup) {
-          performEmergencyCleanup();
-        }
-      }
-    } else if (percentage >= thresholds.critical) {
-      if (alertLevel !== 'critical' && alertLevel !== 'emergency') {
-        setAlertLevel('critical');
-        config.onCritical(stats);
-        
-        addNotification({
-          type: 'error',
-          message: `High memory usage: ${percentage.toFixed(1)}% - Consider closing unused tabs`,
-          duration: 6000
-        });
-      }
-    } else if (percentage >= thresholds.warning) {
-      if (alertLevel === 'none') {
-        setAlertLevel('warning');
-        config.onWarning(stats);
-        
-        addNotification({
-          type: 'warning',
-          message: `Memory usage warning: ${percentage.toFixed(1)}%`,
-          duration: 4000
-        });
-      }
-    } else {
-      if (alertLevel !== 'none') {
-        setAlertLevel('none');
-        
-        if (lastStatsRef.current && lastStatsRef.current.percentage > thresholds.warning) {
+    setAlertLevel(prevLevel => {
+      if (percentage >= thresholds.emergency) {
+        if (prevLevel !== 'emergency') {
+          config.onEmergency(stats);
+          
           addNotification({
-            type: 'success',
-            message: 'Memory usage back to normal levels',
-            duration: 3000
+            type: 'error',
+            message: `Critical memory usage: ${percentage.toFixed(1)}% - Emergency cleanup triggered`,
+            duration: 8000
           });
+          
+          if (config.autoCleanup) {
+            performEmergencyCleanup();
+          }
+          return 'emergency';
+        }
+      } else if (percentage >= thresholds.critical) {
+        if (prevLevel !== 'critical' && prevLevel !== 'emergency') {
+          config.onCritical(stats);
+          
+          addNotification({
+            type: 'error',
+            message: `High memory usage: ${percentage.toFixed(1)}% - Consider closing unused tabs`,
+            duration: 6000
+          });
+          return 'critical';
+        }
+      } else if (percentage >= thresholds.warning) {
+        if (prevLevel === 'none') {
+          config.onWarning(stats);
+          
+          addNotification({
+            type: 'warning',
+            message: `Memory usage warning: ${percentage.toFixed(1)}%`,
+            duration: 4000
+          });
+          return 'warning';
+        }
+      } else {
+        if (prevLevel !== 'none') {
+          if (lastStatsRef.current && lastStatsRef.current.percentage > thresholds.warning) {
+            addNotification({
+              type: 'success',
+              message: 'Memory usage back to normal levels',
+              duration: 3000
+            });
+          }
+          return 'none';
         }
       }
-    }
-  }, [alertLevel, thresholds, config, addNotification, performEmergencyCleanup]);
-
-  const updateStats = useCallback(() => {
-    const stats = getMemoryStats();
-    if (!stats) return;
-    
-    setCurrentStats(stats);
-    lastStatsRef.current = stats;
-    
-    // Add to history (keep last 100 entries)
-    setHistory(prev => {
-      const newHistory = [...prev, { timestamp: Date.now(), stats }];
-      return newHistory.slice(-100);
+      return prevLevel;
     });
-    
-    checkThresholds(stats);
-  }, [getMemoryStats, checkThresholds]);
+  }, [thresholds.emergency, thresholds.critical, thresholds.warning, config.onEmergency, config.onCritical, config.onWarning, config.autoCleanup, addNotification, performEmergencyCleanup]);
 
   // Start/stop monitoring
   useEffect(() => {
@@ -236,18 +222,34 @@ export function useMemoryMonitor(options: MemoryMonitorOptions = {}) {
       return;
     }
 
+    const update = () => {
+      const stats = getMemoryStats();
+      if (!stats) return;
+      
+      setCurrentStats(stats);
+      lastStatsRef.current = stats;
+      
+      // Add to history (keep last 100 entries)
+      setHistory(prev => {
+        const newHistory = [...prev, { timestamp: Date.now(), stats }];
+        return newHistory.slice(-100);
+      });
+      
+      checkThresholds(stats);
+    };
+
     // Initial check
-    updateStats();
+    update();
     
     // Set up periodic monitoring
-    intervalRef.current = setInterval(updateStats, config.interval);
+    intervalRef.current = setInterval(update, config.interval);
     
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
     };
-  }, [config.enabled, config.interval, isSupported, updateStats]);
+  }, [config.enabled, config.interval, isSupported, getMemoryStats, checkThresholds]);
 
   const formatMemorySize = useCallback((bytes: number): string => {
     if (bytes === 0) return '0 B';
@@ -345,10 +347,7 @@ export function useMemoryMonitor(options: MemoryMonitorOptions = {}) {
     formatMemorySize,
     clearHistory,
     forceCleanup,
-    triggerGarbageCollection,
-    
-    // Manual update
-    updateStats
+    triggerGarbageCollection
   };
 }
 
