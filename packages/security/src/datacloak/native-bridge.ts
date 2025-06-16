@@ -180,6 +180,12 @@ export class NativeDataCloakBridge implements DataCloakBridge {
   private getBinaryPaths(currentPlatform: string): string[] {
     const baseDir = join(__dirname, '..', '..', 'bin');
     
+    // Use wrapper for now until we implement proper FFI
+    const wrapperPath = join(baseDir, 'datacloak-wrapper.js');
+    if (existsSync(wrapperPath)) {
+      return [wrapperPath];
+    }
+    
     switch (currentPlatform) {
       case 'win32':
         return [
@@ -210,14 +216,14 @@ export class NativeDataCloakBridge implements DataCloakBridge {
   private async findSystemBinary(): Promise<string | null> {
     return new Promise((resolve) => {
       const which = platform() === 'win32' ? 'where' : 'which';
-      const process = spawn(which, ['datacloak']);
+      const whichProcess = spawn(which, ['datacloak']);
       
       let output = '';
-      process.stdout.on('data', (data) => {
+      whichProcess.stdout.on('data', (data: Buffer) => {
         output += data.toString();
       });
 
-      process.on('close', (code) => {
+      whichProcess.on('close', (code: number | null) => {
         if (code === 0 && output.trim()) {
           resolve(output.trim().split('\n')[0]);
         } else {
@@ -225,7 +231,7 @@ export class NativeDataCloakBridge implements DataCloakBridge {
         }
       });
 
-      process.on('error', () => resolve(null));
+      whichProcess.on('error', () => resolve(null));
     });
   }
 
@@ -250,22 +256,28 @@ export class NativeDataCloakBridge implements DataCloakBridge {
     }
 
     return new Promise((resolve, reject) => {
-      const process = spawn(this.binaryPath!, ['--json'], {
-        stdio: ['pipe', 'pipe', 'pipe']
+      // Check if we're using the JS wrapper
+      const binaryPath = this.binaryPath!; // We already checked it's not null
+      const isWrapper = binaryPath.endsWith('.js');
+      const executable = isWrapper ? 'node' : binaryPath;
+      const args = isWrapper ? [binaryPath] : ['--json'];
+      
+      const childProcess = spawn(executable, args, {
+        stdio: ['pipe', 'pipe', 'pipe'] as const
       });
 
       let output = '';
       let errorOutput = '';
 
-      process.stdout.on('data', (data) => {
+      childProcess.stdout.on('data', (data: Buffer) => {
         output += data.toString();
       });
 
-      process.stderr.on('data', (data) => {
+      childProcess.stderr.on('data', (data: Buffer) => {
         errorOutput += data.toString();
       });
 
-      process.on('close', (code) => {
+      childProcess.on('close', (code: number | null) => {
         if (code === 0) {
           try {
             const result = JSON.parse(output);
@@ -278,22 +290,22 @@ export class NativeDataCloakBridge implements DataCloakBridge {
         }
       });
 
-      process.on('error', (error) => {
+      childProcess.on('error', (error: Error) => {
         reject(new Error(`Failed to spawn binary process: ${error}`));
       });
 
       // Set timeout
       const timeoutMs = timeout || this.config.timeout || 30000;
       const timer = setTimeout(() => {
-        process.kill();
+        childProcess.kill();
         reject(new Error('Binary command timeout'));
       }, timeoutMs);
 
-      process.on('close', () => clearTimeout(timer));
+      childProcess.on('close', () => clearTimeout(timer));
 
       // Send command to binary
-      process.stdin.write(JSON.stringify(command));
-      process.stdin.end();
+      childProcess.stdin.write(JSON.stringify(command));
+      childProcess.stdin.end();
     });
   }
 

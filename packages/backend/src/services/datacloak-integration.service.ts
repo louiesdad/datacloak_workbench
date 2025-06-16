@@ -1,6 +1,7 @@
-// Mock DataCloak Integration Service for development/testing
+// DataCloak Integration Service for PII-aware sentiment analysis
 import { OpenAIService } from './openai.service';
 import { SecurityService, PIIDetectionResult } from './security.service';
+import { dataCloak } from './datacloak.service';
 import { AppError } from '../middleware/error.middleware';
 
 export interface DataCloakSentimentRequest {
@@ -32,7 +33,7 @@ export class DataCloakIntegrationService {
     this.securityService = new SecurityService();
   }
 
-  setOpenAIService(openaiService: OpenAIService): void {
+  setOpenAIService(openaiService: OpenAIService | undefined): void {
     this.openaiService = openaiService;
   }
 
@@ -48,27 +49,37 @@ export class DataCloakIntegrationService {
     }
 
     try {
-      // Mock PII detection and masking
-      await this.securityService.initialize();
-      const piiResults = await this.securityService.detectPII(request.text);
-      const maskingResult = await this.securityService.maskText(request.text);
+      // Initialize DataCloak
+      await dataCloak.initialize();
+      
+      // Step 1: Detect PII using DataCloak's ML-powered detection
+      const piiResults = await dataCloak.detectPII(request.text);
+      
+      // Step 2: Mask PII to protect sensitive data
+      const maskingResult = await dataCloak.maskText(request.text);
+      
+      // Step 3: Perform sentiment analysis on masked text using OpenAI
+      const sentimentResponse = await this.openaiService.analyzeSentiment({
+        text: maskingResult.maskedText,
+        model: request.model,
+        includeConfidence: request.includeConfidence
+      });
 
-      // Mock sentiment analysis
-      const sentimentResult = this.mockSentimentAnalysis(maskingResult.maskedText);
-
+      // Step 4: Return complete analysis with PII protection info
       return {
-        sentiment: sentimentResult.sentiment,
-        score: sentimentResult.score,
-        confidence: sentimentResult.confidence,
+        sentiment: sentimentResponse.sentiment,
+        score: sentimentResponse.score,
+        confidence: sentimentResponse.confidence || 0.8,
         originalText: request.text,
-        deobfuscatedText: request.text, // In real implementation, this would be deobfuscated
+        deobfuscatedText: request.preserveOriginal ? request.text : maskingResult.maskedText,
         piiDetected: piiResults.length > 0,
         piiItemsFound: piiResults.length,
         processingTimeMs: Date.now() - startTime,
-        tokensUsed: Math.floor(request.text.length / 4), // Mock token usage
+        tokensUsed: sentimentResponse.tokensUsed || Math.floor(request.text.length / 4),
         model: request.model
       };
     } catch (error) {
+      console.error('DataCloak sentiment analysis error:', error);
       throw new AppError('DataCloak sentiment analysis failed', 500, 'DATACLOAK_ERROR');
     }
   }
@@ -76,56 +87,73 @@ export class DataCloakIntegrationService {
   async batchAnalyzeSentiment(texts: string[], model: string): Promise<DataCloakSentimentResult[]> {
     const results: DataCloakSentimentResult[] = [];
 
-    for (const text of texts) {
-      const result = await this.analyzeSentiment({
-        text,
-        model,
-        includeConfidence: true,
-        preserveOriginal: true
-      });
-      results.push(result);
+    // Process in batches with rate limiting (3 requests/second as per DataCloak spec)
+    const batchSize = 3;
+    for (let i = 0; i < texts.length; i += batchSize) {
+      const batch = texts.slice(i, i + batchSize);
+      
+      // Process batch in parallel
+      const batchPromises = batch.map(text => 
+        this.analyzeSentiment({
+          text,
+          model,
+          includeConfidence: true,
+          preserveOriginal: true
+        })
+      );
+      
+      const batchResults = await Promise.all(batchPromises);
+      results.push(...batchResults);
+      
+      // Rate limiting: wait 1 second between batches (3 req/sec)
+      if (i + batchSize < texts.length) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
     }
 
     return results;
   }
 
-  private mockSentimentAnalysis(text: string): { sentiment: 'positive' | 'negative' | 'neutral'; score: number; confidence: number } {
-    // Simple mock sentiment analysis
-    const words = text.toLowerCase().split(/\s+/);
-    const positiveWords = ['good', 'great', 'excellent', 'amazing', 'love', 'best', 'wonderful'];
-    const negativeWords = ['bad', 'terrible', 'awful', 'hate', 'worst', 'horrible'];
-
-    let positiveScore = 0;
-    let negativeScore = 0;
-
-    words.forEach(word => {
-      if (positiveWords.includes(word)) positiveScore++;
-      if (negativeWords.includes(word)) negativeScore++;
-    });
-
-    if (positiveScore > negativeScore) {
-      return { sentiment: 'positive', score: 0.7, confidence: 0.85 };
-    } else if (negativeScore > positiveScore) {
-      return { sentiment: 'negative', score: -0.7, confidence: 0.85 };
-    } else {
-      return { sentiment: 'neutral', score: 0.0, confidence: 0.75 };
+  async testDataCloakFlow(): Promise<any> {
+    try {
+      await dataCloak.initialize();
+      const stats = await dataCloak.getStats();
+      
+      return {
+        success: true,
+        message: 'DataCloak flow test successful',
+        timestamp: new Date().toISOString(),
+        dataCloakVersion: stats.version,
+        dataCloakAvailable: stats.available
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: 'DataCloak flow test failed',
+        error: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      };
     }
   }
 
-  async testDataCloakFlow(): Promise<any> {
-    return {
-      success: true,
-      message: 'Mock DataCloak flow test successful',
-      timestamp: new Date().toISOString()
-    };
-  }
-
   async getProcessingStats(): Promise<any> {
-    return {
-      totalRequests: 156,
-      totalTokensUsed: 45230,
-      averageProcessingTime: 1250,
-      piiDetectionRate: 0.23
-    };
+    try {
+      const stats = await dataCloak.getStats();
+      
+      return {
+        totalRequests: 'N/A', // Would need to be tracked separately
+        totalTokensUsed: 'N/A', // Would need to be tracked separately  
+        averageProcessingTime: 'N/A', // Would need to be tracked separately
+        piiDetectionRate: 'N/A', // Would need to be tracked separately
+        dataCloakVersion: stats.version,
+        dataCloakAvailable: stats.available,
+        dataCloakInitialized: stats.initialized
+      };
+    } catch (error) {
+      return {
+        error: 'Failed to get DataCloak stats',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
   }
 }

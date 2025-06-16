@@ -1,0 +1,1 @@
+/Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/security/datacloak-core/target/release/libdatacloak_core.dylib: /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/security/datacloak-core/src/lib.rs
