@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Full Frontend-Backend Integration Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+        .warning {
+            color: orange;
+            font-weight: bold;
+        }
+        .info {
+            color: blue;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        pre {
+            background-color: #f4f4f4;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+        .file-input-wrapper {
+            margin: 10px 0;
+        }
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .result-box {
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 4px;
+        }
+        .field-list {
+            margin: 10px 0;
+        }
+        .field-item {
+            padding: 5px;
+            margin: 3px 0;
+            background-color: #f9f9f9;
+            border-radius: 3px;
+        }
+        .pii-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            background-color: #ff6b6b;
+            color: white;
+            border-radius: 3px;
+            font-size: 11px;
+            margin-left: 5px;
+        }
+        #log {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Full Frontend-Backend Integration Test</h1>
+    <p>This page simulates the WorkflowManager's file upload flow with real backend integration.</p>
+    
+    <div class="test-section">
+        <h2>1. Select File for Upload</h2>
+        <div class="file-input-wrapper">
+            <input type="file" id="file-input" accept=".csv,.xlsx,.xls,.tsv" />
+            <button onclick="testFullIntegration()">Test Full Upload Flow</button>
+        </div>
+        <div id="file-info"></div>
+    </div>
+    
+    <div class="results-grid">
+        <div class="result-box">
+            <h3>Upload Response</h3>
+            <div id="upload-response"></div>
+        </div>
+        
+        <div class="result-box">
+            <h3>File Profile</h3>
+            <div id="file-profile"></div>
+        </div>
+        
+        <div class="result-box">
+            <h3>Dataset Info</h3>
+            <div id="dataset-info"></div>
+        </div>
+        
+        <div class="result-box">
+            <h3>Security Scan</h3>
+            <div id="security-scan"></div>
+        </div>
+    </div>
+    
+    <div id="log"></div>
+    
+    <script>
+        const BACKEND_URL = 'http://localhost:3001';
+        
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = type;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        // Simulate the platform bridge backend API
+        const mockPlatformBridge = {
+            backend: {
+                uploadData: async (file) => {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    
+                    const response = await fetch(`${BACKEND_URL}/api/v1/data/upload`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const data = await response.json();
+                    if (!response.ok) {
+                        throw new Error(data.error?.message || 'Upload failed');
+                    }
+                    
+                    return data;
+                }
+            }
+        };
+        
+        async function testFullIntegration() {
+            const fileInput = document.getElementById('file-input');
+            
+            if (!fileInput.files || fileInput.files.length === 0) {
+                alert('Please select a file first');
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            const fileInfo = {
+                name: file.name,
+                path: file.name,
+                size: file.size,
+                type: file.type || 'text/csv',
+                lastModified: file.lastModified
+            };
+            
+            // Display file info
+            document.getElementById('file-info').innerHTML = `
+                <div class="info">
+                    <strong>File:</strong> ${fileInfo.name}<br>
+                    <strong>Size:</strong> ${(fileInfo.size / 1024).toFixed(2)} KB<br>
+                    <strong>Type:</strong> ${fileInfo.type}
+                </div>
+            `;
+            
+            log(`Starting upload for ${file.name}...`);
+            
+            try {
+                // Simulate WorkflowManager upload logic
+                log('Uploading to backend...');
+                const uploadResponse = await mockPlatformBridge.backend.uploadData(file);
+                
+                log('Upload successful!', 'success');
+                
+                // Display raw response
+                document.getElementById('upload-response').innerHTML = `
+                    <pre>${JSON.stringify(uploadResponse, null, 2)}</pre>
+                `;
+                
+                if (uploadResponse.data) {
+                    const { dataset, previewData, fieldInfo, securityScan } = uploadResponse.data;
+                    
+                    // Convert to Dataset format (simulating WorkflowManager logic)
+                    const convertedDataset = {
+                        id: dataset.id,
+                        name: dataset.originalFilename || dataset.filename,
+                        filename: dataset.filename,
+                        size: dataset.size,
+                        rowCount: dataset.recordCount || 0,
+                        columnCount: fieldInfo?.length || 0,
+                        uploadedAt: dataset.createdAt,
+                        lastModified: dataset.updatedAt,
+                        fileType: dataset.mimeType?.includes('csv') ? 'csv' : 'xlsx',
+                        status: 'ready'
+                    };
+                    
+                    // Display dataset info
+                    document.getElementById('dataset-info').innerHTML = `
+                        <div class="info">
+                            <strong>ID:</strong> ${convertedDataset.id}<br>
+                            <strong>Rows:</strong> ${convertedDataset.rowCount}<br>
+                            <strong>Columns:</strong> ${convertedDataset.columnCount}<br>
+                            <strong>Status:</strong> <span class="success">${convertedDataset.status}</span>
+                        </div>
+                    `;
+                    
+                    // Create and display file profile
+                    const profile = {
+                        file: fileInfo,
+                        fields: fieldInfo?.map(field => ({
+                            name: field.name,
+                            type: field.type,
+                            samples: field.sampleValues || [],
+                            nullCount: field.nullCount || 0,
+                            totalCount: field.totalCount || dataset.recordCount || 0,
+                            uniqueCount: field.uniqueCount || 0,
+                            piiDetection: {
+                                isPII: field.piiDetected || false,
+                                piiType: field.piiType,
+                                confidence: field.piiDetected ? 0.9 : 0.1
+                            }
+                        })) || [],
+                        rowCount: dataset.recordCount || 0,
+                        processingTime: 0,
+                        errors: []
+                    };
+                    
+                    const fieldsHtml = profile.fields.map(field => `
+                        <div class="field-item">
+                            <strong>${field.name}</strong> (${field.type})
+                            ${field.piiDetection.isPII ? `<span class="pii-badge">PII: ${field.piiDetection.piiType}</span>` : ''}
+                            <br>
+                            <small>
+                                Nulls: ${field.nullCount}/${field.totalCount} | 
+                                Unique: ${field.uniqueCount}
+                            </small>
+                        </div>
+                    `).join('');
+                    
+                    document.getElementById('file-profile').innerHTML = `
+                        <div class="field-list">
+                            ${fieldsHtml}
+                        </div>
+                    `;
+                    
+                    // Display security scan
+                    if (securityScan) {
+                        document.getElementById('security-scan').innerHTML = `
+                            <div class="${securityScan.riskLevel === 'high' ? 'error' : securityScan.riskLevel === 'medium' ? 'warning' : 'info'}">
+                                <strong>Risk Level:</strong> ${securityScan.riskLevel}<br>
+                                <strong>PII Items:</strong> ${securityScan.piiItemsDetected}<br>
+                                <strong>Compliance Score:</strong> ${securityScan.complianceScore}%<br>
+                                <strong>Recommendations:</strong>
+                                <ul>
+                                    ${securityScan.recommendations.map(r => `<li>${r}</li>`).join('')}
+                                </ul>
+                            </div>
+                        `;
+                        
+                        if (securityScan.piiItemsDetected > 0) {
+                            log(`Warning: Found ${securityScan.piiItemsDetected} PII items. Risk level: ${securityScan.riskLevel}`, 'warning');
+                        }
+                    }
+                    
+                    log(`Processing complete! Dataset ID: ${convertedDataset.id}`, 'success');
+                    log(`Total rows: ${convertedDataset.rowCount}, Columns: ${convertedDataset.columnCount}`, 'info');
+                }
+                
+            } catch (error) {
+                log(`Upload failed: ${error.message}`, 'error');
+                document.getElementById('upload-response').innerHTML = `
+                    <div class="error">
+                        <strong>Error:</strong> ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        // Initialize
+        window.addEventListener('load', () => {
+            log('Integration test ready. Select a file and click "Test Full Upload Flow"');
+        });
+    </script>
+</body>
+</html>

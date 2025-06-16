@@ -247,7 +247,7 @@ export const WorkflowManager: React.FC = () => {
   }, []);
 
   // Workflow step handlers
-  const handleFilesSelected = useCallback(async (files: FileInfo[]) => {
+  const handleFilesSelected = useCallback(async (files: FileInfo[], rawFiles?: File[]) => {
     try {
       setLoading(true);
       setSelectedFiles(files);
@@ -259,18 +259,139 @@ export const WorkflowManager: React.FC = () => {
         message: `Processing ${files.length} file(s)...`
       });
 
-      // Simulate realistic file processing time based on file size
-      // This ensures the progress bar is visible and then disappears properly
-      const processingTime = Math.max(500, Math.min(3000, files.length * 200));
-      await new Promise(resolve => setTimeout(resolve, processingTime));
+      const datasets: Dataset[] = [];
+      const profiles: FileProfile[] = [];
+      let totalRows = 0;
 
-      // In production, this would upload files and get real datasets
-      // For now, create mock profiles and datasets
-      const profiles = files.map(createMockFileProfile);
+      // Upload files to backend one by one
+      for (let index = 0; index < files.length; index++) {
+        const fileInfo = files[index];
+        try {
+          // Convert FileInfo to File object for upload
+          let file: File | undefined;
+          
+          if (window.platformBridge.capabilities.platform === 'electron' && window.platformBridge.fileSystem) {
+            // In Electron, read file content from path
+            const content = await window.platformBridge.fileSystem.readFile(fileInfo.path);
+            const blob = new Blob([content], { type: fileInfo.type });
+            file = new File([blob], fileInfo.name, { type: fileInfo.type, lastModified: fileInfo.lastModified });
+          } else if (rawFiles && rawFiles[index]) {
+            // In browser mode, use the raw File object if provided
+            file = rawFiles[index];
+          } else {
+            // Fallback to mock data if no file available
+            const mockProfile = createMockFileProfile(fileInfo);
+            profiles.push(mockProfile);
+            const dataset = createDatasetFromProfile(mockProfile);
+            datasets.push(dataset);
+            totalRows += mockProfile.rowCount;
+            continue;
+          }
+
+          // Upload to backend
+          const uploadResponse = await window.platformBridge.backend.uploadData(file);
+          
+          if (uploadResponse.data) {
+            const { dataset, previewData, fieldInfo, securityScan } = uploadResponse.data as any;
+            
+            // Convert backend dataset format to our Dataset interface
+            const convertedDataset: Dataset = {
+              id: dataset.id,
+              name: dataset.originalFilename || dataset.filename,
+              filename: dataset.filename,
+              size: dataset.size,
+              rowCount: dataset.recordCount || 0,
+              columnCount: fieldInfo?.length || 0,
+              uploadedAt: dataset.createdAt,
+              lastModified: dataset.updatedAt,
+              fileType: dataset.mimeType?.includes('csv') ? 'csv' : 
+                       dataset.mimeType?.includes('excel') || dataset.mimeType?.includes('spreadsheet') ? 'xlsx' : 'txt',
+              status: 'ready' as const,
+              metadata: {
+                hasHeader: true,
+                columns: fieldInfo?.map((field: any) => ({
+                  name: field.name,
+                  type: field.type as any,
+                  nullable: field.nullCount > 0,
+                  unique: field.uniqueCount === field.totalCount,
+                  confidence: field.piiDetected ? 0.9 : 0.95,
+                  hasPII: field.piiDetected || false,
+                  piiTypes: field.piiType ? [field.piiType] : [],
+                  statistics: {
+                    nullCount: field.nullCount || 0,
+                    uniqueCount: field.uniqueCount || 0,
+                    min: field.minLength,
+                    max: field.maxLength,
+                    mean: field.averageLength
+                  }
+                })) || [],
+                preview: previewData || []
+              }
+            };
+            
+            datasets.push(convertedDataset);
+            
+            // Create FileProfile from backend response
+            const profile: FileProfile = {
+              file: fileInfo,
+              fields: fieldInfo?.map((field: any) => ({
+                name: field.name,
+                type: field.type,
+                samples: field.sampleValues || [],
+                nullCount: field.nullCount || 0,
+                totalCount: field.totalCount || dataset.recordCount || 0,
+                uniqueCount: field.uniqueCount || 0,
+                piiDetection: {
+                  isPII: field.piiDetected || false,
+                  piiType: field.piiType,
+                  confidence: field.piiDetected ? 0.9 : 0.1
+                },
+                stats: field.type === 'integer' || field.type === 'float' ? {
+                  min: parseFloat(field.min) || 0,
+                  max: parseFloat(field.max) || 0,
+                  mean: field.avg || 0,
+                  median: field.median || 0
+                } : undefined
+              })) || [],
+              rowCount: dataset.recordCount || 0,
+              processingTime: 0,
+              errors: field.warnings || []
+            };
+            
+            profiles.push(profile);
+            totalRows += dataset.recordCount || 0;
+            
+            // Show security warnings if any
+            if (securityScan && securityScan.piiItemsDetected > 0) {
+              addNotification({
+                type: 'warning',
+                title: 'PII Detected',
+                message: `Found ${securityScan.piiItemsDetected} PII items. Risk level: ${securityScan.riskLevel}. Consider masking sensitive data.`
+              });
+            }
+          } else {
+            throw new Error('Upload failed: Invalid response from server');
+          }
+        } catch (uploadError) {
+          console.error(`Failed to upload ${fileInfo.name}:`, uploadError);
+          
+          // Fallback to mock data if upload fails
+          const mockProfile = createMockFileProfile(fileInfo);
+          profiles.push(mockProfile);
+          const dataset = createDatasetFromProfile(mockProfile);
+          datasets.push(dataset);
+          totalRows += mockProfile.rowCount;
+          
+          addNotification({
+            type: 'warning',
+            title: 'Upload Warning',
+            message: `Failed to upload ${fileInfo.name} to backend. Using mock data for development.`
+          });
+        }
+      }
+
       setFileProfiles(profiles);
-
-      // Create datasets from file profiles for sentiment analysis
-      const datasets = profiles.map(profile => createDatasetFromProfile(profile));
+      
       if (datasets.length > 0) {
         setSelectedDataset(datasets[0]); // Select the first dataset by default
       }
@@ -282,7 +403,7 @@ export const WorkflowManager: React.FC = () => {
       addNotification({
         type: 'success',
         title: 'Upload Successful',
-        message: `Successfully uploaded ${files.length} file(s) with ${profiles.reduce((sum, p) => sum + p.rowCount, 0).toLocaleString()} total rows.`
+        message: `Successfully uploaded ${files.length} file(s) with ${totalRows.toLocaleString()} total rows.`
       });
 
     } catch (error) {
@@ -524,7 +645,7 @@ export const WorkflowManager: React.FC = () => {
             </div>
             
             <DataSourcePicker
-              onFilesSelected={handleFilesSelected}
+              onFilesSelected={(files, rawFiles) => handleFilesSelected(files, rawFiles)}
               maxSizeGB={50}
               acceptedFormats={['.csv', '.xlsx', '.xls', '.tsv']}
             />

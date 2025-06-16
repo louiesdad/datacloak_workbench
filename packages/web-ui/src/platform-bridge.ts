@@ -20,6 +20,7 @@ import type {
   ExportDataRequest,
   ExportDataResponse
 } from '../../../shared/contracts/api';
+import { config } from './config';
 
 export interface PlatformCapabilities {
   hasFileSystemAccess: boolean;
@@ -177,7 +178,7 @@ declare global {
 class BackendAPIClient implements BackendAPI {
   private baseURL: string;
 
-  constructor(baseURL = 'http://localhost:3001') {
+  constructor(baseURL = config.api.baseURL) {
     this.baseURL = baseURL;
   }
 

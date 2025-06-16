@@ -7,7 +7,7 @@ import { useApiErrorHandler, type ApiError } from '../hooks/useApiErrorHandler';
 import './DataSourcePicker.css';
 
 interface DataSourcePickerProps {
-  onFilesSelected: (files: FileInfo[]) => void;
+  onFilesSelected: (files: FileInfo[], rawFiles?: File[]) => void;
   maxSizeGB?: number;
   acceptedFormats?: string[];
 }
@@ -152,7 +152,7 @@ export const DataSourcePicker: React.FC<DataSourcePickerProps> = ({
         .map(result => result.file!);
       
       if (validFiles.length > 0) {
-        onFilesSelected(validFiles);
+        onFilesSelected(validFiles, []);
       }
     } catch (error) {
       const apiError = handleApiError(error, {
@@ -252,7 +252,9 @@ export const DataSourcePicker: React.FC<DataSourcePickerProps> = ({
         .map(result => result.file!);
 
       if (validFiles.length > 0) {
-        onFilesSelected(validFiles);
+        // In browser mode, pass the actual File objects
+        const rawFiles = files.filter((_, index) => mockResults[index].valid);
+        onFilesSelected(validFiles, rawFiles);
       }
     }
   }, [handleFilesSelected, maxSizeGB, acceptedFormats]);
@@ -436,7 +438,9 @@ export const DataSourcePicker: React.FC<DataSourcePickerProps> = ({
             .map(result => result.file!);
 
           if (validFiles.length > 0) {
-            onFilesSelected(validFiles);
+            // Pass the actual File objects for browser upload
+            const rawFiles = files.filter((_, index) => mockResults[index].valid);
+            onFilesSelected(validFiles, rawFiles);
           }
 
           // Reset the input

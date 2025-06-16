@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Backend Upload Integration</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+        .info {
+            color: blue;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        pre {
+            background-color: #f4f4f4;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .upload-area {
+            border: 2px dashed #ccc;
+            padding: 20px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        #results {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Backend Upload Integration Test</h1>
+    
+    <div class="test-section">
+        <h2>1. Backend Health Check</h2>
+        <button onclick="checkBackendHealth()">Check Backend Status</button>
+        <div id="health-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. File Upload Test</h2>
+        <div class="upload-area">
+            <input type="file" id="file-input" accept=".csv,.xlsx,.xls,.tsv" />
+            <button onclick="testFileUpload()">Upload to Backend</button>
+        </div>
+        <div id="upload-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. List Datasets</h2>
+        <button onclick="listDatasets()">Get Datasets</button>
+        <div id="datasets-result"></div>
+    </div>
+    
+    <div id="results"></div>
+    
+    <script>
+        const BACKEND_URL = 'http://localhost:3001';
+        
+        function log(message, type = 'info') {
+            const results = document.getElementById('results');
+            const entry = document.createElement('div');
+            entry.className = type;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            results.appendChild(entry);
+        }
+        
+        async function checkBackendHealth() {
+            const resultDiv = document.getElementById('health-result');
+            try {
+                log('Checking backend health...');
+                const response = await fetch(`${BACKEND_URL}/api/v1/health/status`);
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <div class="success">✅ Backend is healthy!</div>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+                log('Backend health check successful', 'success');
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">❌ Backend connection failed: ${error.message}</div>
+                    <p>Make sure the backend is running on port 3001</p>
+                `;
+                log(`Backend health check failed: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testFileUpload() {
+            const fileInput = document.getElementById('file-input');
+            const resultDiv = document.getElementById('upload-result');
+            
+            if (!fileInput.files || fileInput.files.length === 0) {
+                resultDiv.innerHTML = '<div class="error">Please select a file first</div>';
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            log(`Uploading file: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`);
+            
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                const response = await fetch(`${BACKEND_URL}/api/v1/data/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="success">✅ Upload successful!</div>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                    log('File upload successful', 'success');
+                    log(`Dataset ID: ${data.data.id}`);
+                    log(`Rows: ${data.data.rowCount}, Columns: ${data.data.columnCount}`);
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">❌ Upload failed: ${data.error?.message || 'Unknown error'}</div>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                    log(`Upload failed: ${data.error?.message}`, 'error');
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">❌ Upload error: ${error.message}</div>
+                `;
+                log(`Upload error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function listDatasets() {
+            const resultDiv = document.getElementById('datasets-result');
+            try {
+                log('Fetching datasets...');
+                const response = await fetch(`${BACKEND_URL}/api/v1/data/datasets`);
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="success">✅ Found ${data.pagination.total} datasets</div>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                    log(`Found ${data.pagination.total} datasets`, 'success');
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">❌ Failed to fetch datasets</div>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                    log('Failed to fetch datasets', 'error');
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">❌ Error: ${error.message}</div>
+                `;
+                log(`Error fetching datasets: ${error.message}`, 'error');
+            }
+        }
+        
+        // Test backend on page load
+        window.addEventListener('load', () => {
+            log('Page loaded, checking backend connection...');
+            checkBackendHealth();
+        });
+    </script>
+</body>
+</html>
