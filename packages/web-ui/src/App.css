@@ -412,3 +412,64 @@
     border-top-color: #334155;
   }
 }
+
+/* Admin Panel Modal */
+.admin-panel-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-panel-modal .modal-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+.admin-panel-modal .modal-content.admin-modal {
+  position: relative;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  overflow: auto;
+}
+
+.admin-panel-modal .modal-close {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 10001;
+  background: white;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 24px;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.admin-panel-modal .modal-close:hover {
+  background: #f44336;
+  color: white;
+  transform: rotate(90deg);
+}

@@ -1,0 +1,270 @@
+.connection-status-indicator {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.connection-status-indicator.compact {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f9fafb;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+.connection-status-indicator.full {
+  padding: 16px;
+}
+
+.connection-status-indicator.loading {
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #6b7280;
+}
+
+/* Compact Mode */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-dot.healthy {
+  background-color: #10b981;
+}
+
+.status-dot.degraded {
+  background-color: #f59e0b;
+}
+
+.status-dot.down {
+  background-color: #ef4444;
+}
+
+.latency-text {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 500;
+  min-width: 40px;
+}
+
+.connection-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.connection-icon.connected {
+  color: #10b981;
+}
+
+.connection-icon.disconnected {
+  color: #ef4444;
+}
+
+/* Full Mode */
+.status-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.connection-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.status-icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.status-icon.connected {
+  color: #10b981;
+}
+
+.status-icon.disconnected {
+  color: #ef4444;
+}
+
+.status-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.status-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.status-subtitle {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.connection-stats {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.stat-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* Services Grid */
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.service-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+.service-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.service-icon {
+  width: 16px;
+  height: 16px;
+  color: #6b7280;
+}
+
+.service-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  text-transform: capitalize;
+}
+
+.service-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.service-indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+/* Latency Chart */
+.latency-chart {
+  margin-bottom: 16px;
+}
+
+.latency-chart h4 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+}
+
+/* Error List */
+.error-list h4 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.errors {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.error-item {
+  padding: 8px 12px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #991b1b;
+  line-height: 1.4;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .status-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  
+  .services-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .connection-stats {
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+  }
+}
+
+/* Animation for status dots */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.status-dot.healthy {
+  animation: pulse 2s infinite;
+}
+
+.service-indicator {
+  transition: background-color 0.3s ease;
+}
+
+.service-item {
+  transition: border-color 0.2s ease;
+}
+
+.service-item:hover {
+  border-color: #d1d5db;
+}

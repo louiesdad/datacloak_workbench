@@ -10,7 +10,9 @@
       "Bash(cat:*)",
       "Bash(grep:*)",
       "Bash(find:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(git reset:*)",
+      "Bash(curl:*)"
     ],
     "deny": []
   }

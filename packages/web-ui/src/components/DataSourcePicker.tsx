@@ -1,9 +1,10 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import type { FileInfo } from '../platform-bridge';
 import { useFileProcessor, usePerformanceMonitor } from '../hooks/useWebWorker';
 import { ProgressIndicator } from './ProgressIndicator';
 import { ApiErrorDisplay } from './ApiErrorDisplay';
 import { useApiErrorHandler, type ApiError } from '../hooks/useApiErrorHandler';
+import { DragDropEnhancer, FilePreview, FileSystemAccessAPI } from '../file-system-access';
 import './DataSourcePicker.css';
 
 interface DataSourcePickerProps {
@@ -27,17 +28,58 @@ export const DataSourcePicker: React.FC<DataSourcePickerProps> = ({
   const [isValidating, setIsValidating] = useState(false);
   const [validationResults, setValidationResults] = useState<FileValidationResult[]>([]);
   const [apiError, setApiError] = useState<ApiError | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewData, setPreviewData] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const dropZoneRef = useRef<HTMLDivElement>(null);
   const { handleApiError } = useApiErrorHandler();
   
   // Web Worker for large file processing
   const fileProcessor = useFileProcessor();
   const performanceMetrics = usePerformanceMonitor();
   
+  // File System Access API instance
+  const [fileSystemAPI] = useState(() => new FileSystemAccessAPI());
+  const [dragDropEnhancer, setDragDropEnhancer] = useState<DragDropEnhancer | null>(null);
+  
   // Use Web Worker for files larger than 10MB
   const shouldUseWebWorker = useCallback((file: File) => {
     return file.size > 10 * 1024 * 1024; // 10MB threshold
   }, []);
+
+  // Set up enhanced drag-and-drop
+  useEffect(() => {
+    if (dropZoneRef.current && !dragDropEnhancer) {
+      const enhancer = new DragDropEnhancer(
+        dropZoneRef.current,
+        async (files) => {
+          // Handle dropped files with enhanced functionality
+          setIsValidating(true);
+          try {
+            const validFiles = files.filter(file => {
+              const extension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+              return acceptedFormats.includes(extension);
+            });
+            
+            if (validFiles.length > 0) {
+              onFilesSelected(validFiles);
+            }
+          } finally {
+            setIsValidating(false);
+          }
+        },
+        fileSystemAPI
+      );
+      
+      setDragDropEnhancer(enhancer);
+    }
+    
+    return () => {
+      if (dragDropEnhancer) {
+        dragDropEnhancer.destroy();
+      }
+    };
+  }, [dropZoneRef.current, fileSystemAPI, acceptedFormats, onFilesSelected]);
 
   const formatFileSize = (bytes: number): string => {
     const units = ['B', 'KB', 'MB', 'GB'];
@@ -260,8 +302,44 @@ export const DataSourcePicker: React.FC<DataSourcePickerProps> = ({
   }, [handleFilesSelected, maxSizeGB, acceptedFormats]);
 
   const handleFileSelect = useCallback(async () => {
-    // Check if platform bridge is available (Electron environment)
-    if (window.platformBridge?.fileSystem?.selectFiles) {
+    // Use File System Access API if available
+    if (window.platformBridge?.capabilities?.hasFileSystemAccess) {
+      try {
+        const filters = [{
+          name: 'Data Files',
+          extensions: acceptedFormats.map(ext => ext.replace('.', ''))
+        }];
+
+        const filePaths = await fileSystemAPI.selectFiles(filters);
+        if (filePaths.length > 0) {
+          // Get file handles for preview
+          const fileInfos: FileInfo[] = [];
+          for (const path of filePaths) {
+            const info = await fileSystemAPI.getFileInfo(path);
+            fileInfos.push(info);
+          }
+          
+          // Show preview for first file
+          if (fileInfos.length > 0) {
+            const file = await (fileSystemAPI as any).getFileHandle(fileInfos[0].path);
+            if (file) {
+              const preview = await FilePreview.generatePreview(file);
+              setPreviewData(preview);
+              setShowPreview(true);
+            }
+          }
+          
+          onFilesSelected(fileInfos);
+        }
+      } catch (error) {
+        console.error('Error selecting files:', error);
+        // Fallback to browser file input on error
+        if (fileInputRef.current) {
+          fileInputRef.current.click();
+        }
+      }
+    } else if (window.platformBridge?.fileSystem?.selectFiles) {
+      // Electron environment
       try {
         const filters = [{
           name: 'Data Files',
@@ -274,7 +352,6 @@ export const DataSourcePicker: React.FC<DataSourcePickerProps> = ({
         }
       } catch (error) {
         console.error('Error selecting files:', error);
-        // Fallback to browser file input on error
         if (fileInputRef.current) {
           fileInputRef.current.click();
         }
@@ -285,7 +362,7 @@ export const DataSourcePicker: React.FC<DataSourcePickerProps> = ({
         fileInputRef.current.click();
       }
     }
-  }, [handleFilesSelected, acceptedFormats]);
+  }, [handleFilesSelected, acceptedFormats, fileSystemAPI]);
 
 
   return (
@@ -295,6 +372,7 @@ export const DataSourcePicker: React.FC<DataSourcePickerProps> = ({
         <p>Upload your data files for sentiment analysis processing</p>
         
         <div 
+          ref={dropZoneRef}
           className={`drop-zone ${isDragOver ? 'drag-over' : ''}`}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
@@ -447,6 +525,49 @@ export const DataSourcePicker: React.FC<DataSourcePickerProps> = ({
           e.target.value = '';
         }}
       />
+
+      {/* File Preview Modal */}
+      {showPreview && previewData && (
+        <div className="file-preview-modal">
+          <div className="preview-content">
+            <h3>File Preview</h3>
+            {previewData.error ? (
+              <div className="preview-error">{previewData.error}</div>
+            ) : (
+              <>
+                {previewData.headers && (
+                  <div className="preview-table">
+                    <table>
+                      <thead>
+                        <tr>
+                          {previewData.headers.map((header: string, i: number) => (
+                            <th key={i}>{header}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {previewData.rows?.map((row: any, i: number) => (
+                          <tr key={i}>
+                            {previewData.headers.map((header: string, j: number) => (
+                              <td key={j}>{row[header]}</td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+                {previewData.totalRows && (
+                  <div className="preview-info">
+                    Total rows: {previewData.totalRows}
+                  </div>
+                )}
+              </>
+            )}
+            <button onClick={() => setShowPreview(false)}>Close</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

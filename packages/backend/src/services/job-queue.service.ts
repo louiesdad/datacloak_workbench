@@ -2,6 +2,7 @@ import { EventEmitter } from 'events';
 import { v4 as uuidv4 } from 'uuid';
 import { AppError } from '../middleware/error.middleware';
 import { getSSEService } from './sse.service';
+import { eventEmitter, EventTypes } from './event.service';
 
 export interface Job {
   id: string;
@@ -64,6 +65,15 @@ export class JobQueueService extends EventEmitter {
 
     this.jobs.set(jobId, job);
     this.emit('job:added', job);
+    
+    // Emit WebSocket event for job creation
+    eventEmitter.emit(EventTypes.JOB_CREATED, {
+      jobId,
+      type,
+      status: job.status,
+      priority: job.priority,
+      createdAt: job.createdAt
+    });
 
     // Start processing if not already running
     if (!this.isProcessing) {
@@ -254,6 +264,14 @@ export class JobQueueService extends EventEmitter {
       // Send SSE progress event
       const sseService = getSSEService();
       sseService.sendJobProgress(job.id, job.progress, `Processing ${job.type}`);
+      
+      // Emit WebSocket event for job progress
+      eventEmitter.emit(EventTypes.JOB_PROGRESS, {
+        jobId: job.id,
+        type: job.type,
+        progress: job.progress,
+        status: job.status
+      });
     };
 
     try {
@@ -278,6 +296,15 @@ export class JobQueueService extends EventEmitter {
     // Send SSE completion event
     const sseService = getSSEService();
     sseService.sendJobStatus(job.id, 'completed', result);
+    
+    // Emit WebSocket event for job completion
+    eventEmitter.emit(EventTypes.JOB_COMPLETE, {
+      jobId: job.id,
+      type: job.type,
+      status: job.status,
+      result: result,
+      completedAt: job.completedAt
+    });
   }
 
   /**
@@ -293,6 +320,15 @@ export class JobQueueService extends EventEmitter {
     // Send SSE failure event
     const sseService = getSSEService();
     sseService.sendJobStatus(job.id, 'failed', undefined, error);
+    
+    // Emit WebSocket event for job failure
+    eventEmitter.emit(EventTypes.JOB_FAILED, {
+      jobId: job.id,
+      type: job.type,
+      status: job.status,
+      error: error,
+      completedAt: job.completedAt
+    });
   }
 
   /**

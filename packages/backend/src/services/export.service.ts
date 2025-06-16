@@ -256,7 +256,7 @@ export class ExportService {
   /**
    * Get data chunk from database
    */
-  private async getDataChunk(
+  protected async getDataChunk(
     tableName: string,
     options: ExportOptions,
     offset: number,

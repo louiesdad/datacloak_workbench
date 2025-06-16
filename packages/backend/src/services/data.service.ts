@@ -6,7 +6,8 @@ import * as path from 'path';
 import csv from 'csv-parser';
 import * as XLSX from 'xlsx';
 import { SecurityService } from './security.service';
-import { FileStreamService, StreamProgress } from './file-stream.service';
+import { FileStreamService } from './file-stream.service';
+import { DataCloakStreamService, DataCloakStreamOptions } from './datacloak-stream.service';
 
 export interface Dataset {
   id: string;
@@ -49,6 +50,24 @@ export interface FieldStatistics {
   warnings?: string[];
 }
 
+export interface StreamingOptions {
+  chunkSize?: number; // 8KB to 4MB
+  maxMemoryUsage?: number; // Maximum memory to use (MB)
+  batchSize?: number; // Records per batch
+  enableProgressTracking?: boolean;
+  onProgress?: (progress: StreamProgress) => void;
+}
+
+export interface StreamProgress {
+  processedBytes: number;
+  totalBytes: number;
+  processedRecords: number;
+  estimatedTotalRecords?: number;
+  percentComplete: number;
+  bytesPerSecond: number;
+  estimatedTimeRemaining?: number;
+}
+
 export interface UploadResult {
   dataset: Dataset;
   previewData: any[];
@@ -64,11 +83,13 @@ export interface UploadResult {
 export class DataService {
   private securityService: SecurityService;
   private fileStreamService: FileStreamService;
+  private dataCloakStreamService: DataCloakStreamService;
   private static readonly LARGE_FILE_THRESHOLD = 100 * 1024 * 1024; // 100MB
 
   constructor() {
     this.securityService = new SecurityService();
     this.fileStreamService = new FileStreamService();
+    this.dataCloakStreamService = new DataCloakStreamService();
   }
   private getUploadDir(): string {
     const uploadDir = path.join(process.cwd(), 'data', 'uploads');
@@ -235,11 +256,17 @@ export class DataService {
     let allData: any[] = [];
     let recordCount = 0;
     let previewComplete = false;
+    let piiDetectionInfo: Record<string, any> = {};
 
-    const progressCallback = (progress: StreamProgress) => {
-      console.log(`Processing: ${progress.percentComplete.toFixed(1)}% complete, ${progress.rowsProcessed} rows processed`);
-      if (progress.averageRowsPerSecond) {
-        console.log(`Speed: ${Math.round(progress.averageRowsPerSecond)} rows/second`);
+    // Get optimal chunk size for this file
+    const optimalChunkSize = await this.dataCloakStreamService.getOptimalChunkSize(filePath);
+    console.log(`Using optimal chunk size: ${Math.round(optimalChunkSize / 1024 / 1024)}MB for file processing`);
+
+    const progressCallback = (progress: any) => {
+      console.log(`Processing: ${progress.percentComplete.toFixed(1)}% complete, ${progress.processedRecords || progress.rowsProcessed || 0} rows processed`);
+      if (progress.averageRowsPerSecond || progress.bytesPerSecond) {
+        const speed = progress.averageRowsPerSecond || Math.round(progress.bytesPerSecond / 100); // Estimate rows from bytes
+        console.log(`Speed: ${Math.round(speed)} rows/second`);
       }
       if (progress.estimatedTimeRemaining) {
         const remainingMinutes = Math.round(progress.estimatedTimeRemaining / 1000 / 60);
@@ -250,11 +277,14 @@ export class DataService {
     const chunkCallback = async (chunkResult: any) => {
       recordCount += chunkResult.processedRows;
       
+      // Use masked data if available (from DataCloak processing)
+      const dataToProcess = chunkResult.maskedData || chunkResult.data;
+      
       // Collect preview data from first chunk
-      if (!previewComplete && chunkResult.data.length > 0) {
+      if (!previewComplete && dataToProcess.length > 0) {
         const remainingPreviewNeeded = previewSize - previewData.length;
         if (remainingPreviewNeeded > 0) {
-          previewData.push(...chunkResult.data.slice(0, remainingPreviewNeeded));
+          previewData.push(...dataToProcess.slice(0, remainingPreviewNeeded));
           if (previewData.length >= previewSize) {
             previewComplete = true;
           }
@@ -263,41 +293,122 @@ export class DataService {
 
       // For field analysis, we need a sample of data from across the file
       // Take a sample from each chunk to get representative field info
-      if (chunkResult.data.length > 0) {
-        const sampleSize = Math.min(50, chunkResult.data.length);
-        allData.push(...chunkResult.data.slice(0, sampleSize));
+      if (dataToProcess.length > 0) {
+        const sampleSize = Math.min(50, dataToProcess.length);
+        allData.push(...dataToProcess.slice(0, sampleSize));
         
         // Limit total sample size to prevent memory issues
         if (allData.length > 10000) {
           allData = allData.slice(0, 10000);
         }
       }
+
+      // Collect PII detection info from DataCloak
+      if (chunkResult.piiDetectionResults) {
+        chunkResult.piiDetectionResults.forEach((pii: any) => {
+          if (!piiDetectionInfo[pii.fieldName]) {
+            piiDetectionInfo[pii.fieldName] = {
+              piiDetected: true,
+              piiTypes: new Set(),
+              confidence: 0
+            };
+          }
+          piiDetectionInfo[pii.fieldName].piiTypes.add(pii.piiType);
+          piiDetectionInfo[pii.fieldName].confidence = Math.max(
+            piiDetectionInfo[pii.fieldName].confidence,
+            pii.confidence
+          );
+        });
+      }
     };
 
+    const piiDetectedCallback = (piiResults: any[]) => {
+      console.log(`PII detected in chunk: ${piiResults.length} items found`);
+    };
+
+    // Create memory monitor for large file processing
+    const memoryMonitor = this.dataCloakStreamService.createMemoryMonitor();
+    memoryMonitor.start();
+
     try {
-      const streamResult = await this.fileStreamService.streamProcessFile(filePath, {
+      const streamResult = await this.dataCloakStreamService.streamProcessWithDataCloak(filePath, {
         mimeType,
         onProgress: progressCallback,
         onChunk: chunkCallback,
-        chunkSize: 256 * 1024 * 1024 // 256MB chunks
+        onPIIDetected: piiDetectedCallback,
+        chunkSize: optimalChunkSize,
+        preservePII: false, // Mask PII by default for security
+        maskingOptions: {
+          email: true,
+          phone: true,
+          ssn: true,
+          creditCard: true,
+          address: true,
+          name: true
+        }
       });
 
+      memoryMonitor.stop();
+      const memoryStats = memoryMonitor.getStats();
+      
       console.log(`Streaming complete: ${streamResult.totalRows} rows processed in ${streamResult.processingTime}ms`);
+      console.log(`Memory usage - Peak: ${memoryStats.peak.toFixed(2)}MB, Final: ${memoryStats.current.toFixed(2)}MB`);
+      console.log(`PII Summary: ${streamResult.piiSummary.totalPIIItems} items found across ${streamResult.piiSummary.fieldsWithPII.length} fields`);
 
+      // Analyze fields with PII information
       const fieldInfo = this.analyzeFields(allData);
+      
+      // Enhance field info with DataCloak PII detection results
+      const enhancedFieldInfo = fieldInfo.map(field => {
+        const piiInfo = piiDetectionInfo[field.name];
+        if (piiInfo) {
+          return {
+            ...field,
+            piiDetected: true,
+            piiType: Array.from(piiInfo.piiTypes).join(', '),
+            warnings: [
+              ...(field.warnings || []),
+              `Contains PII: ${Array.from(piiInfo.piiTypes).join(', ')} (confidence: ${Math.round(piiInfo.confidence * 100)}%)`
+            ]
+          };
+        }
+        return field;
+      });
 
       return {
         previewData,
-        fieldInfo,
+        fieldInfo: enhancedFieldInfo,
         recordCount: streamResult.totalRows,
       };
     } catch (error) {
-      console.error('Streaming file processing failed, falling back to regular parsing:', error);
-      // Fallback to regular parsing for smaller files
-      if (mimeType === 'text/csv' || mimeType === 'text/plain') {
-        return this.parseCsvFile(filePath, previewSize);
-      } else {
-        return this.parseExcelFile(filePath, previewSize);
+      memoryMonitor.stop();
+      console.error('DataCloak streaming failed, falling back to regular streaming:', error);
+      
+      // Fallback to regular file stream service if DataCloak fails
+      try {
+        const streamResult = await this.fileStreamService.streamProcessFile(filePath, {
+          mimeType,
+          onProgress: progressCallback,
+          onChunk: chunkCallback,
+          chunkSize: optimalChunkSize
+        });
+
+        console.log(`Fallback streaming complete: ${streamResult.totalRows} rows processed`);
+        const fieldInfo = this.analyzeFields(allData);
+
+        return {
+          previewData,
+          fieldInfo,
+          recordCount: streamResult.totalRows,
+        };
+      } catch (fallbackError) {
+        console.error('Streaming file processing failed, falling back to regular parsing:', fallbackError);
+        // Final fallback to regular parsing for smaller files
+        if (mimeType === 'text/csv' || mimeType === 'text/plain') {
+          return this.parseCsvFile(filePath, previewSize);
+        } else {
+          return this.parseExcelFile(filePath, previewSize);
+        }
       }
     }
   }
@@ -307,14 +418,14 @@ export class DataService {
     fieldInfo: FieldStatistics[];
     recordCount: number;
   }> {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       const results: any[] = [];
       let lineCount = 0;
       let headerCount = 0;
       
       // First, validate the CSV structure
       try {
-        this.validateCsvStructure(filePath);
+        await this.validateCsvStructure(filePath);
       } catch (error) {
         reject(error);
         return;
@@ -405,16 +516,284 @@ export class DataService {
     };
   }
 
-  private validateCsvStructure(filePath: string): void {
-    const fileContent = fs.readFileSync(filePath, 'utf8');
+  /**
+   * Stream process large files with configurable chunk sizes (8KB-4MB)
+   */
+  async processLargeFileStream(
+    filePath: string, 
+    options: StreamingOptions = {}
+  ): Promise<{ fieldInfo: FieldStatistics[]; recordCount: number; sampleData: any[] }> {
+    const fileExtension = path.extname(filePath).toLowerCase();
     
-    // Check if file is empty
-    if (!fileContent || fileContent.trim().length === 0) {
+    // Route to appropriate streaming processor
+    if (fileExtension === '.csv' || fileExtension === '.tsv') {
+      return this.processCSVStream(filePath, options);
+    } else if (fileExtension === '.xlsx' || fileExtension === '.xls') {
+      return this.processExcelStream(filePath, options);
+    } else {
+      throw new AppError(`Unsupported file format: ${fileExtension}`, 400, 'UNSUPPORTED_FORMAT');
+    }
+  }
+
+  /**
+   * Stream process CSV files with configurable chunk sizes
+   */
+  private async processCSVStream(
+    filePath: string, 
+    options: StreamingOptions = {}
+  ): Promise<{ fieldInfo: FieldStatistics[]; recordCount: number; sampleData: any[] }> {
+    // Validate chunk size (8KB to 4MB)
+    const chunkSize = Math.max(8 * 1024, Math.min(options.chunkSize || 64 * 1024, 4 * 1024 * 1024));
+    const batchSize = options.batchSize || 1000;
+    const maxMemoryUsage = (options.maxMemoryUsage || 500) * 1024 * 1024; // Convert MB to bytes
+    
+    const stats = fs.statSync(filePath);
+    const totalBytes = stats.size;
+    const startTime = Date.now();
+    
+    let processedBytes = 0;
+    let processedRecords = 0;
+    let allData: any[] = [];
+    let sampleData: any[] = [];
+    const maxSampleSize = 1000;
+    
+    return new Promise((resolve, reject) => {
+      const stream = fs.createReadStream(filePath, { 
+        encoding: 'utf8', 
+        highWaterMark: chunkSize 
+      });
+      
+      stream
+        .pipe(csv())
+        .on('data', (record: any) => {
+          processedRecords++;
+          
+          // Keep sample data for analysis
+          if (sampleData.length < maxSampleSize) {
+            sampleData.push(record);
+          }
+          
+          // Store all data for smaller files, or sample for large files
+          if (processedBytes < maxMemoryUsage || allData.length < 10000) {
+            allData.push(record);
+          }
+          
+          // Track progress
+          if (options.enableProgressTracking && options.onProgress && processedRecords % 100 === 0) {
+            const currentTime = Date.now();
+            const elapsedTime = (currentTime - startTime) / 1000;
+            const bytesPerSecond = processedBytes / elapsedTime;
+            const percentComplete = Math.min((processedBytes / totalBytes) * 100, 100);
+            
+            options.onProgress({
+              processedBytes,
+              totalBytes,
+              processedRecords,
+              percentComplete,
+              bytesPerSecond,
+              estimatedTimeRemaining: elapsedTime > 0 ? ((totalBytes - processedBytes) / bytesPerSecond) : undefined
+            });
+          }
+        })
+        .on('end', () => {
+          try {
+            const fieldInfo = this.analyzeFields(sampleData);
+            resolve({
+              fieldInfo,
+              recordCount: processedRecords,
+              sampleData: sampleData.slice(0, 100) // Return first 100 for preview
+            });
+          } catch (error) {
+            reject(error);
+          }
+        })
+        .on('error', (error) => {
+          reject(new AppError(`Failed to process CSV file: ${error.message}`, 500, 'FILE_PROCESSING_ERROR'));
+        });
+      
+      // Track bytes processed
+      stream.on('data', (chunk: string | Buffer) => {
+        processedBytes += Buffer.byteLength(chunk.toString(), 'utf8');
+      });
+    });
+  }
+
+  /**
+   * Stream process Excel files with configurable chunk sizes and memory management
+   */
+  private async processExcelStream(
+    filePath: string, 
+    options: StreamingOptions = {}
+  ): Promise<{ fieldInfo: FieldStatistics[]; recordCount: number; sampleData: any[] }> {
+    const batchSize = options.batchSize || 1000;
+    const maxMemoryUsage = (options.maxMemoryUsage || 500) * 1024 * 1024; // Convert MB to bytes
+    
+    const stats = fs.statSync(filePath);
+    const totalBytes = stats.size;
+    const startTime = Date.now();
+    
+    let processedBytes = 0;
+    let processedRecords = 0;
+    let sampleData: any[] = [];
+    const maxSampleSize = 1000;
+    
+    try {
+      // Read Excel file with streaming options
+      const workbook = XLSX.readFile(filePath, {
+        dense: false, // Use object mode for memory efficiency
+        cellDates: true,
+        cellNF: false,
+        cellText: false
+      });
+      
+      const sheetName = workbook.SheetNames[0];
+      if (!sheetName) {
+        throw new AppError('Excel file contains no worksheets', 400, 'INVALID_EXCEL');
+      }
+      
+      const worksheet = workbook.Sheets[sheetName];
+      
+      // Convert to stream-like processing
+      const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1:A1');
+      const totalRows = range.e.r - range.s.r + 1;
+      
+      // Process Excel data in batches to manage memory
+      const headers: string[] = [];
+      let currentRow = range.s.r;
+      
+      // Get headers from first row
+      for (let col = range.s.c; col <= range.e.c; col++) {
+        const cellAddress = XLSX.utils.encode_cell({ r: range.s.r, c: col });
+        const cell = worksheet[cellAddress];
+        headers.push(cell ? String(cell.v) : `Column_${col + 1}`);
+      }
+      
+      currentRow++; // Skip header row
+      
+      // Process data in batches
+      while (currentRow <= range.e.r) {
+        const batchEnd = Math.min(currentRow + batchSize - 1, range.e.r);
+        const batchData: any[] = [];
+        
+        // Process batch of rows
+        for (let row = currentRow; row <= batchEnd; row++) {
+          const record: any = {};
+          
+          for (let col = range.s.c; col <= range.e.c; col++) {
+            const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
+            const cell = worksheet[cellAddress];
+            const header = headers[col - range.s.c];
+            
+            if (cell) {
+              record[header] = cell.v;
+            } else {
+              record[header] = null;
+            }
+          }
+          
+          batchData.push(record);
+          processedRecords++;
+        }
+        
+        // Add to sample data if we haven't reached limit
+        for (const record of batchData) {
+          if (sampleData.length < maxSampleSize) {
+            sampleData.push(record);
+          } else {
+            break;
+          }
+        }
+        
+        // Track progress
+        if (options.enableProgressTracking && options.onProgress) {
+          processedBytes = Math.round((processedRecords / totalRows) * totalBytes);
+          const currentTime = Date.now();
+          const elapsedTime = (currentTime - startTime) / 1000;
+          const bytesPerSecond = processedBytes / elapsedTime;
+          const percentComplete = Math.min((processedRecords / totalRows) * 100, 100);
+          
+          options.onProgress({
+            processedBytes,
+            totalBytes,
+            processedRecords,
+            estimatedTotalRecords: totalRows,
+            percentComplete,
+            bytesPerSecond,
+            estimatedTimeRemaining: elapsedTime > 0 ? ((totalRows - processedRecords) / (processedRecords / elapsedTime)) : undefined
+          });
+        }
+        
+        // Memory management: clear batch data if memory usage is high
+        if (process.memoryUsage().heapUsed > maxMemoryUsage) {
+          // Force garbage collection if available
+          if ((global as any).gc) {
+            (global as any).gc();
+          }
+        }
+        
+        currentRow = batchEnd + 1;
+        
+        // Allow other operations to proceed
+        await new Promise(resolve => setImmediate(resolve));
+      }
+      
+      const fieldInfo = this.analyzeFields(sampleData);
+      
+      return {
+        fieldInfo,
+        recordCount: processedRecords,
+        sampleData: sampleData.slice(0, 100) // Return first 100 for preview
+      };
+      
+    } catch (error) {
+      throw new AppError(`Failed to process Excel file: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, 'EXCEL_PROCESSING_ERROR');
+    }
+  }
+
+  private async validateCsvStructure(filePath: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const stream = fs.createReadStream(filePath, { encoding: 'utf8', highWaterMark: 16 * 1024 }); // 16KB chunks
+      let firstChunk = '';
+      let hasReadFirstChunk = false;
+      
+      stream.on('data', (chunk: string | Buffer) => {
+        const chunkStr = chunk.toString();
+        if (!hasReadFirstChunk) {
+          firstChunk += chunkStr;
+          hasReadFirstChunk = true;
+          
+          // Only read enough to validate structure (first few lines)
+          if (firstChunk.length > 1024) { // 1KB should be enough for validation
+            stream.destroy(); // Stop reading more data
+            this.validateCsvChunk(firstChunk);
+            resolve();
+          }
+        }
+      });
+      
+      stream.on('end', () => {
+        if (firstChunk.length === 0) {
+          reject(new AppError('CSV file is empty', 400, 'MALFORMED_CSV'));
+        } else {
+          this.validateCsvChunk(firstChunk);
+          resolve();
+        }
+      });
+      
+      stream.on('error', (error) => {
+        reject(new AppError(`Failed to read CSV file: ${error.message}`, 400, 'FILE_READ_ERROR'));
+      });
+    });
+  }
+
+  private validateCsvChunk(chunk: string): void {
+    // Check if chunk is empty
+    if (!chunk || chunk.trim().length === 0) {
       throw new AppError('CSV file is empty', 400, 'MALFORMED_CSV');
     }
     
     // Check for common CSV issues
-    const lines = fileContent.split('\n').filter(line => line.trim().length > 0);
+    const lines = chunk.split('\n').filter(line => line.trim().length > 0);
     
     if (lines.length === 0) {
       throw new AppError('CSV file contains no valid lines', 400, 'MALFORMED_CSV');
@@ -430,7 +809,7 @@ export class DataService {
     
     // Check for binary content (indicates this might not be a text CSV)
     const binaryPattern = /[\x00-\x08\x0E-\x1F\x7F-\xFF]/;
-    if (binaryPattern.test(fileContent.substring(0, 1000))) {
+    if (binaryPattern.test(chunk.substring(0, 1000))) {
       throw new AppError('File contains binary data and is not a valid CSV format', 400, 'MALFORMED_CSV');
     }
   }

@@ -1,0 +1,116 @@
+
+> e2e-tests@1.0.0 test
+> playwright test tests/dev4-verification.spec.ts --reporter=json
+
+{
+  "config": {
+    "configFile": "/Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/playwright.config.ts",
+    "rootDir": "/Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/tests",
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": "/Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/fixtures/global-setup.ts",
+    "globalTeardown": "/Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/fixtures/global-teardown.ts",
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {},
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "/Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/test-results/artifacts",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "browser-chrome",
+        "name": "browser-chrome",
+        "testDir": "/Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "/.*\\.spec\\.ts$/"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "/Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/test-results/artifacts",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "browser-firefox",
+        "name": "browser-firefox",
+        "testDir": "/Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "/.*\\.spec\\.ts$/"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "/Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/test-results/artifacts",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "browser-webkit",
+        "name": "browser-webkit",
+        "testDir": "/Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "/.*\\.spec\\.ts$/"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "/Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/test-results/artifacts",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "mobile-chrome",
+        "name": "mobile-chrome",
+        "testDir": "/Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "/01-file-upload\\.spec\\.ts|02-field-detection\\.spec\\.ts/"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.53.0",
+    "workers": 6,
+    "webServer": null
+  },
+  "suites": [],
+  "errors": [
+    {
+      "message": "Error: Timed out waiting 30000ms from config.webServer.",
+      "stack": "Error: Timed out waiting 30000ms from config.webServer."
+    }
+  ],
+  "stats": {
+    "startTime": "2025-06-16T12:17:06.611Z",
+    "duration": 30042.950999999997,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests
+npm error workspace e2e-tests@1.0.0
+npm error location /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/e2e-tests
+npm error command failed
+npm error command sh -c playwright test tests/dev4-verification.spec.ts --reporter=json

@@ -303,7 +303,7 @@ export class SentimentController {
       config.timeout = timeout;
     }
 
-    const updateResult = this.sentimentService.updateOpenAIConfig(config);
+    const updateResult = await this.sentimentService.updateOpenAIConfig(config);
     
     if (!updateResult.success) {
       throw new AppError(updateResult.error || 'Failed to update configuration', 500, 'CONFIG_UPDATE_ERROR');

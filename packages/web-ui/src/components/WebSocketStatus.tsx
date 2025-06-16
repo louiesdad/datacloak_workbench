@@ -192,6 +192,9 @@ export const WebSocketStatus: React.FC<WebSocketStatusProps> = ({
         
         addToMessageHistory('received', data);
         
+        // Emit custom event for other components to listen to
+        window.dispatchEvent(new CustomEvent('websocket:message', { detail: data }));
+        
         if (onMessage) {
           onMessage(data);
         }

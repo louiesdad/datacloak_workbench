@@ -221,6 +221,14 @@ export const Navigation: React.FC<NavigationProps> = ({ className }) => {
         >
           🎛️ Advanced Features
         </button>
+        <button
+          className="nav-action admin"
+          onClick={() => window.dispatchEvent(new CustomEvent('show-admin-panel'))}
+          data-testid="admin-panel-button"
+          title="Admin configuration panel"
+        >
+          🔧 Admin Panel
+        </button>
       </div>
 
       {/* App version */}

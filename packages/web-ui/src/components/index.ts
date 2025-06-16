@@ -29,8 +29,10 @@ export { SSEProgressIndicator } from './SSEProgressIndicator';
 export { WebSocketStatus } from './WebSocketStatus';
 export { RealTimeDashboard } from './RealTimeDashboard';
 export { JobQueueManager } from './JobQueueManager';
+export { StreamingProgress } from './StreamingProgress';
 
 export type { FieldProfile, FileProfile } from './ProfilerUI';
+export type { StreamingStats } from './StreamingProgress';
 export type { SecurityLevel, PIIType } from './SecurityBadge';
 export type { 
   TransformPipeline, 

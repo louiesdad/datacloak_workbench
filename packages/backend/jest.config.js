@@ -4,7 +4,9 @@ module.exports = {
   roots: ['<rootDir>/src', '<rootDir>/tests'],
   testMatch: [
     '**/__tests__/**/*.ts',
-    '**/?(*.)+(spec|test).ts'
+    '**/__tests__/**/*.js',
+    '**/?(*.)+(spec|test).ts',
+    '**/?(*.)+(spec|test).js'
   ],
   transform: {
     '^.+\\.ts$': 'ts-jest',
@@ -12,6 +14,10 @@ module.exports = {
   collectCoverageFrom: [
     'src/**/*.ts',
     '!src/**/*.d.ts',
+    '!src/**/*.test.ts',
+    '!src/**/__tests__/**',
+    '!src/**/mocks/**',
+    '!src/tests/**',
     '!src/server.ts',
     '!src/database/index.ts',
   ],
@@ -36,5 +42,8 @@ module.exports = {
   clearMocks: true,
   resetMocks: true,
   restoreMocks: true,
-  maxWorkers: 1  // Run tests sequentially to avoid database conflicts
+  maxWorkers: 1,  // Run tests sequentially to avoid database conflicts
+  moduleNameMapper: {
+    '^ioredis$': '<rootDir>/src/services/__mocks__/ioredis.js'
+  }
 };

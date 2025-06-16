@@ -3,6 +3,11 @@ import type { SentimentResult } from '../../../../shared/contracts/api';
 import { VirtualTable, PerformantList } from './VirtualScrollList';
 import { ApiErrorDisplay } from './ApiErrorDisplay';
 import { useApiErrorHandler, type ApiError } from '../hooks/useApiErrorHandler';
+import { 
+  SentimentDistributionChart, 
+  KeywordFrequencyChart, 
+  ConfidenceScoreChart 
+} from './charts';
 import './SentimentInsights.css';
 
 interface SentimentInsightsProps {
@@ -330,14 +335,14 @@ export const SentimentInsights: React.FC<SentimentInsightsProps> = ({
             <div className="insights-grid">
               <div className="insight-section">
                 <h4>Score Distribution</h4>
-                {renderChart(
-                  insights.summary.scoreDistribution.map(d => ({
-                    label: d.range,
-                    value: d.percentage,
-                    color: d.range.includes('Positive') ? '#10b981' : 
-                           d.range.includes('Negative') ? '#ef4444' : '#6b7280'
-                  }))
-                )}
+                <SentimentDistributionChart
+                  data={insights.summary.scoreDistribution.map(d => ({
+                    sentiment: d.range,
+                    count: d.count,
+                    percentage: d.percentage
+                  }))}
+                  height={250}
+                />
               </div>
 
               <div className="insight-section">
@@ -473,12 +478,15 @@ export const SentimentInsights: React.FC<SentimentInsightsProps> = ({
           <div className="emotions-analysis">
             <div className="emotion-overview">
               <h4>🎭 Dominant Emotions</h4>
-              {renderChart(
-                insights.emotions.dominantEmotions.map(e => ({
-                  label: e.emotion,
-                  value: e.averageIntensity * 100
-                }))
-              )}
+              <KeywordFrequencyChart
+                data={insights.emotions.dominantEmotions.map(e => ({
+                  keyword: e.emotion,
+                  frequency: e.frequency,
+                  averageScore: e.averageIntensity
+                }))}
+                height={300}
+                maxItems={8}
+              />
             </div>
 
             <div className="emotion-details">

@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { MemoryMonitor } from './MemoryMonitor';
 import { SSEProgressIndicator } from './SSEProgressIndicator';
 import { WebSocketStatus } from './WebSocketStatus';
+import { RealTimeSentimentFeed } from './RealTimeSentimentFeed';
 import { useNotifications } from './NotificationToast';
 import './RealTimeDashboard.css';
 
@@ -11,6 +12,7 @@ interface RealTimeDashboardProps {
   showMemoryMonitor?: boolean;
   showSSEProgress?: boolean;
   showWebSocketStatus?: boolean;
+  showSentimentFeed?: boolean;
   autoStart?: boolean;
   position?: 'floating' | 'inline';
   className?: string;
@@ -18,7 +20,7 @@ interface RealTimeDashboardProps {
 
 interface DashboardState {
   isCollapsed: boolean;
-  activePanel: 'memory' | 'sse' | 'websocket' | 'all';
+  activePanel: 'memory' | 'sse' | 'websocket' | 'sentiment' | 'all';
   sseData: any;
   wsData: any;
   memoryAlerts: number;
@@ -30,6 +32,7 @@ export const RealTimeDashboard: React.FC<RealTimeDashboardProps> = ({
   showMemoryMonitor = true,
   showSSEProgress = true,
   showWebSocketStatus = true,
+  showSentimentFeed = true,
   autoStart = false,
   position = 'floating',
   className = ''
@@ -117,6 +120,7 @@ export const RealTimeDashboard: React.FC<RealTimeDashboardProps> = ({
     if (showMemoryMonitor) components.push('memory');
     if (showSSEProgress) components.push('sse');
     if (showWebSocketStatus) components.push('websocket');
+    if (showSentimentFeed) components.push('sentiment');
     
     return components;
   };
@@ -178,6 +182,17 @@ export const RealTimeDashboard: React.FC<RealTimeDashboardProps> = ({
                 />
               </div>
             )}
+            
+            {showSentimentFeed && (
+              <div className="dashboard-section sentiment-section">
+                <h4>Live Sentiment Analysis</h4>
+                <RealTimeSentimentFeed
+                  maxItems={25}
+                  autoScroll={true}
+                  showDetails={true}
+                />
+              </div>
+            )}
           </div>
         )}
         
@@ -215,6 +230,16 @@ export const RealTimeDashboard: React.FC<RealTimeDashboardProps> = ({
               autoConnect={autoStart}
               position="inline"
               compact={false}
+            />
+          </div>
+        )}
+        
+        {state.activePanel === 'sentiment' && showSentimentFeed && (
+          <div className="single-panel">
+            <RealTimeSentimentFeed
+              maxItems={50}
+              autoScroll={true}
+              showDetails={true}
             />
           </div>
         )}
@@ -296,6 +321,15 @@ export const RealTimeDashboard: React.FC<RealTimeDashboardProps> = ({
                   data-testid="panel-websocket"
                 >
                   Connection
+                </button>
+              )}
+              {showSentimentFeed && (
+                <button
+                  className={`panel-button ${state.activePanel === 'sentiment' ? 'active' : ''}`}
+                  onClick={() => updateState({ activePanel: 'sentiment' })}
+                  data-testid="panel-sentiment"
+                >
+                  Sentiment
                 </button>
               )}
             </div>

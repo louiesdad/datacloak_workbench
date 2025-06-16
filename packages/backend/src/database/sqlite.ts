@@ -130,6 +130,21 @@ export const createTables = async (): Promise<void> => {
     );
   `);
 
+  // Compliance audits table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS compliance_audits (
+      audit_id TEXT PRIMARY KEY,
+      overall_score INTEGER NOT NULL,
+      overall_status TEXT NOT NULL CHECK (overall_status IN ('compliant', 'non_compliant', 'needs_review')),
+      gdpr_score INTEGER DEFAULT 0,
+      ccpa_score INTEGER DEFAULT 0,
+      hipaa_score INTEGER DEFAULT 0,
+      violations_count INTEGER DEFAULT 0,
+      recommendations_count INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
   // Create indexes for better performance
   db.exec(`
     CREATE INDEX IF NOT EXISTS idx_sentiment_analyses_created_at ON sentiment_analyses(created_at);
@@ -143,6 +158,8 @@ export const createTables = async (): Promise<void> => {
     CREATE INDEX IF NOT EXISTS idx_security_events_created_at ON security_events(created_at);
     CREATE INDEX IF NOT EXISTS idx_security_events_type ON security_events(type);
     CREATE INDEX IF NOT EXISTS idx_security_events_severity ON security_events(severity);
+    CREATE INDEX IF NOT EXISTS idx_compliance_audits_created_at ON compliance_audits(created_at);
+    CREATE INDEX IF NOT EXISTS idx_compliance_audits_overall_score ON compliance_audits(overall_score);
   `);
 
   // Create triggers for updated_at

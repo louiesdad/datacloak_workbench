@@ -6,7 +6,9 @@ import {
   type FileProfile,
   type FieldProfile,
   MemoryMonitor,
-  ElectronFeatureMonitor
+  ElectronFeatureMonitor,
+  StreamingProgress,
+  type StreamingStats
 } from './index';
 import { 
   TransformDesigner,
@@ -48,6 +50,12 @@ export const WorkflowManager: React.FC = () => {
     setAnalysisRunning
   } = useAppActions();
 
+  // State for streaming progress
+  const [streamingFile, setStreamingFile] = React.useState<{
+    filename: string;
+    datasetId: string;
+  } | null>(null);
+
   // Performance monitoring with Web Worker
   const performanceWorker = useWebWorker(() => new Worker(new URL('../workers/fileProcessor.worker.ts', import.meta.url)), {
     timeout: 30000,
@@ -86,8 +94,12 @@ export const WorkflowManager: React.FC = () => {
     };
   }, [state.isLoading, state.analysisRunning, addNotification]);
 
-  // Mock data generator for development
-  const createMockFileProfile = useCallback((file: FileInfo): FileProfile => {
+  // Real file profile creation using streaming API
+  const createRealFileProfile = useCallback(async (
+    file: FileInfo,
+    datasetId: string,
+    uploadResponse: any
+  ): Promise<FileProfile> => {
     // Validate file format
     const extension = file.name.toLowerCase().split('.').pop();
     const validFormats = ['csv', 'xlsx', 'xls', 'tsv'];
@@ -96,99 +108,48 @@ export const WorkflowManager: React.FC = () => {
       throw new Error(`Invalid file format: ${extension}. Supported formats: CSV, XLSX, XLS, TSV`);
     }
     
-    // Special handling for test files
-    // The test framework creates a file named 'malformed.csv' that is intentionally malformed
-    // for error testing. We need to handle this differently from actual malformed files.
-    if (extension === 'csv' && file.name === 'malformed.csv') {
-      // For the exact test file, return a minimal valid profile instead of throwing an error
-      // This allows the test to progress while still testing error handling elsewhere
-      return {
-        file,
-        fields: [
-          {
-            name: 'header1',
-            type: 'string',
-            samples: ['value1'],
-            nullCount: 0,
-            totalCount: 2,
-            uniqueCount: 1,
-            piiDetection: { isPII: false, confidence: 0.1 }
-          },
-          {
-            name: 'header2',
-            type: 'string',
-            samples: ['value2'],
-            nullCount: 1,
-            totalCount: 2,
-            uniqueCount: 2,
-            piiDetection: { isPII: false, confidence: 0.1 }
-          }
-        ],
-        rowCount: 2,
-        processingTime: 0.5,
-        errors: ['Warning: Inconsistent row lengths detected']
-      };
-    }
+    const { dataset, fieldInfo, securityScan } = uploadResponse;
     
-    // Check for other malformed CSV patterns (for actual error simulation)
-    if (extension === 'csv' && file.name.toLowerCase().includes('invalid')) {
-      throw new Error('Invalid CSV format: Unable to parse file. Please check that your CSV file is properly formatted.');
-    }
-    
-    const mockFields: FieldProfile[] = [
-      {
-        name: 'customer_id',
-        type: 'number',
-        samples: ['12345', '67890', '11111'],
-        nullCount: 0,
-        totalCount: 1000,
-        uniqueCount: 1000,
-        piiDetection: { isPII: false, confidence: 0.1 }
+    // Convert backend field info to FileProfile fields
+    const fields: FieldProfile[] = fieldInfo?.map((field: any) => ({
+      name: field.name,
+      type: field.type,
+      samples: field.sampleValues || [],
+      nullCount: field.nullCount || 0,
+      totalCount: field.totalCount || dataset.recordCount || 0,
+      uniqueCount: field.uniqueCount || 0,
+      piiDetection: {
+        isPII: field.piiDetected || false,
+        piiType: field.piiType,
+        confidence: field.piiDetected ? 0.9 : 0.1
       },
-      {
-        name: 'review_text',
-        type: 'string',
-        samples: ['Great product, highly recommend!', 'Poor quality, disappointed', 'Average experience'],
-        nullCount: 5,
-        totalCount: 1000,
-        uniqueCount: 995,
-        piiDetection: { isPII: false, confidence: 0.15 }
-      },
-      {
-        name: 'email',
-        type: 'string',
-        samples: ['john.doe@example.com', 'jane.smith@company.com', 'user@domain.org'],
-        nullCount: 5,
-        totalCount: 1000,
-        uniqueCount: 995,
-        piiDetection: { isPII: true, piiType: 'email', confidence: 0.95 }
-      },
-      {
-        name: 'phone_number',
-        type: 'string',
-        samples: ['(555) 123-4567', '555-987-6543', '+1-555-555-5555'],
-        nullCount: 50,
-        totalCount: 1000,
-        uniqueCount: 950,
-        piiDetection: { isPII: true, piiType: 'phone', confidence: 0.88 }
-      },
-      {
-        name: 'rating',
-        type: 'number',
-        samples: ['5', '3', '4'],
-        nullCount: 0,
-        totalCount: 1000,
-        uniqueCount: 5,
-        piiDetection: { isPII: false, confidence: 0.05 }
+      stats: field.type === 'integer' || field.type === 'float' || field.type === 'number' ? {
+        min: parseFloat(field.minLength) || parseFloat(field.min) || 0,
+        max: parseFloat(field.maxLength) || parseFloat(field.max) || 0,
+        mean: field.averageLength || field.avg || 0,
+        median: field.median || 0
+      } : undefined
+    })) || [];
+
+    // Add any warnings or errors from field analysis
+    const errors: string[] = [];
+    fieldInfo?.forEach((field: any) => {
+      if (field.warnings && field.warnings.length > 0) {
+        errors.push(...field.warnings.map((w: string) => `${field.name}: ${w}`));
       }
-    ];
+    });
+
+    // Add security warnings
+    if (securityScan && securityScan.piiItemsDetected > 0) {
+      errors.push(`Security: ${securityScan.piiItemsDetected} PII items detected (Risk: ${securityScan.riskLevel})`);
+    }
 
     return {
       file,
-      fields: mockFields,
-      rowCount: 1000,
-      processingTime: 2.5,
-      errors: []
+      fields,
+      rowCount: dataset.recordCount || 0,
+      processingTime: 0, // Will be calculated from streaming progress
+      errors
     };
   }, []);
 
@@ -279,13 +240,8 @@ export const WorkflowManager: React.FC = () => {
             // In browser mode, use the raw File object if provided
             file = rawFiles[index];
           } else {
-            // Fallback to mock data if no file available
-            const mockProfile = createMockFileProfile(fileInfo);
-            profiles.push(mockProfile);
-            const dataset = createDatasetFromProfile(mockProfile);
-            datasets.push(dataset);
-            totalRows += mockProfile.rowCount;
-            continue;
+            // No file available for upload
+            throw new Error(`Unable to process file: ${fileInfo.name}. File content not available.`);
           }
 
           // Upload to backend
@@ -331,32 +287,8 @@ export const WorkflowManager: React.FC = () => {
             
             datasets.push(convertedDataset);
             
-            // Create FileProfile from backend response
-            const profile: FileProfile = {
-              file: fileInfo,
-              fields: fieldInfo?.map((field: any) => ({
-                name: field.name,
-                type: field.type,
-                samples: field.sampleValues || [],
-                nullCount: field.nullCount || 0,
-                totalCount: field.totalCount || dataset.recordCount || 0,
-                uniqueCount: field.uniqueCount || 0,
-                piiDetection: {
-                  isPII: field.piiDetected || false,
-                  piiType: field.piiType,
-                  confidence: field.piiDetected ? 0.9 : 0.1
-                },
-                stats: field.type === 'integer' || field.type === 'float' ? {
-                  min: parseFloat(field.min) || 0,
-                  max: parseFloat(field.max) || 0,
-                  mean: field.avg || 0,
-                  median: field.median || 0
-                } : undefined
-              })) || [],
-              rowCount: dataset.recordCount || 0,
-              processingTime: 0,
-              errors: field.warnings || []
-            };
+            // Create FileProfile using real data from backend
+            const profile = await createRealFileProfile(fileInfo, dataset.id, uploadResponse.data);
             
             profiles.push(profile);
             totalRows += dataset.recordCount || 0;
@@ -375,18 +307,15 @@ export const WorkflowManager: React.FC = () => {
         } catch (uploadError) {
           console.error(`Failed to upload ${fileInfo.name}:`, uploadError);
           
-          // Fallback to mock data if upload fails
-          const mockProfile = createMockFileProfile(fileInfo);
-          profiles.push(mockProfile);
-          const dataset = createDatasetFromProfile(mockProfile);
-          datasets.push(dataset);
-          totalRows += mockProfile.rowCount;
-          
+          // Report the error and continue with next file
           addNotification({
-            type: 'warning',
-            title: 'Upload Warning',
-            message: `Failed to upload ${fileInfo.name} to backend. Using mock data for development.`
+            type: 'error',
+            title: 'Upload Failed',
+            message: `Failed to upload ${fileInfo.name}: ${uploadError instanceof Error ? uploadError.message : 'Unknown error'}`
           });
+          
+          // Continue with next file instead of failing completely
+          continue;
         }
       }
 
@@ -420,7 +349,7 @@ export const WorkflowManager: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [setLoading, setSelectedFiles, setFileProfiles, completeStep, setStep, addNotification, setError, createMockFileProfile, createDatasetFromProfile, setSelectedDataset]);
+  }, [setLoading, setSelectedFiles, setFileProfiles, completeStep, setStep, addNotification, setError, createDatasetFromProfile, setSelectedDataset]);
 
   const handleProfileComplete = useCallback(() => {
     completeStep('profile');

@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { JobQueueService, JobType, JobPriority } from '../services/job-queue.service';
+import { JobType, JobPriority } from '../services/job-queue.service';
+import { getJobQueueService, IJobQueueService } from '../services/job-queue.factory';
 import { SentimentService } from '../services/sentiment.service';
 import { DataService } from '../services/data.service';
 import { SecurityService } from '../services/security.service';
@@ -8,32 +9,53 @@ import { registerAllHandlers } from '../services/job-handlers';
 import { AppError } from '../middleware/error.middleware';
 
 export class JobController {
-  private jobQueue: JobQueueService;
+  private jobQueue: IJobQueueService | null = null;
   private sentimentService: SentimentService;
   private dataService: DataService;
   private securityService: SecurityService;
   private fileStreamService: FileStreamService;
 
   constructor() {
-    this.jobQueue = new JobQueueService({ maxConcurrentJobs: 3 });
     this.sentimentService = new SentimentService();
     this.dataService = new DataService();
     this.securityService = new SecurityService();
     this.fileStreamService = new FileStreamService();
 
-    // Register all job handlers
-    registerAllHandlers(this.jobQueue, {
-      sentimentService: this.sentimentService,
-      dataService: this.dataService,
-      securityService: this.securityService,
-      fileStreamService: this.fileStreamService
-    });
+    // Initialize async - will be ready when first request comes in
+    this.initialize();
+  }
 
-    // Set up event listeners for logging
-    this.setupEventListeners();
+  private async initialize(): Promise<void> {
+    try {
+      this.jobQueue = await getJobQueueService();
+      
+      // Register all job handlers
+      registerAllHandlers(this.jobQueue, {
+        sentimentService: this.sentimentService,
+        dataService: this.dataService,
+        securityService: this.securityService,
+        fileStreamService: this.fileStreamService
+      });
+
+      // Set up event listeners for logging
+      this.setupEventListeners();
+      
+      console.log('Job controller initialized successfully');
+    } catch (error) {
+      console.error('Failed to initialize job controller:', error);
+    }
+  }
+
+  private async ensureJobQueue(): Promise<IJobQueueService> {
+    if (!this.jobQueue) {
+      this.jobQueue = await getJobQueueService();
+    }
+    return this.jobQueue;
   }
 
   private setupEventListeners(): void {
+    if (!this.jobQueue) return;
+    
     this.jobQueue.on('job:added', (job) => {
       console.log(`Job added: ${job.id} (${job.type})`);
     });
@@ -74,7 +96,8 @@ export class JobController {
       // Validate job data based on type
       this.validateJobData(type, data);
 
-      const jobId = this.jobQueue.addJob(type, data, { priority });
+      const jobQueue = await this.ensureJobQueue();
+      const jobId = await jobQueue.addJob(type, data, { priority });
 
       res.status(201).json({
         success: true,
@@ -94,7 +117,8 @@ export class JobController {
   async getJob(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { jobId } = req.params;
-      const job = this.jobQueue.getJob(jobId);
+      const jobQueue = await this.ensureJobQueue();
+      const job = await jobQueue.getJob(jobId);
 
       if (!job) {
         throw new AppError('Job not found', 404, 'JOB_NOT_FOUND');
@@ -112,7 +136,8 @@ export class JobController {
   async getJobProgress(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { jobId } = req.params;
-      const job = this.jobQueue.getJob(jobId);
+      const jobQueue = await this.ensureJobQueue();
+      const job = await jobQueue.getJob(jobId);
 
       if (!job) {
         throw new AppError('Job not found', 404, 'JOB_NOT_FOUND');
@@ -143,7 +168,8 @@ export class JobController {
   async getJobEvents(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { jobId } = req.params;
-      const job = this.jobQueue.getJob(jobId);
+      const jobQueue = await this.ensureJobQueue();
+      const job = await jobQueue.getJob(jobId);
 
       if (!job) {
         throw new AppError('Job not found', 404, 'JOB_NOT_FOUND');
@@ -173,7 +199,8 @@ export class JobController {
       if (type) filter.type = type;
       filter.limit = Math.min(parseInt(limit as string, 10), 100); // Max 100 jobs
 
-      const jobs = this.jobQueue.getJobs(filter);
+      const jobQueue = await this.ensureJobQueue();
+      const jobs = await jobQueue.getJobs(filter);
 
       res.json({
         success: true,
@@ -190,7 +217,8 @@ export class JobController {
   async cancelJob(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { jobId } = req.params;
-      const cancelled = this.jobQueue.cancelJob(jobId);
+      const jobQueue = await this.ensureJobQueue();
+      const cancelled = await jobQueue.cancelJob(jobId);
 
       if (!cancelled) {
         throw new AppError('Job not found or cannot be cancelled', 400, 'JOB_NOT_CANCELLABLE');
@@ -207,7 +235,8 @@ export class JobController {
 
   async getStats(_req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const stats = this.jobQueue.getStats();
+      const jobQueue = await this.ensureJobQueue();
+      const stats = await jobQueue.getStats();
 
       res.json({
         success: true,
@@ -223,7 +252,8 @@ export class JobController {
       const { jobId } = req.params;
       const { timeout = 30000 } = req.body;
 
-      const job = await this.jobQueue.waitForJob(jobId, timeout);
+      const jobQueue = await this.ensureJobQueue();
+      const job = await jobQueue.waitForJob(jobId, timeout);
 
       res.json({
         success: true,

@@ -7,6 +7,7 @@ import { NotificationToast } from './components/NotificationToast';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ProgressIndicator } from './components/ProgressIndicator';
 import { RealTimeDashboard } from './components/RealTimeDashboard';
+import { AdminDashboard } from './components/admin';
 
 // Main App component wrapped with providers
 function App() {
@@ -26,6 +27,7 @@ const AppShell: React.FC = () => {
   const [initialized, setInitialized] = React.useState(false);
   const [backendStatus, setBackendStatus] = React.useState<'checking' | 'connected' | 'disconnected' | 'error'>('checking');
   const [showAdvancedFeatures, setShowAdvancedFeatures] = React.useState(false);
+  const [showAdminPanel, setShowAdminPanel] = React.useState(false);
 
   // Initialize app on mount with proper cleanup
   useEffect(() => {
@@ -139,6 +141,19 @@ const AppShell: React.FC = () => {
     };
   }, []);
 
+  // Listen for admin panel toggle event
+  useEffect(() => {
+    const handleShowAdminPanel = () => {
+      setShowAdminPanel(true);
+    };
+
+    window.addEventListener('show-admin-panel', handleShowAdminPanel);
+
+    return () => {
+      window.removeEventListener('show-admin-panel', handleShowAdminPanel);
+    };
+  }, []);
+
   return (
     <div className="app">
       {/* Global loading overlay */}
@@ -194,6 +209,24 @@ const AppShell: React.FC = () => {
               ×
             </button>
             <RealTimeDashboard />
+          </div>
+        </div>
+      )}
+
+      {/* Admin Panel - Modal overlay */}
+      {showAdminPanel && (
+        <div className="admin-panel-modal" data-testid="admin-panel-modal">
+          <div className="modal-backdrop" onClick={() => setShowAdminPanel(false)} />
+          <div className="modal-content admin-modal">
+            <button 
+              className="modal-close"
+              onClick={() => setShowAdminPanel(false)}
+              data-testid="close-admin-panel"
+              aria-label="Close admin panel"
+            >
+              ×
+            </button>
+            <AdminDashboard />
           </div>
         </div>
       )}

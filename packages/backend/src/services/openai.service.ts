@@ -1,5 +1,13 @@
 import { AppError } from '../middleware/error.middleware';
 import { RateLimiterService, createOpenAIRateLimiter } from './rate-limiter.service';
+import { 
+  TextOptimizer, 
+  OpenAILogger, 
+  CostTracker, 
+  calculateTokenCost,
+  OpenAIStreamProcessor,
+  TokenUsage
+} from './openai-enhancements';
 
 export interface OpenAIConfig {
   apiKey: string;
@@ -37,6 +45,8 @@ export class OpenAIService {
   private retryAttempts = 3;
   private retryDelay = 1000; // Base delay in ms
   private rateLimiter: RateLimiterService;
+  private logger: OpenAILogger;
+  private costTracker: CostTracker;
 
   constructor(config: OpenAIConfig) {
     this.config = {
@@ -53,6 +63,10 @@ export class OpenAIService {
 
     // Initialize rate limiter (3 requests per second)
     this.rateLimiter = createOpenAIRateLimiter();
+    
+    // Initialize logger and cost tracker
+    this.logger = new OpenAILogger();
+    this.costTracker = new CostTracker();
   }
 
   /**
@@ -65,7 +79,18 @@ export class OpenAIService {
       throw new AppError('Text is required for sentiment analysis', 400, 'INVALID_INPUT');
     }
 
-    const prompt = this.buildSentimentPrompt(text, includeConfidence);
+    // Optimize text if needed
+    let optimizedText = TextOptimizer.compress(text);
+    const estimatedTokens = TextOptimizer.estimateTokens(optimizedText);
+    
+    // If text is too long, use smart truncation
+    const maxTextTokens = (this.config.maxTokens || 150) * 3; // Reserve tokens for response
+    if (estimatedTokens > maxTextTokens) {
+      optimizedText = TextOptimizer.smartTruncate(optimizedText, maxTextTokens);
+      console.log(`Text truncated from ~${estimatedTokens} to ~${TextOptimizer.estimateTokens(optimizedText)} tokens`);
+    }
+
+    const prompt = this.buildSentimentPrompt(optimizedText, includeConfidence);
     
     try {
       const response = await this.makeOpenAIRequest({
@@ -104,6 +129,9 @@ export class OpenAIService {
     // Apply rate limiting
     await this.rateLimiter.waitForLimit();
 
+    const startTime = Date.now();
+    this.logger.logRequest(payload.model, payload);
+
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
@@ -130,9 +158,31 @@ export class OpenAIService {
       }
 
       const data = await response.json();
+      
+      // Track costs and log response
+      if (data.usage) {
+        this.costTracker.track(payload.model, data.usage);
+        
+        const tokenUsage: TokenUsage = {
+          promptTokens: data.usage.prompt_tokens,
+          completionTokens: data.usage.completion_tokens,
+          totalTokens: data.usage.total_tokens,
+          estimatedCost: calculateTokenCost(data.usage, payload.model)
+        };
+        
+        this.logger.logResponse(
+          payload.model, 
+          data, 
+          Date.now() - startTime,
+          tokenUsage
+        );
+      }
+      
       return data;
 
     } catch (error) {
+      this.logger.logError(payload.model, error, Date.now() - startTime);
+      
       if (error instanceof AppError) {
         throw error;
       }
@@ -385,5 +435,104 @@ Text to analyze: "${text.replace(/"/g, '\\"')}"`;
   getConfig(): Omit<OpenAIConfig, 'apiKey'> {
     const { apiKey, ...config } = this.config;
     return config;
+  }
+
+  /**
+   * Analyze sentiment for large text using streaming
+   */
+  async *analyzeSentimentStream(
+    text: string,
+    options?: {
+      chunkSize?: number;
+      model?: string;
+      onProgress?: (processed: number, total: number) => void;
+    }
+  ): AsyncGenerator<OpenAISentimentResponse> {
+    const chunkSize = options?.chunkSize || 4000; // ~1000 tokens per chunk
+    const model = options?.model || this.config.model;
+    
+    const chunks = OpenAIStreamProcessor.splitIntoChunks(text, chunkSize);
+    const total = chunks.length;
+    let processed = 0;
+    
+    for (const chunk of chunks) {
+      const result = await this.analyzeSentiment({
+        text: chunk,
+        model,
+        includeConfidence: true
+      });
+      
+      processed++;
+      if (options?.onProgress) {
+        options.onProgress(processed, total);
+      }
+      
+      yield result;
+    }
+  }
+
+  /**
+   * Get usage statistics and logs
+   */
+  getUsageStats() {
+    return {
+      logs: this.logger.getStats(),
+      costs: {
+        daily: this.costTracker.getDailyCost(),
+        monthly: this.costTracker.getMonthlyCost()
+      },
+      rateLimit: this.rateLimiter.getStatus()
+    };
+  }
+
+  /**
+   * Get recent logs for debugging
+   */
+  getLogs(options?: { type?: string; model?: string; limit?: number }) {
+    return this.logger.getLogs(options);
+  }
+
+  /**
+   * Clear logs and reset counters
+   */
+  clearStats(): void {
+    this.logger.clear();
+  }
+
+  /**
+   * Batch sentiment analysis with optimized token usage
+   */
+  async analyzeSentimentBatch(
+    texts: string[],
+    options?: {
+      model?: string;
+      batchSize?: number;
+      onProgress?: (completed: number, total: number) => void;
+    }
+  ): Promise<OpenAISentimentResponse[]> {
+    const batchSize = options?.batchSize || 5;
+    const results: OpenAISentimentResponse[] = [];
+    
+    // Process in batches to optimize API calls
+    for (let i = 0; i < texts.length; i += batchSize) {
+      const batch = texts.slice(i, i + batchSize);
+      
+      // Process batch in parallel
+      const batchResults = await Promise.all(
+        batch.map(text => this.analyzeSentiment({
+          text,
+          model: options?.model,
+          includeConfidence: true
+        }))
+      );
+      
+      results.push(...batchResults);
+      
+      if (options?.onProgress) {
+        options.onProgress(Math.min(i + batchSize, texts.length), texts.length);
+      }
+    }
+    
+    return results;
   }
 }

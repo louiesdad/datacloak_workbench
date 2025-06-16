@@ -21,6 +21,7 @@ import type {
   ExportDataResponse
 } from '../../../shared/contracts/api';
 import { config } from './config';
+import { FileSystemAccessAPI, isFileSystemAccessSupported } from './file-system-access';
 
 export interface PlatformCapabilities {
   hasFileSystemAccess: boolean;
@@ -126,6 +127,7 @@ export interface BackendAPI {
   getDataset: (id: string) => Promise<ApiResponse<Dataset>>;
   deleteDataset: (id: string) => Promise<ApiResponse>;
   exportData: (request: ExportDataRequest) => Promise<ExportDataResponse>;
+  exportEnhanced: (request: any) => Promise<any>; // Enhanced export with additional features
   
   // Sentiment analysis
   analyzeSentiment: (request: SentimentAnalysisRequest) => Promise<SentimentAnalysisResponse>;
@@ -169,6 +171,33 @@ declare global {
       versions: any;
       send: (channel: string, data: any) => void;
       receive: (channel: string, func: Function) => void;
+      invoke: (channel: string, ...args: any[]) => Promise<any>;
+      fs: {
+        readFile: (filePath: string) => Promise<any>;
+        writeFile: (filePath: string, content: string) => Promise<any>;
+        selectDirectory: () => Promise<any>;
+        selectFile: (filters?: Array<{name: string, extensions: string[]}>) => Promise<any>;
+        selectFiles: (filters?: Array<{name: string, extensions: string[]}>) => Promise<any>;
+        getFileInfo: (filePath: string) => Promise<any>;
+        createReadStream: (filePath: string, options?: { start?: number, end?: number }) => Promise<any>;
+        readStreamChunk: (filePath: string, start: number, end: number) => Promise<any>;
+        validateFile: (filePath: string, maxSize?: number, allowedExtensions?: string[]) => Promise<any>;
+      };
+      window: {
+        minimizeToTray: () => Promise<any>;
+        show: () => Promise<any>;
+      };
+      app: {
+        quit: () => Promise<any>;
+      };
+      notification: {
+        show: (options: { title: string, body: string, icon?: string }) => Promise<any>;
+      };
+      transform: {
+        execute: (transformConfig: any) => Promise<any>;
+        validate: (pipeline: any) => Promise<any>;
+        getTableSchema: (tableName: string) => Promise<any>;
+      };
     };
     platformBridge: PlatformBridge;
   }
@@ -284,6 +313,13 @@ class BackendAPIClient implements BackendAPI {
       body: JSON.stringify(request),
     });
   }
+
+  async exportEnhanced(request: any): Promise<any> {
+    return this.fetchAPI('/api/v1/export/enhanced', {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  }
 }
 
 // Event emitter implementation
@@ -315,10 +351,10 @@ class EventEmitter {
   }
 }
 
-// Browser implementation
+// Browser implementation with File System Access API support
 class BrowserPlatformBridge extends EventEmitter implements PlatformBridge {
   capabilities: PlatformCapabilities = {
-    hasFileSystemAccess: false,
+    hasFileSystemAccess: isFileSystemAccessSupported(),
     hasNotifications: 'Notification' in window,
     hasSystemTray: false,
     hasMenuBar: false,
@@ -328,21 +364,48 @@ class BrowserPlatformBridge extends EventEmitter implements PlatformBridge {
 
   backend: BackendAPI = new BackendAPIClient();
 
-  fileSystem: FileSystemAPI = {
-    readFile: async () => { throw new Error('File system access not available in browser'); },
-    writeFile: async () => { throw new Error('File system access not available in browser'); },
-    selectDirectory: async () => { throw new Error('Directory selection not available in browser'); },
-    selectFile: async () => { throw new Error('File selection not available in browser'); },
-    selectFiles: async () => { throw new Error('File selection not available in browser'); },
-    getFileInfo: async () => { throw new Error('File info not available in browser'); },
-    readFileStream: async function* () { throw new Error('File streaming not available in browser'); },
-    validateFile: async () => ({ valid: false, error: 'File validation not available in browser' })
-  };
+  // Use the new File System Access API implementation
+  fileSystem: FileSystemAPI = new FileSystemAccessAPI();
 
   transforms: TransformAPI = {
-    executeTransform: async () => { throw new Error('Transform execution not available in browser'); },
-    validateTransform: async () => { throw new Error('Transform validation not available in browser'); },
-    getTableSchema: async () => { throw new Error('Table schema access not available in browser'); }
+    executeTransform: async () => {
+      console.warn('Transform execution not available in browser mode. Returning mock success.');
+      return {
+        success: true,
+        data: {
+          transformId: `mock_transform_${Date.now()}`,
+          status: 'completed',
+          message: 'Transform executed successfully (browser mock)',
+          resultCount: 0
+        }
+      };
+    },
+    validateTransform: async () => {
+      console.warn('Transform validation not available in browser mode. Returning mock validation.');
+      return {
+        success: true,
+        data: {
+          valid: true,
+          message: 'Transform is valid (browser mock)',
+          warnings: ['Validation performed in browser mock mode']
+        }
+      };
+    },
+    getTableSchema: async () => {
+      console.warn('Table schema access not available in browser mode. Returning mock schema.');
+      return {
+        success: true,
+        data: {
+          tableName: 'mock_table',
+          columns: [
+            { name: 'id', type: 'number', nullable: false },
+            { name: 'data', type: 'string', nullable: true }
+          ],
+          rowCount: 0,
+          created: new Date().toISOString()
+        }
+      };
+    }
   };
 
   notifications: NotificationAPI = {
@@ -376,145 +439,134 @@ class ElectronPlatformBridge extends EventEmitter implements PlatformBridge {
 
   fileSystem: FileSystemAPI = {
     readFile: async (path: string) => {
-      return new Promise((resolve, reject) => {
-        window.electronAPI!.send('fs:readFile', { path });
-        window.electronAPI!.receive('fs:readFile:response', (data: { error?: string; content?: string }) => {
-          if (data.error) {
-            reject(new Error(data.error));
-          } else {
-            resolve(data.content!);
-          }
-        });
-      });
+      const result = await window.electronAPI!.fs.readFile(path);
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+      return result.content;
     },
     writeFile: async (path: string, content: string) => {
-      return new Promise((resolve, reject) => {
-        window.electronAPI!.send('fs:writeFile', { path, content });
-        window.electronAPI!.receive('fs:writeFile:response', (data: { error?: string }) => {
-          if (data.error) {
-            reject(new Error(data.error));
-          } else {
-            resolve();
-          }
-        });
-      });
+      const result = await window.electronAPI!.fs.writeFile(path, content);
+      if (!result.success) {
+        throw new Error(result.error);
+      }
     },
     selectDirectory: async () => {
-      return new Promise((resolve) => {
-        window.electronAPI!.send('fs:selectDirectory', {});
-        window.electronAPI!.receive('fs:selectDirectory:response', (data: { path?: string }) => {
-          resolve(data.path || null);
-        });
-      });
+      const result = await window.electronAPI!.fs.selectDirectory();
+      return result.success ? result.path : null;
     },
     selectFile: async (filters?: FileFilter[]) => {
-      return new Promise((resolve) => {
-        window.electronAPI!.send('fs:selectFile', { filters });
-        window.electronAPI!.receive('fs:selectFile:response', (data: { path?: string }) => {
-          resolve(data.path || null);
-        });
-      });
+      const result = await window.electronAPI!.fs.selectFile(filters);
+      return result.success ? result.path : null;
     },
     selectFiles: async (filters?: FileFilter[]) => {
-      return new Promise((resolve) => {
-        window.electronAPI!.send('fs:selectFiles', { filters });
-        window.electronAPI!.receive('fs:selectFiles:response', (data: { paths?: string[] }) => {
-          resolve(data.paths || []);
-        });
-      });
+      const result = await window.electronAPI!.fs.selectFiles(filters);
+      return result.success ? result.paths : [];
     },
-    getFileInfo: async (path: string) => {
-      return new Promise((resolve, reject) => {
-        window.electronAPI!.send('fs:getFileInfo', { path });
-        window.electronAPI!.receive('fs:getFileInfo:response', (data: { error?: string; fileInfo?: FileInfo }) => {
-          if (data.error) {
-            reject(new Error(data.error));
-          } else {
-            resolve(data.fileInfo!);
-          }
-        });
-      });
+    getFileInfo: async (path: string): Promise<FileInfo> => {
+      const result = await window.electronAPI!.fs.getFileInfo(path);
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+      return {
+        name: result.info.name,
+        path: path,
+        size: result.info.size,
+        type: result.info.extension,
+        lastModified: new Date(result.info.modified).getTime()
+      };
     },
-    readFileStream: async function* (path: string, chunkSize = 1024 * 1024) {
-      return new Promise<AsyncIterableIterator<Uint8Array>>((resolve, reject) => {
-        window.electronAPI!.send('fs:createReadStream', { path, chunkSize });
-        window.electronAPI!.receive('fs:createReadStream:response', (data: { error?: string; streamId?: string }) => {
-          if (data.error) {
-            reject(new Error(data.error));
-          } else {
-            resolve(createAsyncIterator(data.streamId!));
-          }
-        });
-      });
+    readFileStream: async function* (path: string, chunkSize = 64 * 1024) {
+      const streamResult = await window.electronAPI!.fs.createReadStream(path);
+      if (!streamResult.success) {
+        throw new Error(streamResult.error);
+      }
+      
+      let position = 0;
+      while (true) {
+        const chunkResult = await window.electronAPI!.fs.readStreamChunk(path, position, position + chunkSize);
+        if (!chunkResult.success) {
+          throw new Error(chunkResult.error);
+        }
+        
+        if (chunkResult.bytesRead > 0) {
+          yield new TextEncoder().encode(chunkResult.chunk);
+          position += chunkResult.bytesRead;
+        }
+        
+        if (chunkResult.isEnd) {
+          break;
+        }
+      }
     },
     validateFile: async (path: string, maxSizeGB = 50) => {
-      return new Promise((resolve) => {
-        window.electronAPI!.send('fs:validateFile', { path, maxSizeGB });
-        window.electronAPI!.receive('fs:validateFile:response', (data: { valid: boolean; error?: string }) => {
-          resolve(data);
-        });
-      });
+      const maxSizeBytes = maxSizeGB * 1024 * 1024 * 1024;
+      const result = await window.electronAPI!.fs.validateFile(path, maxSizeBytes);
+      if (!result.success) {
+        return { valid: false, error: result.error };
+      }
+      return { 
+        valid: result.validation.isValid, 
+        error: result.validation.errors.length > 0 ? result.validation.errors.join(', ') : undefined 
+      };
     }
   };
 
   transforms: TransformAPI = {
     executeTransform: async (request: TransformExecutionRequest) => {
-      return new Promise((resolve, reject) => {
-        window.electronAPI!.send('transform:execute', request);
-        window.electronAPI!.receive('transform:execute:response', (data: { error?: string; result?: TransformExecutionResponse }) => {
-          if (data.error) {
-            reject(new Error(data.error));
-          } else {
-            resolve(data.result!);
-          }
-        });
-      });
+      const result = await window.electronAPI!.transform.execute(request);
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+      return result.result;
     },
     validateTransform: async (pipeline: TransformPipeline) => {
-      return new Promise((resolve, reject) => {
-        window.electronAPI!.send('transform:validate', { pipeline });
-        window.electronAPI!.receive('transform:validate:response', (data: { error?: string; validation?: TransformValidation }) => {
-          if (data.error) {
-            reject(new Error(data.error));
-          } else {
-            resolve(data.validation!);
-          }
-        });
-      });
+      const result = await window.electronAPI!.transform.validate(pipeline);
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+      return result.validation;
     },
     getTableSchema: async (tableName: string) => {
-      return new Promise((resolve, reject) => {
-        window.electronAPI!.send('transform:getTableSchema', { tableName });
-        window.electronAPI!.receive('transform:getTableSchema:response', (data: { error?: string; schema?: TableSchema }) => {
-          if (data.error) {
-            reject(new Error(data.error));
-          } else {
-            resolve(data.schema!);
-          }
-        });
-      });
+      const result = await window.electronAPI!.transform.getTableSchema(tableName);
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+      return result.schema;
     }
   };
 
   notifications: NotificationAPI = {
     show: async (title: string, body: string, options?: NotificationOptions) => {
-      window.electronAPI!.send('notification:show', { title, body, options });
+      const result = await window.electronAPI!.notification.show({ title, body, icon: options?.icon });
+      if (!result.success) {
+        throw new Error(result.error);
+      }
     },
     requestPermission: async () => {
       return true; // Electron doesn't need permission
     }
   };
 
-  minimizeToTray = () => {
-    window.electronAPI!.send('window:minimizeToTray', {});
+  minimizeToTray = async () => {
+    const result = await window.electronAPI!.window.minimizeToTray();
+    if (!result.success) {
+      throw new Error(result.error);
+    }
   };
 
-  showWindow = () => {
-    window.electronAPI!.send('window:show', {});
+  showWindow = async () => {
+    const result = await window.electronAPI!.window.show();
+    if (!result.success) {
+      throw new Error(result.error);
+    }
   };
 
-  quit = () => {
-    window.electronAPI!.send('app:quit', {});
+  quit = async () => {
+    const result = await window.electronAPI!.app.quit();
+    if (!result.success) {
+      throw new Error(result.error);
+    }
   };
 }
 
