@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Workflow Progression</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .step {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .active {
+            background-color: #e3f2fd;
+            border-color: #2196f3;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        .log {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            white-space: pre-line;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test Workflow Progression</h1>
+    
+    <div class="step active" id="upload-step">
+        <h2>Step 1: Upload</h2>
+        <button onclick="simulateFileUpload()">Simulate File Upload</button>
+        <p>Click to simulate file selection and trigger handleFilesSelected</p>
+    </div>
+    
+    <div class="step" id="profile-step">
+        <h2>Step 2: Profile</h2>
+        <p>ProfilerUI should appear here after file upload</p>
+        <button onclick="completeProfile()" disabled>Complete Profile</button>
+    </div>
+    
+    <div class="step" id="transform-step">
+        <h2>Step 3: Transform</h2>
+        <p>TransformDesigner should be accessible after profiling</p>
+        <button onclick="skipTransform()" disabled>Skip Transform</button>
+    </div>
+    
+    <div class="step" id="configure-step">
+        <h2>Step 4: Configure Analysis</h2>
+        <p>SentimentAnalysisControl should show after transform</p>
+        <button onclick="runAnalysis()" disabled>Run Analysis</button>
+    </div>
+    
+    <div class="step" id="results-step">
+        <h2>Step 5: Results</h2>
+        <p>ResultExplorer should display after analysis</p>
+    </div>
+    
+    <div class="log" id="log">
+        <strong>Event Log:</strong>
+    </div>
+    
+    <script>
+        const log = document.getElementById('log');
+        let currentStep = 'upload';
+        
+        function addLog(message) {
+            log.innerHTML += '\n' + new Date().toLocaleTimeString() + ': ' + message;
+        }
+        
+        function setActiveStep(stepId) {
+            document.querySelectorAll('.step').forEach(step => {
+                step.classList.remove('active');
+            });
+            document.getElementById(stepId + '-step').classList.add('active');
+            currentStep = stepId;
+            addLog(`Transitioned to ${stepId} step`);
+        }
+        
+        function simulateFileUpload() {
+            addLog('Simulating file upload...');
+            
+            // Simulate the workflow from WorkflowManager.tsx
+            // 1. Create mock file
+            const mockFile = {
+                name: 'test.csv',
+                size: 1000,
+                type: 'text/csv',
+                path: '/test/test.csv',
+                lastModified: Date.now()
+            };
+            
+            addLog('Created mock file: ' + mockFile.name);
+            
+            // 2. Simulate handleFilesSelected
+            addLog('Processing file...');
+            setTimeout(() => {
+                // 3. Create file profile
+                addLog('Created file profile with 5 fields');
+                
+                // 4. Complete upload step
+                addLog('Completed upload step');
+                
+                // 5. Set step to profile
+                setActiveStep('profile');
+                document.querySelector('#profile-step button').disabled = false;
+                
+                addLog('ProfilerUI should now be visible');
+            }, 1000);
+        }
+        
+        function completeProfile() {
+            addLog('Completing profile step...');
+            setActiveStep('transform');
+            document.querySelector('#transform-step button').disabled = false;
+        }
+        
+        function skipTransform() {
+            addLog('Skipping transform step...');
+            setActiveStep('configure');
+            document.querySelector('#configure-step button').disabled = false;
+        }
+        
+        function runAnalysis() {
+            addLog('Running sentiment analysis...');
+            setTimeout(() => {
+                setActiveStep('results');
+                addLog('Analysis complete - ResultExplorer should show');
+            }, 1500);
+        }
+        
+        addLog('Workflow test ready - click "Simulate File Upload" to begin');
+    </script>
+</body>
+</html>

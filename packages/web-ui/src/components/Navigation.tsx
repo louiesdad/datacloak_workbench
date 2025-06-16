@@ -92,6 +92,17 @@ export const Navigation: React.FC<NavigationProps> = ({ className }) => {
           return false;
       }
     }
+    
+    // Also allow navigation forward if previous steps are completed
+    if (targetIndex > currentIndex) {
+      // Check if all steps between current and target are completed
+      for (let i = 0; i < targetIndex; i++) {
+        if (!completedSteps.has(stepOrder[i] as WorkflowStep)) {
+          return false;
+        }
+      }
+      return true;
+    }
 
     return false;
   };

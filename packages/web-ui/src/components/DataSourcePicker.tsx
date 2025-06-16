@@ -1,7 +1,6 @@
 import React, { useState, useCallback, useRef } from 'react';
 import type { FileInfo } from '../platform-bridge';
 import { useFileProcessor, usePerformanceMonitor } from '../hooks/useWebWorker';
-import { LargeFileUploader } from './LargeFileUploader';
 import { ProgressIndicator } from './ProgressIndicator';
 import { ApiErrorDisplay } from './ApiErrorDisplay';
 import { useApiErrorHandler, type ApiError } from '../hooks/useApiErrorHandler';
@@ -286,22 +285,6 @@ export const DataSourcePicker: React.FC<DataSourcePickerProps> = ({
     }
   }, [handleFilesSelected, acceptedFormats]);
 
-  const handleUploadComplete = useCallback((fileId: string, fileName: string) => {
-    // Convert uploaded file to FileInfo format for the existing flow
-    const fileInfo: FileInfo = {
-      name: fileName,
-      path: fileName,
-      size: 0, // Size would be available from upload result
-      type: fileName.includes('.csv') ? 'text/csv' : 'application/octet-stream'
-    };
-    
-    onFilesSelected([fileInfo]);
-    setApiError(null);
-  }, [onFilesSelected]);
-
-  const handleUploadError = useCallback((error: any) => {
-    setApiError(error);
-  }, []);
 
   return (
     <div className="data-source-picker" data-testid="data-source-picker">
@@ -309,23 +292,22 @@ export const DataSourcePicker: React.FC<DataSourcePickerProps> = ({
         <h3>Select Data Files</h3>
         <p>Upload your data files for sentiment analysis processing</p>
         
-        <LargeFileUploader
-          onUploadComplete={handleUploadComplete}
-          onUploadError={handleUploadError}
-          acceptedTypes={acceptedFormats}
-          maxFileSize={maxSizeGB * 1024 * 1024 * 1024} // Convert GB to bytes
-          chunkSize={10 * 1024 * 1024} // 10MB chunks
-          multiple={false}
-          className="data-source-uploader"
+        <div 
+          className={`drop-zone ${isDragOver ? 'drag-over' : ''}`}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          onClick={() => fileInputRef.current?.click()}
+          data-testid="file-drop-zone"
         >
-          <div className="upload-area-content" data-testid="file-upload-area">
+          <div className="upload-area-content upload-area" data-testid="upload-area">
             <button 
               className="browse-files-button"
-              data-testid="browse-files-button"
+              data-testid="file-input"
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                // Will be handled by parent's onClick
+                fileInputRef.current?.click();
               }}
               style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
             >
@@ -343,7 +325,7 @@ export const DataSourcePicker: React.FC<DataSourcePickerProps> = ({
               <div>Large files will be uploaded in chunks for reliability</div>
             </div>
           </div>
-        </LargeFileUploader>
+        </div>
         
         {/* Performance warning for large files */}
         {!performanceMetrics.isResponsive && (
