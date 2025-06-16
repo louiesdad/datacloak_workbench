@@ -56,5 +56,41 @@ coverage/
 out/
 electron-builder.env
 
-# Large test files
+# Large test files and data
 packages/e2e-tests/fixtures/large-test.csv
+*.csv
+test_data.csv
+
+# Test results and artifacts
+tests/e2e/test-results/artifacts/
+tests/e2e/test-results/html/
+tests/e2e/test-results/*.png
+tests/e2e/test-results/*.json
+tests/e2e/test-results/*.xml
+test-results/
+
+# Large datasets and temporary files
+temp/
+data/
+*.sqlite
+*.db
+
+# Claude settings (contains API keys)
+.claude/settings.local.json
+
+# Build and compile outputs
+packages/backend/dist/
+packages/web-ui/dist/
+packages/electron-shell/dist/
+
+# DataCloak library files (large binary)
+temp/datacloak/
+
+# Package manager files
+package-lock.json
+yarn.lock
+
+# IDE and editor files
+*.swp
+*.swo
+*~

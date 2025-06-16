@@ -51,21 +51,29 @@ export class DataCloakService {
   constructor() {
     // Use real DataCloak bridge if available, fallback to mock
     try {
-      // Try to load the binary bridge first (works without FFI dependencies)
-      const { RateLimitedBinaryBridge } = require('../../../security/src/datacloak/binary-bridge');
-      this.bridge = new RateLimitedBinaryBridge();
-      console.log('Using real DataCloak binary bridge with rate limiting');
-    } catch (binaryError) {
+      // Try to load the REAL DataCloak FFI bridge first
+      const { RealDataCloakFFIBridge } = require('../../../security/src/datacloak/real-ffi-bridge');
+      this.bridge = new RealDataCloakFFIBridge();
+      console.log('✅ Using REAL DataCloak FFI bridge with native library');
+    } catch (realError) {
       try {
-        // Try FFI bridge as fallback
-        const { RateLimitedDataCloakBridge } = require('../../../security/src/datacloak/ffi-bridge');
-        this.bridge = new RateLimitedDataCloakBridge();
-        console.log('Using real DataCloak FFI bridge with rate limiting');
-      } catch (ffiError) {
-        console.warn('Real DataCloak bridges not available, using mock implementation');
-        console.warn('Binary bridge error:', binaryError.message);
-        console.warn('FFI bridge error:', ffiError.message);
-        this.bridge = this.createMockBridge();
+        // Try to load the binary bridge fallback
+        const { RateLimitedBinaryBridge } = require('../../../security/src/datacloak/binary-bridge');
+        this.bridge = new RateLimitedBinaryBridge();
+        console.log('Using DataCloak binary bridge with rate limiting');
+      } catch (binaryError) {
+        try {
+          // Try original FFI bridge as fallback
+          const { RateLimitedDataCloakBridge } = require('../../../security/src/datacloak/ffi-bridge');
+          this.bridge = new RateLimitedDataCloakBridge();
+          console.log('Using DataCloak FFI bridge with rate limiting');
+        } catch (ffiError) {
+          console.warn('⚠️ Real DataCloak bridges not available, using mock implementation');
+          console.warn('Real FFI error:', realError.message);
+          console.warn('Binary bridge error:', binaryError.message);
+          console.warn('FFI bridge error:', ffiError.message);
+          this.bridge = this.createMockBridge();
+        }
       }
     }
 

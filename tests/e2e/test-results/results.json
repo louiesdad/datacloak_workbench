@@ -54,7 +54,7 @@
         "testMatch": [
           "/.*\\.spec\\.ts$/"
         ],
-        "timeout": 30000
+        "timeout": 60000
       },
       {
         "outputDir": "/Users/thomaswagner/Documents/datacloak-sentiment-workbench/tests/e2e/test-results/artifacts",
@@ -68,7 +68,7 @@
         "testMatch": [
           "/.*\\.spec\\.ts$/"
         ],
-        "timeout": 30000
+        "timeout": 60000
       },
       {
         "outputDir": "/Users/thomaswagner/Documents/datacloak-sentiment-workbench/tests/e2e/test-results/artifacts",
@@ -82,7 +82,7 @@
         "testMatch": [
           "/.*\\.spec\\.ts$/"
         ],
-        "timeout": 30000
+        "timeout": 60000
       },
       {
         "outputDir": "/Users/thomaswagner/Documents/datacloak-sentiment-workbench/tests/e2e/test-results/artifacts",
@@ -96,7 +96,7 @@
         "testMatch": [
           "/01-file-upload\\.spec\\.ts|02-field-detection\\.spec\\.ts/"
         ],
-        "timeout": 30000
+        "timeout": 60000
       }
     ],
     "shard": null,
@@ -106,18 +106,5107 @@
     "workers": 6,
     "webServer": null
   },
-  "suites": [],
-  "errors": [
+  "suites": [
     {
-      "message": "Error: No tests found",
-      "stack": "Error: No tests found"
+      "title": "01-file-upload.spec.ts",
+      "file": "01-file-upload.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "File Upload Functionality",
+          "file": "01-file-upload.spec.ts",
+          "line": 3,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should upload small CSV file successfully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19a5a2d50a937c3a4785-d8e7e1764a47a20e6102",
+              "file": "01-file-upload.spec.ts",
+              "line": 29,
+              "column": 7
+            },
+            {
+              "title": "should upload medium CSV file with progress indication",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19a5a2d50a937c3a4785-57dbc477d6efd678dd97",
+              "file": "01-file-upload.spec.ts",
+              "line": 60,
+              "column": 7
+            },
+            {
+              "title": "should handle large CSV file upload",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19a5a2d50a937c3a4785-a33c7b4e09309dce4952",
+              "file": "01-file-upload.spec.ts",
+              "line": 107,
+              "column": 7
+            },
+            {
+              "title": "should upload PII-containing file and show warnings",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19a5a2d50a937c3a4785-c432d49f693412fdd769",
+              "file": "01-file-upload.spec.ts",
+              "line": 137,
+              "column": 7
+            },
+            {
+              "title": "should reject invalid file formats",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19a5a2d50a937c3a4785-2f090f39fdf254fba332",
+              "file": "01-file-upload.spec.ts",
+              "line": 171,
+              "column": 7
+            },
+            {
+              "title": "should handle malformed CSV gracefully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19a5a2d50a937c3a4785-4877e99630d9aefc35cf",
+              "file": "01-file-upload.spec.ts",
+              "line": 208,
+              "column": 7
+            },
+            {
+              "title": "should support drag and drop file upload",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19a5a2d50a937c3a4785-ae0a9a37a275d841faea",
+              "file": "01-file-upload.spec.ts",
+              "line": 241,
+              "column": 7
+            },
+            {
+              "title": "should show file requirements and help text",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19a5a2d50a937c3a4785-c09891d43ac4d6aede69",
+              "file": "01-file-upload.spec.ts",
+              "line": 307,
+              "column": 7
+            },
+            {
+              "title": "should upload small CSV file successfully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19a5a2d50a937c3a4785-4375449d3dd6770a5c07",
+              "file": "01-file-upload.spec.ts",
+              "line": 29,
+              "column": 7
+            },
+            {
+              "title": "should upload medium CSV file with progress indication",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19a5a2d50a937c3a4785-e8414ab2f4205bae55e6",
+              "file": "01-file-upload.spec.ts",
+              "line": 60,
+              "column": 7
+            },
+            {
+              "title": "should handle large CSV file upload",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19a5a2d50a937c3a4785-1f87a511aa1d97deed5f",
+              "file": "01-file-upload.spec.ts",
+              "line": 107,
+              "column": 7
+            },
+            {
+              "title": "should upload PII-containing file and show warnings",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19a5a2d50a937c3a4785-ada0e7cb8dc5d1c01f40",
+              "file": "01-file-upload.spec.ts",
+              "line": 137,
+              "column": 7
+            },
+            {
+              "title": "should reject invalid file formats",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19a5a2d50a937c3a4785-a78ed18f7f0cf7efa1f7",
+              "file": "01-file-upload.spec.ts",
+              "line": 171,
+              "column": 7
+            },
+            {
+              "title": "should handle malformed CSV gracefully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19a5a2d50a937c3a4785-ebb60fadb36094de9924",
+              "file": "01-file-upload.spec.ts",
+              "line": 208,
+              "column": 7
+            },
+            {
+              "title": "should support drag and drop file upload",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19a5a2d50a937c3a4785-5abf4d7eb5af7f09a604",
+              "file": "01-file-upload.spec.ts",
+              "line": 241,
+              "column": 7
+            },
+            {
+              "title": "should show file requirements and help text",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19a5a2d50a937c3a4785-770ac426a00eabc95af0",
+              "file": "01-file-upload.spec.ts",
+              "line": 307,
+              "column": 7
+            },
+            {
+              "title": "should upload small CSV file successfully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19a5a2d50a937c3a4785-9bb7b346ad93c4d2c928",
+              "file": "01-file-upload.spec.ts",
+              "line": 29,
+              "column": 7
+            },
+            {
+              "title": "should upload medium CSV file with progress indication",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19a5a2d50a937c3a4785-faa932d16e0433d7d6b7",
+              "file": "01-file-upload.spec.ts",
+              "line": 60,
+              "column": 7
+            },
+            {
+              "title": "should handle large CSV file upload",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19a5a2d50a937c3a4785-6a2a79388f75b56eeaa9",
+              "file": "01-file-upload.spec.ts",
+              "line": 107,
+              "column": 7
+            },
+            {
+              "title": "should upload PII-containing file and show warnings",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19a5a2d50a937c3a4785-15a3c866e5a41d990564",
+              "file": "01-file-upload.spec.ts",
+              "line": 137,
+              "column": 7
+            },
+            {
+              "title": "should reject invalid file formats",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19a5a2d50a937c3a4785-8f7b0a16a6a769a05ef9",
+              "file": "01-file-upload.spec.ts",
+              "line": 171,
+              "column": 7
+            },
+            {
+              "title": "should handle malformed CSV gracefully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19a5a2d50a937c3a4785-b007b6484cbc7ae5b4ac",
+              "file": "01-file-upload.spec.ts",
+              "line": 208,
+              "column": 7
+            },
+            {
+              "title": "should support drag and drop file upload",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19a5a2d50a937c3a4785-b31c37d8451bd550480e",
+              "file": "01-file-upload.spec.ts",
+              "line": 241,
+              "column": 7
+            },
+            {
+              "title": "should show file requirements and help text",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19a5a2d50a937c3a4785-e8838993177beca2effa",
+              "file": "01-file-upload.spec.ts",
+              "line": 307,
+              "column": 7
+            },
+            {
+              "title": "should upload small CSV file successfully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-chrome",
+                  "projectName": "mobile-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19a5a2d50a937c3a4785-da77f3960fdddf777d7a",
+              "file": "01-file-upload.spec.ts",
+              "line": 29,
+              "column": 7
+            },
+            {
+              "title": "should upload medium CSV file with progress indication",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-chrome",
+                  "projectName": "mobile-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19a5a2d50a937c3a4785-50e7ac5e15819ac3d895",
+              "file": "01-file-upload.spec.ts",
+              "line": 60,
+              "column": 7
+            },
+            {
+              "title": "should handle large CSV file upload",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-chrome",
+                  "projectName": "mobile-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19a5a2d50a937c3a4785-e2a30226f1fd29738ece",
+              "file": "01-file-upload.spec.ts",
+              "line": 107,
+              "column": 7
+            },
+            {
+              "title": "should upload PII-containing file and show warnings",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-chrome",
+                  "projectName": "mobile-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19a5a2d50a937c3a4785-071e8a02610f91daa886",
+              "file": "01-file-upload.spec.ts",
+              "line": 137,
+              "column": 7
+            },
+            {
+              "title": "should reject invalid file formats",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-chrome",
+                  "projectName": "mobile-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19a5a2d50a937c3a4785-fdbc48bfd05ec2adb76d",
+              "file": "01-file-upload.spec.ts",
+              "line": 171,
+              "column": 7
+            },
+            {
+              "title": "should handle malformed CSV gracefully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-chrome",
+                  "projectName": "mobile-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19a5a2d50a937c3a4785-36e46c159668189ffe59",
+              "file": "01-file-upload.spec.ts",
+              "line": 208,
+              "column": 7
+            },
+            {
+              "title": "should support drag and drop file upload",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-chrome",
+                  "projectName": "mobile-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19a5a2d50a937c3a4785-a3d5e1b09adee03af219",
+              "file": "01-file-upload.spec.ts",
+              "line": 241,
+              "column": 7
+            },
+            {
+              "title": "should show file requirements and help text",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-chrome",
+                  "projectName": "mobile-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19a5a2d50a937c3a4785-705e3197b502cbed83ce",
+              "file": "01-file-upload.spec.ts",
+              "line": 307,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "File Upload Error Scenarios",
+          "file": "01-file-upload.spec.ts",
+          "line": 345,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should handle server upload errors gracefully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19a5a2d50a937c3a4785-7293c40ecdfed1d37cc7",
+              "file": "01-file-upload.spec.ts",
+              "line": 351,
+              "column": 7
+            },
+            {
+              "title": "should handle network connectivity issues",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19a5a2d50a937c3a4785-43db5fa23cea46a5d1ac",
+              "file": "01-file-upload.spec.ts",
+              "line": 394,
+              "column": 7
+            },
+            {
+              "title": "should handle server upload errors gracefully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19a5a2d50a937c3a4785-9e532bc4c27b888e0887",
+              "file": "01-file-upload.spec.ts",
+              "line": 351,
+              "column": 7
+            },
+            {
+              "title": "should handle network connectivity issues",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19a5a2d50a937c3a4785-26a45e6a3cb8816ac826",
+              "file": "01-file-upload.spec.ts",
+              "line": 394,
+              "column": 7
+            },
+            {
+              "title": "should handle server upload errors gracefully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19a5a2d50a937c3a4785-232090ed4d69990ebbf1",
+              "file": "01-file-upload.spec.ts",
+              "line": 351,
+              "column": 7
+            },
+            {
+              "title": "should handle network connectivity issues",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19a5a2d50a937c3a4785-0382f1cebce6365ce84d",
+              "file": "01-file-upload.spec.ts",
+              "line": 394,
+              "column": 7
+            },
+            {
+              "title": "should handle server upload errors gracefully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-chrome",
+                  "projectName": "mobile-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19a5a2d50a937c3a4785-7b18c5d4818ae6320864",
+              "file": "01-file-upload.spec.ts",
+              "line": 351,
+              "column": 7
+            },
+            {
+              "title": "should handle network connectivity issues",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-chrome",
+                  "projectName": "mobile-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19a5a2d50a937c3a4785-5352f5c53b90b2bff3b8",
+              "file": "01-file-upload.spec.ts",
+              "line": 394,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "02-field-detection.spec.ts",
+      "file": "02-field-detection.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Field Detection and PII Identification",
+          "file": "02-field-detection.spec.ts",
+          "line": 3,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should detect common field types correctly",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "303cf419b79616ef015e-d839c3f5bde7b3a2cae6",
+              "file": "02-field-detection.spec.ts",
+              "line": 11,
+              "column": 7
+            },
+            {
+              "title": "should identify PII fields and show security warnings",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "303cf419b79616ef015e-2909bfcb65718ea1b971",
+              "file": "02-field-detection.spec.ts",
+              "line": 86,
+              "column": 7
+            },
+            {
+              "title": "should show field statistics and data quality metrics",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "303cf419b79616ef015e-6f7642cbbde941c55e70",
+              "file": "02-field-detection.spec.ts",
+              "line": 158,
+              "column": 7
+            },
+            {
+              "title": "should handle field inference with low confidence",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "303cf419b79616ef015e-beb81c077a3a8bad4122",
+              "file": "02-field-detection.spec.ts",
+              "line": 220,
+              "column": 7
+            },
+            {
+              "title": "should allow manual field type corrections",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "303cf419b79616ef015e-0258fcee4c4039196b91",
+              "file": "02-field-detection.spec.ts",
+              "line": 258,
+              "column": 7
+            },
+            {
+              "title": "should display field count and row count summaries",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "303cf419b79616ef015e-64a7d555ab46953abeb3",
+              "file": "02-field-detection.spec.ts",
+              "line": 302,
+              "column": 7
+            },
+            {
+              "title": "should handle empty or invalid columns gracefully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "303cf419b79616ef015e-6396457ca90b9e9519c3",
+              "file": "02-field-detection.spec.ts",
+              "line": 342,
+              "column": 7
+            },
+            {
+              "title": "should detect common field types correctly",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "303cf419b79616ef015e-b379647f9e2d6ef8804e",
+              "file": "02-field-detection.spec.ts",
+              "line": 11,
+              "column": 7
+            },
+            {
+              "title": "should identify PII fields and show security warnings",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "303cf419b79616ef015e-b3619368e2a49d3e05ff",
+              "file": "02-field-detection.spec.ts",
+              "line": 86,
+              "column": 7
+            },
+            {
+              "title": "should show field statistics and data quality metrics",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "303cf419b79616ef015e-8ad820ab825aba5b0ff6",
+              "file": "02-field-detection.spec.ts",
+              "line": 158,
+              "column": 7
+            },
+            {
+              "title": "should handle field inference with low confidence",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "303cf419b79616ef015e-5f761562926674763a15",
+              "file": "02-field-detection.spec.ts",
+              "line": 220,
+              "column": 7
+            },
+            {
+              "title": "should allow manual field type corrections",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "303cf419b79616ef015e-5676a0c0227cff25c603",
+              "file": "02-field-detection.spec.ts",
+              "line": 258,
+              "column": 7
+            },
+            {
+              "title": "should display field count and row count summaries",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "303cf419b79616ef015e-9cbcb4a3901e7f3b4a75",
+              "file": "02-field-detection.spec.ts",
+              "line": 302,
+              "column": 7
+            },
+            {
+              "title": "should handle empty or invalid columns gracefully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "303cf419b79616ef015e-68035804df352683ae64",
+              "file": "02-field-detection.spec.ts",
+              "line": 342,
+              "column": 7
+            },
+            {
+              "title": "should detect common field types correctly",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "303cf419b79616ef015e-2cad90e788b9243ca074",
+              "file": "02-field-detection.spec.ts",
+              "line": 11,
+              "column": 7
+            },
+            {
+              "title": "should identify PII fields and show security warnings",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "303cf419b79616ef015e-826f375ad889bad06afc",
+              "file": "02-field-detection.spec.ts",
+              "line": 86,
+              "column": 7
+            },
+            {
+              "title": "should show field statistics and data quality metrics",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "303cf419b79616ef015e-b79e19b4842ba578808e",
+              "file": "02-field-detection.spec.ts",
+              "line": 158,
+              "column": 7
+            },
+            {
+              "title": "should handle field inference with low confidence",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "303cf419b79616ef015e-c3f7f91c97a8f2591e44",
+              "file": "02-field-detection.spec.ts",
+              "line": 220,
+              "column": 7
+            },
+            {
+              "title": "should allow manual field type corrections",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "303cf419b79616ef015e-b016bb410de034a62c1a",
+              "file": "02-field-detection.spec.ts",
+              "line": 258,
+              "column": 7
+            },
+            {
+              "title": "should display field count and row count summaries",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "303cf419b79616ef015e-423bb0c341c55e908e43",
+              "file": "02-field-detection.spec.ts",
+              "line": 302,
+              "column": 7
+            },
+            {
+              "title": "should handle empty or invalid columns gracefully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "303cf419b79616ef015e-9cd1f0406474e9994911",
+              "file": "02-field-detection.spec.ts",
+              "line": 342,
+              "column": 7
+            },
+            {
+              "title": "should detect common field types correctly",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-chrome",
+                  "projectName": "mobile-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "303cf419b79616ef015e-f6586ab9ce5c484e1e74",
+              "file": "02-field-detection.spec.ts",
+              "line": 11,
+              "column": 7
+            },
+            {
+              "title": "should identify PII fields and show security warnings",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-chrome",
+                  "projectName": "mobile-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "303cf419b79616ef015e-4d253a5ede91266c05df",
+              "file": "02-field-detection.spec.ts",
+              "line": 86,
+              "column": 7
+            },
+            {
+              "title": "should show field statistics and data quality metrics",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-chrome",
+                  "projectName": "mobile-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "303cf419b79616ef015e-54daf6d680e63fb2e233",
+              "file": "02-field-detection.spec.ts",
+              "line": 158,
+              "column": 7
+            },
+            {
+              "title": "should handle field inference with low confidence",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-chrome",
+                  "projectName": "mobile-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "303cf419b79616ef015e-c4494c75580c4020b15c",
+              "file": "02-field-detection.spec.ts",
+              "line": 220,
+              "column": 7
+            },
+            {
+              "title": "should allow manual field type corrections",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-chrome",
+                  "projectName": "mobile-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "303cf419b79616ef015e-f7f666164c9e87d1e28d",
+              "file": "02-field-detection.spec.ts",
+              "line": 258,
+              "column": 7
+            },
+            {
+              "title": "should display field count and row count summaries",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-chrome",
+                  "projectName": "mobile-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "303cf419b79616ef015e-bf92a9fadbbe033aea48",
+              "file": "02-field-detection.spec.ts",
+              "line": 302,
+              "column": 7
+            },
+            {
+              "title": "should handle empty or invalid columns gracefully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-chrome",
+                  "projectName": "mobile-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "303cf419b79616ef015e-bfd4ae8a6a9271b1e22c",
+              "file": "02-field-detection.spec.ts",
+              "line": 342,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "03-transform-operations.spec.ts",
+      "file": "03-transform-operations.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Data Transform Operations",
+          "file": "03-transform-operations.spec.ts",
+          "line": 3,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should display available transformation options",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "da422fea62ddb1b8a72c-5b3a62a3ef0c926366ac",
+              "file": "03-transform-operations.spec.ts",
+              "line": 26,
+              "column": 7
+            },
+            {
+              "title": "should support data filtering operations",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "da422fea62ddb1b8a72c-b06d9c984f41456e7a0b",
+              "file": "03-transform-operations.spec.ts",
+              "line": 72,
+              "column": 7
+            },
+            {
+              "title": "should support data sorting and ordering",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "da422fea62ddb1b8a72c-25852009b96da8c17b44",
+              "file": "03-transform-operations.spec.ts",
+              "line": 128,
+              "column": 7
+            },
+            {
+              "title": "should support field renaming and formatting",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "da422fea62ddb1b8a72c-a895126cccaa51dc3bc3",
+              "file": "03-transform-operations.spec.ts",
+              "line": 161,
+              "column": 7
+            },
+            {
+              "title": "should provide transform preview functionality",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "da422fea62ddb1b8a72c-6d1c46e340c64c789189",
+              "file": "03-transform-operations.spec.ts",
+              "line": 188,
+              "column": 7
+            },
+            {
+              "title": "should allow skipping optional transformations",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "da422fea62ddb1b8a72c-9bf5ec06528a0ade98a4",
+              "file": "03-transform-operations.spec.ts",
+              "line": 243,
+              "column": 7
+            },
+            {
+              "title": "should handle transform validation and errors",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "da422fea62ddb1b8a72c-576a242e98bdcd69dfde",
+              "file": "03-transform-operations.spec.ts",
+              "line": 281,
+              "column": 7
+            },
+            {
+              "title": "should save and display transform configuration",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "da422fea62ddb1b8a72c-e3004f6716d5d5ef2c08",
+              "file": "03-transform-operations.spec.ts",
+              "line": 346,
+              "column": 7
+            },
+            {
+              "title": "should handle large dataset transformations",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "da422fea62ddb1b8a72c-5049e46a273884b5d0c9",
+              "file": "03-transform-operations.spec.ts",
+              "line": 394,
+              "column": 7
+            },
+            {
+              "title": "should display available transformation options",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "da422fea62ddb1b8a72c-8f331f76cad43ba72462",
+              "file": "03-transform-operations.spec.ts",
+              "line": 26,
+              "column": 7
+            },
+            {
+              "title": "should support data filtering operations",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "da422fea62ddb1b8a72c-ec65bb275112c43b203a",
+              "file": "03-transform-operations.spec.ts",
+              "line": 72,
+              "column": 7
+            },
+            {
+              "title": "should support data sorting and ordering",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "da422fea62ddb1b8a72c-5dda37c31b4d8f625a0c",
+              "file": "03-transform-operations.spec.ts",
+              "line": 128,
+              "column": 7
+            },
+            {
+              "title": "should support field renaming and formatting",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "da422fea62ddb1b8a72c-c7fce7d3d83609bd2790",
+              "file": "03-transform-operations.spec.ts",
+              "line": 161,
+              "column": 7
+            },
+            {
+              "title": "should provide transform preview functionality",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "da422fea62ddb1b8a72c-2609d8e87c25a3a0ced4",
+              "file": "03-transform-operations.spec.ts",
+              "line": 188,
+              "column": 7
+            },
+            {
+              "title": "should allow skipping optional transformations",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "da422fea62ddb1b8a72c-638c40b022ccf3080aa9",
+              "file": "03-transform-operations.spec.ts",
+              "line": 243,
+              "column": 7
+            },
+            {
+              "title": "should handle transform validation and errors",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "da422fea62ddb1b8a72c-e7ef613efdbcf2d659ac",
+              "file": "03-transform-operations.spec.ts",
+              "line": 281,
+              "column": 7
+            },
+            {
+              "title": "should save and display transform configuration",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "da422fea62ddb1b8a72c-24370c0f19ba2bb9bceb",
+              "file": "03-transform-operations.spec.ts",
+              "line": 346,
+              "column": 7
+            },
+            {
+              "title": "should handle large dataset transformations",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "da422fea62ddb1b8a72c-20666fc35abf034a1ea1",
+              "file": "03-transform-operations.spec.ts",
+              "line": 394,
+              "column": 7
+            },
+            {
+              "title": "should display available transformation options",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "da422fea62ddb1b8a72c-eb639026f09c0c4af5d6",
+              "file": "03-transform-operations.spec.ts",
+              "line": 26,
+              "column": 7
+            },
+            {
+              "title": "should support data filtering operations",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "da422fea62ddb1b8a72c-177819e955589a6fa60b",
+              "file": "03-transform-operations.spec.ts",
+              "line": 72,
+              "column": 7
+            },
+            {
+              "title": "should support data sorting and ordering",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "da422fea62ddb1b8a72c-93983a7a558be2ee2431",
+              "file": "03-transform-operations.spec.ts",
+              "line": 128,
+              "column": 7
+            },
+            {
+              "title": "should support field renaming and formatting",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "da422fea62ddb1b8a72c-9fa484ffbd5af74b4759",
+              "file": "03-transform-operations.spec.ts",
+              "line": 161,
+              "column": 7
+            },
+            {
+              "title": "should provide transform preview functionality",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "da422fea62ddb1b8a72c-6794e9df1ae5bab29914",
+              "file": "03-transform-operations.spec.ts",
+              "line": 188,
+              "column": 7
+            },
+            {
+              "title": "should allow skipping optional transformations",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "da422fea62ddb1b8a72c-0e9a53e412860008c489",
+              "file": "03-transform-operations.spec.ts",
+              "line": 243,
+              "column": 7
+            },
+            {
+              "title": "should handle transform validation and errors",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "da422fea62ddb1b8a72c-8516e755eb1dea93870a",
+              "file": "03-transform-operations.spec.ts",
+              "line": 281,
+              "column": 7
+            },
+            {
+              "title": "should save and display transform configuration",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "da422fea62ddb1b8a72c-4508184fc31e53d165a3",
+              "file": "03-transform-operations.spec.ts",
+              "line": 346,
+              "column": 7
+            },
+            {
+              "title": "should handle large dataset transformations",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "da422fea62ddb1b8a72c-f06c4198bd46a19d3c0a",
+              "file": "03-transform-operations.spec.ts",
+              "line": 394,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "04-sentiment-analysis.spec.ts",
+      "file": "04-sentiment-analysis.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Sentiment Analysis with OpenAI Integration",
+          "file": "04-sentiment-analysis.spec.ts",
+          "line": 3,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should display sentiment analysis configuration options",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "71b7078c6a36f526728c-23b2dd6ddc6c257d16a3",
+              "file": "04-sentiment-analysis.spec.ts",
+              "line": 26,
+              "column": 7
+            },
+            {
+              "title": "should display cost estimation for sentiment analysis",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "71b7078c6a36f526728c-cbb1e91a894d171c740f",
+              "file": "04-sentiment-analysis.spec.ts",
+              "line": 91,
+              "column": 7
+            },
+            {
+              "title": "should start sentiment analysis job successfully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "71b7078c6a36f526728c-d90431c16cce76b07ed8",
+              "file": "04-sentiment-analysis.spec.ts",
+              "line": 142,
+              "column": 7
+            },
+            {
+              "title": "should show progress during sentiment analysis",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "71b7078c6a36f526728c-fcca4d71770fa1184e09",
+              "file": "04-sentiment-analysis.spec.ts",
+              "line": 200,
+              "column": 7
+            },
+            {
+              "title": "should complete sentiment analysis and show results",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "71b7078c6a36f526728c-c6c6c43f55fae0d6893c",
+              "file": "04-sentiment-analysis.spec.ts",
+              "line": 270,
+              "column": 7
+            },
+            {
+              "title": "should handle OpenAI API errors gracefully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "71b7078c6a36f526728c-0ab32c676bc59c8a268e",
+              "file": "04-sentiment-analysis.spec.ts",
+              "line": 345,
+              "column": 7
+            },
+            {
+              "title": "should test different sentiment datasets",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "71b7078c6a36f526728c-4e92e33431ca16996acc",
+              "file": "04-sentiment-analysis.spec.ts",
+              "line": 400,
+              "column": 7
+            },
+            {
+              "title": "should provide sentiment analysis insights and metrics",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "71b7078c6a36f526728c-a23825778d957038dd35",
+              "file": "04-sentiment-analysis.spec.ts",
+              "line": 448,
+              "column": 7
+            },
+            {
+              "title": "should display sentiment analysis configuration options",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "71b7078c6a36f526728c-38cc56fbabd174b7bcef",
+              "file": "04-sentiment-analysis.spec.ts",
+              "line": 26,
+              "column": 7
+            },
+            {
+              "title": "should display cost estimation for sentiment analysis",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "71b7078c6a36f526728c-c5447072b79ddc40ad41",
+              "file": "04-sentiment-analysis.spec.ts",
+              "line": 91,
+              "column": 7
+            },
+            {
+              "title": "should start sentiment analysis job successfully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "71b7078c6a36f526728c-ceca75e99d017a82ae20",
+              "file": "04-sentiment-analysis.spec.ts",
+              "line": 142,
+              "column": 7
+            },
+            {
+              "title": "should show progress during sentiment analysis",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "71b7078c6a36f526728c-f9338eec9b6a6cac3adf",
+              "file": "04-sentiment-analysis.spec.ts",
+              "line": 200,
+              "column": 7
+            },
+            {
+              "title": "should complete sentiment analysis and show results",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "71b7078c6a36f526728c-29764a4962fd7a901ff6",
+              "file": "04-sentiment-analysis.spec.ts",
+              "line": 270,
+              "column": 7
+            },
+            {
+              "title": "should handle OpenAI API errors gracefully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "71b7078c6a36f526728c-576489b45e49e02ec92d",
+              "file": "04-sentiment-analysis.spec.ts",
+              "line": 345,
+              "column": 7
+            },
+            {
+              "title": "should test different sentiment datasets",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "71b7078c6a36f526728c-8d977070b47a4a92e4db",
+              "file": "04-sentiment-analysis.spec.ts",
+              "line": 400,
+              "column": 7
+            },
+            {
+              "title": "should provide sentiment analysis insights and metrics",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "71b7078c6a36f526728c-8b631f27afe96ecd032e",
+              "file": "04-sentiment-analysis.spec.ts",
+              "line": 448,
+              "column": 7
+            },
+            {
+              "title": "should display sentiment analysis configuration options",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "71b7078c6a36f526728c-271ef098148b3ed92a5f",
+              "file": "04-sentiment-analysis.spec.ts",
+              "line": 26,
+              "column": 7
+            },
+            {
+              "title": "should display cost estimation for sentiment analysis",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "71b7078c6a36f526728c-c1930e770e6e477a09fc",
+              "file": "04-sentiment-analysis.spec.ts",
+              "line": 91,
+              "column": 7
+            },
+            {
+              "title": "should start sentiment analysis job successfully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "71b7078c6a36f526728c-e84b619ba929ead84490",
+              "file": "04-sentiment-analysis.spec.ts",
+              "line": 142,
+              "column": 7
+            },
+            {
+              "title": "should show progress during sentiment analysis",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "71b7078c6a36f526728c-be38f3530c908b982208",
+              "file": "04-sentiment-analysis.spec.ts",
+              "line": 200,
+              "column": 7
+            },
+            {
+              "title": "should complete sentiment analysis and show results",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "71b7078c6a36f526728c-b79cf10ca6ab74dca5c5",
+              "file": "04-sentiment-analysis.spec.ts",
+              "line": 270,
+              "column": 7
+            },
+            {
+              "title": "should handle OpenAI API errors gracefully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "71b7078c6a36f526728c-e323e293dcd1feae6771",
+              "file": "04-sentiment-analysis.spec.ts",
+              "line": 345,
+              "column": 7
+            },
+            {
+              "title": "should test different sentiment datasets",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "71b7078c6a36f526728c-785689d93753dbd0b08d",
+              "file": "04-sentiment-analysis.spec.ts",
+              "line": 400,
+              "column": 7
+            },
+            {
+              "title": "should provide sentiment analysis insights and metrics",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "71b7078c6a36f526728c-b4a54c5ed5e7e92e3390",
+              "file": "04-sentiment-analysis.spec.ts",
+              "line": 448,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "05-results-export.spec.ts",
+      "file": "05-results-export.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Results Export Functionality",
+          "file": "05-results-export.spec.ts",
+          "line": 3,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should display sentiment analysis results overview",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e238870e23f953e02ab8-f16e13d8722bef410ae4",
+              "file": "05-results-export.spec.ts",
+              "line": 44,
+              "column": 7
+            },
+            {
+              "title": "should provide multiple export format options",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e238870e23f953e02ab8-8d85bf8be7b846264c31",
+              "file": "05-results-export.spec.ts",
+              "line": 96,
+              "column": 7
+            },
+            {
+              "title": "should successfully export results as CSV",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e238870e23f953e02ab8-91983ba606941b487ac7",
+              "file": "05-results-export.spec.ts",
+              "line": 156,
+              "column": 7
+            },
+            {
+              "title": "should successfully export results as Excel",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e238870e23f953e02ab8-b530592421b912067741",
+              "file": "05-results-export.spec.ts",
+              "line": 217,
+              "column": 7
+            },
+            {
+              "title": "should successfully export results as JSON",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e238870e23f953e02ab8-543b5e741f54bf052d35",
+              "file": "05-results-export.spec.ts",
+              "line": 267,
+              "column": 7
+            },
+            {
+              "title": "should provide filtering and column selection for export",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e238870e23f953e02ab8-10ecf3d3143c1625de68",
+              "file": "05-results-export.spec.ts",
+              "line": 317,
+              "column": 7
+            },
+            {
+              "title": "should handle large dataset exports",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e238870e23f953e02ab8-1fb270569faec937295a",
+              "file": "05-results-export.spec.ts",
+              "line": 384,
+              "column": 7
+            },
+            {
+              "title": "should handle export errors gracefully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e238870e23f953e02ab8-f172c6d2910e7df639be",
+              "file": "05-results-export.spec.ts",
+              "line": 451,
+              "column": 7
+            },
+            {
+              "title": "should provide download progress and completion feedback",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e238870e23f953e02ab8-134f18c446caf4155fa7",
+              "file": "05-results-export.spec.ts",
+              "line": 506,
+              "column": 7
+            },
+            {
+              "title": "should display sentiment analysis results overview",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e238870e23f953e02ab8-c21e4339ce7f6cc21d9d",
+              "file": "05-results-export.spec.ts",
+              "line": 44,
+              "column": 7
+            },
+            {
+              "title": "should provide multiple export format options",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e238870e23f953e02ab8-1456cc79195a589990a8",
+              "file": "05-results-export.spec.ts",
+              "line": 96,
+              "column": 7
+            },
+            {
+              "title": "should successfully export results as CSV",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e238870e23f953e02ab8-b6c97e271c93194aae2d",
+              "file": "05-results-export.spec.ts",
+              "line": 156,
+              "column": 7
+            },
+            {
+              "title": "should successfully export results as Excel",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e238870e23f953e02ab8-2c630956d43d08e4e4c1",
+              "file": "05-results-export.spec.ts",
+              "line": 217,
+              "column": 7
+            },
+            {
+              "title": "should successfully export results as JSON",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e238870e23f953e02ab8-a4543dcf75dc285f460a",
+              "file": "05-results-export.spec.ts",
+              "line": 267,
+              "column": 7
+            },
+            {
+              "title": "should provide filtering and column selection for export",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e238870e23f953e02ab8-75babd126bcc16c60e4a",
+              "file": "05-results-export.spec.ts",
+              "line": 317,
+              "column": 7
+            },
+            {
+              "title": "should handle large dataset exports",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e238870e23f953e02ab8-5f2a32b18ed60ddd323b",
+              "file": "05-results-export.spec.ts",
+              "line": 384,
+              "column": 7
+            },
+            {
+              "title": "should handle export errors gracefully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e238870e23f953e02ab8-ab5ed2152264d5271670",
+              "file": "05-results-export.spec.ts",
+              "line": 451,
+              "column": 7
+            },
+            {
+              "title": "should provide download progress and completion feedback",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e238870e23f953e02ab8-f43611ebd65507970a87",
+              "file": "05-results-export.spec.ts",
+              "line": 506,
+              "column": 7
+            },
+            {
+              "title": "should display sentiment analysis results overview",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e238870e23f953e02ab8-0c2d9beeb64e80ab9822",
+              "file": "05-results-export.spec.ts",
+              "line": 44,
+              "column": 7
+            },
+            {
+              "title": "should provide multiple export format options",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e238870e23f953e02ab8-946a9c3fdf49d3b31b44",
+              "file": "05-results-export.spec.ts",
+              "line": 96,
+              "column": 7
+            },
+            {
+              "title": "should successfully export results as CSV",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e238870e23f953e02ab8-4b6e813f9cc5e0554b46",
+              "file": "05-results-export.spec.ts",
+              "line": 156,
+              "column": 7
+            },
+            {
+              "title": "should successfully export results as Excel",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e238870e23f953e02ab8-45d0d9d4829a9399f314",
+              "file": "05-results-export.spec.ts",
+              "line": 217,
+              "column": 7
+            },
+            {
+              "title": "should successfully export results as JSON",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e238870e23f953e02ab8-8e07373638ee3705ab9a",
+              "file": "05-results-export.spec.ts",
+              "line": 267,
+              "column": 7
+            },
+            {
+              "title": "should provide filtering and column selection for export",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e238870e23f953e02ab8-ab37b91e922eedca8941",
+              "file": "05-results-export.spec.ts",
+              "line": 317,
+              "column": 7
+            },
+            {
+              "title": "should handle large dataset exports",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e238870e23f953e02ab8-47bc851de07cac4f15bc",
+              "file": "05-results-export.spec.ts",
+              "line": 384,
+              "column": 7
+            },
+            {
+              "title": "should handle export errors gracefully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e238870e23f953e02ab8-8fad80235e4a0fa2a64b",
+              "file": "05-results-export.spec.ts",
+              "line": 451,
+              "column": 7
+            },
+            {
+              "title": "should provide download progress and completion feedback",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e238870e23f953e02ab8-c5e65f5530f738bba836",
+              "file": "05-results-export.spec.ts",
+              "line": 506,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "accessibility.spec.ts",
+      "file": "accessibility.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Accessibility Tests",
+          "file": "accessibility.spec.ts",
+          "line": 4,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should not have critical accessibility violations on main pages",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ddd864604af8a6a0198f-89d08816fc4ae4e53fcc",
+              "file": "accessibility.spec.ts",
+              "line": 5,
+              "column": 7
+            },
+            {
+              "title": "should not have critical accessibility violations on main pages",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ddd864604af8a6a0198f-1ff9a23bdef3d88b5ea6",
+              "file": "accessibility.spec.ts",
+              "line": 5,
+              "column": 7
+            },
+            {
+              "title": "should not have critical accessibility violations on main pages",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ddd864604af8a6a0198f-a4b849a3b3d0cdbad8a6",
+              "file": "accessibility.spec.ts",
+              "line": 5,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "bug-verification.spec.ts",
+      "file": "bug-verification.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Bug Fix Verification",
+          "file": "bug-verification.spec.ts",
+          "line": 3,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should verify all reported bugs are fixed",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "d10f70b72fad5fdf267e-2d17623200431b9d7904",
+              "file": "bug-verification.spec.ts",
+              "line": 4,
+              "column": 7
+            },
+            {
+              "title": "should verify mobile view layout (Bug #13)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "d10f70b72fad5fdf267e-e1e15a268bc80b7c273f",
+              "file": "bug-verification.spec.ts",
+              "line": 172,
+              "column": 7
+            },
+            {
+              "title": "should verify all reported bugs are fixed",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "d10f70b72fad5fdf267e-6dfcfe0da7ae028b76e9",
+              "file": "bug-verification.spec.ts",
+              "line": 4,
+              "column": 7
+            },
+            {
+              "title": "should verify mobile view layout (Bug #13)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "d10f70b72fad5fdf267e-5dfa519a76d1981cbfb6",
+              "file": "bug-verification.spec.ts",
+              "line": 172,
+              "column": 7
+            },
+            {
+              "title": "should verify all reported bugs are fixed",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "d10f70b72fad5fdf267e-856b315ca5d3c1cde069",
+              "file": "bug-verification.spec.ts",
+              "line": 4,
+              "column": 7
+            },
+            {
+              "title": "should verify mobile view layout (Bug #13)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "d10f70b72fad5fdf267e-ec2e95aaf0bf71011978",
+              "file": "bug-verification.spec.ts",
+              "line": 172,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "enhanced-datacloak-e2e.spec.ts",
+      "file": "enhanced-datacloak-e2e.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Enhanced DataCloak E2E Tests",
+          "file": "enhanced-datacloak-e2e.spec.ts",
+          "line": 30,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Complete Enhanced DataCloak Workflow - HIPAA Compliance",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "bee1f918c67d1c8fad4e-918cc6d910c7593771f6",
+              "file": "enhanced-datacloak-e2e.spec.ts",
+              "line": 41,
+              "column": 7
+            },
+            {
+              "title": "Multi-Framework Compliance Comparison",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "bee1f918c67d1c8fad4e-775446dbfd6fe5457acd",
+              "file": "enhanced-datacloak-e2e.spec.ts",
+              "line": 174,
+              "column": 7
+            },
+            {
+              "title": "Real-time Risk Assessment During Upload",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "bee1f918c67d1c8fad4e-05eb9f4b26c4e5c47156",
+              "file": "enhanced-datacloak-e2e.spec.ts",
+              "line": 198,
+              "column": 7
+            },
+            {
+              "title": "Large Dataset Performance Testing",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "bee1f918c67d1c8fad4e-e4af5f0edf716e5d28d6",
+              "file": "enhanced-datacloak-e2e.spec.ts",
+              "line": 233,
+              "column": 7
+            },
+            {
+              "title": "Custom Pattern Creation and Testing",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "bee1f918c67d1c8fad4e-67c78a41c80f0aa3fd7f",
+              "file": "enhanced-datacloak-e2e.spec.ts",
+              "line": 274,
+              "column": 7
+            },
+            {
+              "title": "Integration Testing - Backend API Endpoints",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "bee1f918c67d1c8fad4e-a17e73ca5c85066db0ed",
+              "file": "enhanced-datacloak-e2e.spec.ts",
+              "line": 305,
+              "column": 7
+            },
+            {
+              "title": "Accessibility and Mobile Responsiveness",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "bee1f918c67d1c8fad4e-f5385bd0350741527536",
+              "file": "enhanced-datacloak-e2e.spec.ts",
+              "line": 336,
+              "column": 7
+            },
+            {
+              "title": "Error Handling and Recovery",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "bee1f918c67d1c8fad4e-90637395174609ec8f25",
+              "file": "enhanced-datacloak-e2e.spec.ts",
+              "line": 371,
+              "column": 7
+            },
+            {
+              "title": "Complete Enhanced DataCloak Workflow - HIPAA Compliance",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "bee1f918c67d1c8fad4e-c51e17bd58f62217e608",
+              "file": "enhanced-datacloak-e2e.spec.ts",
+              "line": 41,
+              "column": 7
+            },
+            {
+              "title": "Multi-Framework Compliance Comparison",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "bee1f918c67d1c8fad4e-51b428e9f3d454756e41",
+              "file": "enhanced-datacloak-e2e.spec.ts",
+              "line": 174,
+              "column": 7
+            },
+            {
+              "title": "Real-time Risk Assessment During Upload",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "bee1f918c67d1c8fad4e-7b012d332786bdab49b6",
+              "file": "enhanced-datacloak-e2e.spec.ts",
+              "line": 198,
+              "column": 7
+            },
+            {
+              "title": "Large Dataset Performance Testing",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "bee1f918c67d1c8fad4e-3dedf7c67c193b1efe3c",
+              "file": "enhanced-datacloak-e2e.spec.ts",
+              "line": 233,
+              "column": 7
+            },
+            {
+              "title": "Custom Pattern Creation and Testing",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "bee1f918c67d1c8fad4e-af1cfdb9a37467548782",
+              "file": "enhanced-datacloak-e2e.spec.ts",
+              "line": 274,
+              "column": 7
+            },
+            {
+              "title": "Integration Testing - Backend API Endpoints",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "bee1f918c67d1c8fad4e-609fec028269ee858c74",
+              "file": "enhanced-datacloak-e2e.spec.ts",
+              "line": 305,
+              "column": 7
+            },
+            {
+              "title": "Accessibility and Mobile Responsiveness",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "bee1f918c67d1c8fad4e-cb5d2c8c9129bbe77182",
+              "file": "enhanced-datacloak-e2e.spec.ts",
+              "line": 336,
+              "column": 7
+            },
+            {
+              "title": "Error Handling and Recovery",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "bee1f918c67d1c8fad4e-797acefba72913f0639b",
+              "file": "enhanced-datacloak-e2e.spec.ts",
+              "line": 371,
+              "column": 7
+            },
+            {
+              "title": "Complete Enhanced DataCloak Workflow - HIPAA Compliance",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "bee1f918c67d1c8fad4e-455f7defe9fd58c51b6a",
+              "file": "enhanced-datacloak-e2e.spec.ts",
+              "line": 41,
+              "column": 7
+            },
+            {
+              "title": "Multi-Framework Compliance Comparison",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "bee1f918c67d1c8fad4e-b352b1b6daf5a36e1b54",
+              "file": "enhanced-datacloak-e2e.spec.ts",
+              "line": 174,
+              "column": 7
+            },
+            {
+              "title": "Real-time Risk Assessment During Upload",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "bee1f918c67d1c8fad4e-12bde23a13cc28c0cdf5",
+              "file": "enhanced-datacloak-e2e.spec.ts",
+              "line": 198,
+              "column": 7
+            },
+            {
+              "title": "Large Dataset Performance Testing",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "bee1f918c67d1c8fad4e-f029954a4f176e10b033",
+              "file": "enhanced-datacloak-e2e.spec.ts",
+              "line": 233,
+              "column": 7
+            },
+            {
+              "title": "Custom Pattern Creation and Testing",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "bee1f918c67d1c8fad4e-16640676a674a2f48c65",
+              "file": "enhanced-datacloak-e2e.spec.ts",
+              "line": 274,
+              "column": 7
+            },
+            {
+              "title": "Integration Testing - Backend API Endpoints",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "bee1f918c67d1c8fad4e-73adf470c8a618a14214",
+              "file": "enhanced-datacloak-e2e.spec.ts",
+              "line": 305,
+              "column": 7
+            },
+            {
+              "title": "Accessibility and Mobile Responsiveness",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "bee1f918c67d1c8fad4e-4c568a570d13a7a83783",
+              "file": "enhanced-datacloak-e2e.spec.ts",
+              "line": 336,
+              "column": 7
+            },
+            {
+              "title": "Error Handling and Recovery",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "bee1f918c67d1c8fad4e-1dc9ea1b13ef669d9cbd",
+              "file": "enhanced-datacloak-e2e.spec.ts",
+              "line": 371,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Performance Benchmarks",
+          "file": "enhanced-datacloak-e2e.spec.ts",
+          "line": 396,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Measure key performance metrics",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "bee1f918c67d1c8fad4e-b7d8b5a3674bf817fcc7",
+              "file": "enhanced-datacloak-e2e.spec.ts",
+              "line": 398,
+              "column": 7
+            },
+            {
+              "title": "Measure key performance metrics",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "bee1f918c67d1c8fad4e-b3287612148e0e8a285e",
+              "file": "enhanced-datacloak-e2e.spec.ts",
+              "line": 398,
+              "column": 7
+            },
+            {
+              "title": "Measure key performance metrics",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "bee1f918c67d1c8fad4e-7b07a11b4f27abcb5a4d",
+              "file": "enhanced-datacloak-e2e.spec.ts",
+              "line": 398,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "focused-bug-check.spec.ts",
+      "file": "focused-bug-check.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Focused Bug Verification",
+          "file": "focused-bug-check.spec.ts",
+          "line": 3,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Bugs #8, #11, #12 - Backend errors, Skip transform, Cost estimation",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "11f349bbfc92ffef2b73-e1712ac0d8ed6934c3b9",
+              "file": "focused-bug-check.spec.ts",
+              "line": 4,
+              "column": 7
+            },
+            {
+              "title": "Bugs #8, #11, #12 - Backend errors, Skip transform, Cost estimation",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "11f349bbfc92ffef2b73-1faebf4d0cf97d9218b7",
+              "file": "focused-bug-check.spec.ts",
+              "line": 4,
+              "column": 7
+            },
+            {
+              "title": "Bugs #8, #11, #12 - Backend errors, Skip transform, Cost estimation",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "11f349bbfc92ffef2b73-1038e511bc9ff0e8a983",
+              "file": "focused-bug-check.spec.ts",
+              "line": 4,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "integration-workflow-e2e.spec.ts",
+      "file": "integration-workflow-e2e.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Integration Workflow E2E Tests",
+          "file": "integration-workflow-e2e.spec.ts",
+          "line": 29,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Complete HIPAA Healthcare Data Processing Workflow",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "db581cdb19f7d756922c-c511b042671ec27426a3",
+              "file": "integration-workflow-e2e.spec.ts",
+              "line": 45,
+              "column": 7
+            },
+            {
+              "title": "Financial Data PCI-DSS Compliance Workflow",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "db581cdb19f7d756922c-19ae7904ac9ee503abb3",
+              "file": "integration-workflow-e2e.spec.ts",
+              "line": 193,
+              "column": 7
+            },
+            {
+              "title": "GDPR European Data Processing Workflow",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "db581cdb19f7d756922c-de3190174428d1ec17f8",
+              "file": "integration-workflow-e2e.spec.ts",
+              "line": 225,
+              "column": 7
+            },
+            {
+              "title": "Performance and Scalability Integration Test",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "db581cdb19f7d756922c-597428942ed3dce10388",
+              "file": "integration-workflow-e2e.spec.ts",
+              "line": 270,
+              "column": 7
+            },
+            {
+              "title": "Error Recovery and Resilience Integration Test",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "db581cdb19f7d756922c-a5f81899d0827f001c02",
+              "file": "integration-workflow-e2e.spec.ts",
+              "line": 313,
+              "column": 7
+            },
+            {
+              "title": "Cross-Browser Compatibility Integration Test",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "db581cdb19f7d756922c-25e3075427021a9b4e33",
+              "file": "integration-workflow-e2e.spec.ts",
+              "line": 351,
+              "column": 7
+            },
+            {
+              "title": "Complete HIPAA Healthcare Data Processing Workflow",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "db581cdb19f7d756922c-d573ef346b5aaf363199",
+              "file": "integration-workflow-e2e.spec.ts",
+              "line": 45,
+              "column": 7
+            },
+            {
+              "title": "Financial Data PCI-DSS Compliance Workflow",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "db581cdb19f7d756922c-279f6961dabcbdad5294",
+              "file": "integration-workflow-e2e.spec.ts",
+              "line": 193,
+              "column": 7
+            },
+            {
+              "title": "GDPR European Data Processing Workflow",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "db581cdb19f7d756922c-eb0fd83b299494d8a74c",
+              "file": "integration-workflow-e2e.spec.ts",
+              "line": 225,
+              "column": 7
+            },
+            {
+              "title": "Performance and Scalability Integration Test",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "db581cdb19f7d756922c-08a936f7ebe2061dcf91",
+              "file": "integration-workflow-e2e.spec.ts",
+              "line": 270,
+              "column": 7
+            },
+            {
+              "title": "Error Recovery and Resilience Integration Test",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "db581cdb19f7d756922c-35066dbaa3b34c28586c",
+              "file": "integration-workflow-e2e.spec.ts",
+              "line": 313,
+              "column": 7
+            },
+            {
+              "title": "Cross-Browser Compatibility Integration Test",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "db581cdb19f7d756922c-ad466574ca6570a3dde5",
+              "file": "integration-workflow-e2e.spec.ts",
+              "line": 351,
+              "column": 7
+            },
+            {
+              "title": "Complete HIPAA Healthcare Data Processing Workflow",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "db581cdb19f7d756922c-1dca5336f389d776cd83",
+              "file": "integration-workflow-e2e.spec.ts",
+              "line": 45,
+              "column": 7
+            },
+            {
+              "title": "Financial Data PCI-DSS Compliance Workflow",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "db581cdb19f7d756922c-a9fb7711b98ce697dcfa",
+              "file": "integration-workflow-e2e.spec.ts",
+              "line": 193,
+              "column": 7
+            },
+            {
+              "title": "GDPR European Data Processing Workflow",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "db581cdb19f7d756922c-8ff057916a514bb80877",
+              "file": "integration-workflow-e2e.spec.ts",
+              "line": 225,
+              "column": 7
+            },
+            {
+              "title": "Performance and Scalability Integration Test",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "db581cdb19f7d756922c-2d3018a926e248c48a1d",
+              "file": "integration-workflow-e2e.spec.ts",
+              "line": 270,
+              "column": 7
+            },
+            {
+              "title": "Error Recovery and Resilience Integration Test",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "db581cdb19f7d756922c-c8db0a75d8e0c1c8e61a",
+              "file": "integration-workflow-e2e.spec.ts",
+              "line": 313,
+              "column": 7
+            },
+            {
+              "title": "Cross-Browser Compatibility Integration Test",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "db581cdb19f7d756922c-90b10363325d77f2033c",
+              "file": "integration-workflow-e2e.spec.ts",
+              "line": 351,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "API Integration Tests",
+          "file": "integration-workflow-e2e.spec.ts",
+          "line": 378,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Backend API Endpoints Integration",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "db581cdb19f7d756922c-2d3002f49c178d960c9e",
+              "file": "integration-workflow-e2e.spec.ts",
+              "line": 380,
+              "column": 7
+            },
+            {
+              "title": "WebSocket Real-time Integration",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "db581cdb19f7d756922c-09271ff5e44e1eff864a",
+              "file": "integration-workflow-e2e.spec.ts",
+              "line": 438,
+              "column": 7
+            },
+            {
+              "title": "Backend API Endpoints Integration",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "db581cdb19f7d756922c-2312447bf52dacf46e2d",
+              "file": "integration-workflow-e2e.spec.ts",
+              "line": 380,
+              "column": 7
+            },
+            {
+              "title": "WebSocket Real-time Integration",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "db581cdb19f7d756922c-43e7331ffa4faa4c1e63",
+              "file": "integration-workflow-e2e.spec.ts",
+              "line": 438,
+              "column": 7
+            },
+            {
+              "title": "Backend API Endpoints Integration",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "db581cdb19f7d756922c-54d87d4ee1c5479e0403",
+              "file": "integration-workflow-e2e.spec.ts",
+              "line": 380,
+              "column": 7
+            },
+            {
+              "title": "WebSocket Real-time Integration",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "db581cdb19f7d756922c-09139a2b630d5b8a0d6d",
+              "file": "integration-workflow-e2e.spec.ts",
+              "line": 438,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "sentiment-execution.spec.ts",
+      "file": "sentiment-execution.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Sentiment Analysis Execution",
+          "file": "sentiment-execution.spec.ts",
+          "line": 3,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should complete sentiment configuration and enable execution",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "46612fb23adf52b95c9f-9d6bd037a7c23c5ec133",
+              "file": "sentiment-execution.spec.ts",
+              "line": 4,
+              "column": 7
+            },
+            {
+              "title": "should complete sentiment configuration and enable execution",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "46612fb23adf52b95c9f-975d44e829c68733e6f9",
+              "file": "sentiment-execution.spec.ts",
+              "line": 4,
+              "column": 7
+            },
+            {
+              "title": "should complete sentiment configuration and enable execution",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "46612fb23adf52b95c9f-d9b2b18df53c65c1648a",
+              "file": "sentiment-execution.spec.ts",
+              "line": 4,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "system-verification-e2e.spec.ts",
+      "file": "system-verification-e2e.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Enhanced DataCloak System Verification",
+          "file": "system-verification-e2e.spec.ts",
+          "line": 9,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Verify Enhanced DataCloak Service Structure",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2bf29e1db9f097c47035-6c3d38f77b030159a024",
+              "file": "system-verification-e2e.spec.ts",
+              "line": 11,
+              "column": 7
+            },
+            {
+              "title": "Verify API Endpoint Structure",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2bf29e1db9f097c47035-db4a9cd7b9e945d8effc",
+              "file": "system-verification-e2e.spec.ts",
+              "line": 49,
+              "column": 7
+            },
+            {
+              "title": "Verify Frontend Component Structure",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2bf29e1db9f097c47035-0a88e81b77ccf9512095",
+              "file": "system-verification-e2e.spec.ts",
+              "line": 87,
+              "column": 7
+            },
+            {
+              "title": "Verify Testing Infrastructure",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2bf29e1db9f097c47035-f874c55abc4088d701a2",
+              "file": "system-verification-e2e.spec.ts",
+              "line": 135,
+              "column": 7
+            },
+            {
+              "title": "Verify Integration Dependencies",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2bf29e1db9f097c47035-e89924cfa259e2dc2160",
+              "file": "system-verification-e2e.spec.ts",
+              "line": 177,
+              "column": 7
+            },
+            {
+              "title": "Verify Production Readiness",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2bf29e1db9f097c47035-bc9b5903123ebc0b4923",
+              "file": "system-verification-e2e.spec.ts",
+              "line": 215,
+              "column": 7
+            },
+            {
+              "title": "Verify Compliance and Security Features",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2bf29e1db9f097c47035-d9d35693a7371970b9c0",
+              "file": "system-verification-e2e.spec.ts",
+              "line": 272,
+              "column": 7
+            },
+            {
+              "title": "Performance Benchmarks Verification",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2bf29e1db9f097c47035-d2ff6a012989a82bfbe1",
+              "file": "system-verification-e2e.spec.ts",
+              "line": 318,
+              "column": 7
+            },
+            {
+              "title": "Verify Enhanced DataCloak Service Structure",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2bf29e1db9f097c47035-1ae994dfc6349e94c307",
+              "file": "system-verification-e2e.spec.ts",
+              "line": 11,
+              "column": 7
+            },
+            {
+              "title": "Verify API Endpoint Structure",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2bf29e1db9f097c47035-6ed9a463be039c400d55",
+              "file": "system-verification-e2e.spec.ts",
+              "line": 49,
+              "column": 7
+            },
+            {
+              "title": "Verify Frontend Component Structure",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2bf29e1db9f097c47035-bb71c8cd6fced1eb3c94",
+              "file": "system-verification-e2e.spec.ts",
+              "line": 87,
+              "column": 7
+            },
+            {
+              "title": "Verify Testing Infrastructure",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2bf29e1db9f097c47035-f3ac012bbff99b64e368",
+              "file": "system-verification-e2e.spec.ts",
+              "line": 135,
+              "column": 7
+            },
+            {
+              "title": "Verify Integration Dependencies",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2bf29e1db9f097c47035-82d943af711317b94ff1",
+              "file": "system-verification-e2e.spec.ts",
+              "line": 177,
+              "column": 7
+            },
+            {
+              "title": "Verify Production Readiness",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2bf29e1db9f097c47035-d9012b79fa67cdc2e302",
+              "file": "system-verification-e2e.spec.ts",
+              "line": 215,
+              "column": 7
+            },
+            {
+              "title": "Verify Compliance and Security Features",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2bf29e1db9f097c47035-0cd30757f7226ad8e82d",
+              "file": "system-verification-e2e.spec.ts",
+              "line": 272,
+              "column": 7
+            },
+            {
+              "title": "Performance Benchmarks Verification",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2bf29e1db9f097c47035-20ecdd6c24db005f5fc6",
+              "file": "system-verification-e2e.spec.ts",
+              "line": 318,
+              "column": 7
+            },
+            {
+              "title": "Verify Enhanced DataCloak Service Structure",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2bf29e1db9f097c47035-035e3bf56fe6fb319324",
+              "file": "system-verification-e2e.spec.ts",
+              "line": 11,
+              "column": 7
+            },
+            {
+              "title": "Verify API Endpoint Structure",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2bf29e1db9f097c47035-d64a7394a43a8316a075",
+              "file": "system-verification-e2e.spec.ts",
+              "line": 49,
+              "column": 7
+            },
+            {
+              "title": "Verify Frontend Component Structure",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2bf29e1db9f097c47035-c5bd97f2882c44a4efe2",
+              "file": "system-verification-e2e.spec.ts",
+              "line": 87,
+              "column": 7
+            },
+            {
+              "title": "Verify Testing Infrastructure",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2bf29e1db9f097c47035-42c2bafdeeb80c762a3b",
+              "file": "system-verification-e2e.spec.ts",
+              "line": 135,
+              "column": 7
+            },
+            {
+              "title": "Verify Integration Dependencies",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2bf29e1db9f097c47035-46d7aa5b17f96a331a31",
+              "file": "system-verification-e2e.spec.ts",
+              "line": 177,
+              "column": 7
+            },
+            {
+              "title": "Verify Production Readiness",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2bf29e1db9f097c47035-2a97e17fa8206857950f",
+              "file": "system-verification-e2e.spec.ts",
+              "line": 215,
+              "column": 7
+            },
+            {
+              "title": "Verify Compliance and Security Features",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2bf29e1db9f097c47035-4ba9b98a6da3e4d52587",
+              "file": "system-verification-e2e.spec.ts",
+              "line": 272,
+              "column": 7
+            },
+            {
+              "title": "Performance Benchmarks Verification",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2bf29e1db9f097c47035-e27d580437b70307783e",
+              "file": "system-verification-e2e.spec.ts",
+              "line": 318,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "System Integration Summary",
+          "file": "system-verification-e2e.spec.ts",
+          "line": 368,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Generate Integration Report",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2bf29e1db9f097c47035-8979675ec33b6fc41b63",
+              "file": "system-verification-e2e.spec.ts",
+              "line": 370,
+              "column": 7
+            },
+            {
+              "title": "Generate Integration Report",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2bf29e1db9f097c47035-505212497ea53415b22a",
+              "file": "system-verification-e2e.spec.ts",
+              "line": 370,
+              "column": 7
+            },
+            {
+              "title": "Generate Integration Report",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2bf29e1db9f097c47035-ee05579c74b920bb6e7f",
+              "file": "system-verification-e2e.spec.ts",
+              "line": 370,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "workflow-navigation.spec.ts",
+      "file": "workflow-navigation.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Workflow Navigation",
+          "file": "workflow-navigation.spec.ts",
+          "line": 3,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should progress through workflow steps",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7b54a57387754b7e1243-17f3786c026429ebee0d",
+              "file": "workflow-navigation.spec.ts",
+              "line": 4,
+              "column": 7
+            },
+            {
+              "title": "should progress through workflow steps",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7b54a57387754b7e1243-855417c1b17da6e06023",
+              "file": "workflow-navigation.spec.ts",
+              "line": 4,
+              "column": 7
+            },
+            {
+              "title": "should progress through workflow steps",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "7b54a57387754b7e1243-ba5da538efeadaed386c",
+              "file": "workflow-navigation.spec.ts",
+              "line": 4,
+              "column": 7
+            }
+          ]
+        }
+      ]
     }
   ],
+  "errors": [],
   "stats": {
-    "startTime": "2025-06-15T13:18:15.666Z",
-    "duration": 947.6120000000001,
+    "startTime": "2025-06-16T19:02:56.319Z",
+    "duration": 555.516,
     "expected": 0,
-    "skipped": 0,
+    "skipped": 242,
     "unexpected": 0,
     "flaky": 0
   }

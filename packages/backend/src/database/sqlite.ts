@@ -2,6 +2,7 @@ import Database from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
 import { config } from '../config/env';
+import { enhancedSQLiteManager } from './enhanced-sqlite';
 
 let db: Database.Database | null = null;
 
@@ -26,6 +27,15 @@ export const initializeSQLite = async (): Promise<void> => {
     
     // Create tables
     await createTables();
+    
+    // Initialize enhanced schema for TASK-202
+    try {
+      await enhancedSQLiteManager.initializeComplete();
+      console.log('Enhanced SQLite schema initialized successfully');
+    } catch (error) {
+      console.error('Failed to initialize enhanced schema:', error);
+      // Don't throw here to maintain backward compatibility
+    }
     
   } catch (error) {
     console.error('Failed to initialize SQLite:', error);

@@ -56,4 +56,46 @@ router.post(
   asyncHandler(websocketController.disconnectClient)
 );
 
+// Real-time Risk Assessment WebSocket Endpoints - TASK-201
+const riskAssessmentSubscribeSchema = Joi.object({
+  assessmentId: Joi.string().optional(),
+  frameworks: Joi.array().items(Joi.string()).optional(),
+  riskThreshold: Joi.number().min(0).max(100).optional()
+});
+
+const riskAssessmentUpdateSchema = Joi.object({
+  assessmentId: Joi.string().required(),
+  riskScore: Joi.number().min(0).max(100).required(),
+  status: Joi.string().valid('pending', 'processing', 'completed', 'failed').required(),
+  data: Joi.any().optional()
+});
+
+router.post(
+  '/risk-assessment/subscribe',
+  authenticate,
+  validate(riskAssessmentSubscribeSchema),
+  asyncHandler(websocketController.subscribeToRiskAssessments)
+);
+
+router.post(
+  '/risk-assessment/unsubscribe',
+  authenticate,
+  asyncHandler(websocketController.unsubscribeFromRiskAssessments)
+);
+
+router.post(
+  '/risk-assessment/update',
+  authenticate,
+  authorize('analyst'),
+  validate(riskAssessmentUpdateSchema),
+  asyncHandler(websocketController.broadcastRiskAssessmentUpdate)
+);
+
+router.get(
+  '/risk-assessment/active-subscriptions',
+  authenticate,
+  authorize('admin'),
+  asyncHandler(websocketController.getActiveRiskSubscriptions)
+);
+
 export default router;
