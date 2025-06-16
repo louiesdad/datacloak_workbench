@@ -25,4 +25,15 @@ router.get('/insights/business', analyticsController.getBusinessInsights);
 router.get('/advanced', analyticsController.getAdvancedAnalytics);
 router.get('/export', analyticsController.getAnalyticsExport);
 
+// Performance analytics endpoints - TASK-201
+router.get('/performance', analyticsController.getPerformanceMetrics);
+router.get('/performance/real-time', analyticsController.getRealTimePerformance);
+router.get('/performance/trends', analyticsController.getPerformanceTrends);
+router.get('/performance/cache', analyticsController.getCachePerformance);
+router.get('/performance/api', analyticsController.getAPIPerformance);
+router.get('/performance/database', analyticsController.getDatabasePerformance);
+router.get('/performance/memory', analyticsController.getMemoryUsage);
+router.get('/performance/alerts', analyticsController.getPerformanceAlerts);
+router.post('/performance/baseline', analyticsController.setPerformanceBaseline);
+
 export default router;

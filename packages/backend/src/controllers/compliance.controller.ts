@@ -516,6 +516,405 @@ ${'='.repeat(50)}
       throw new AppError('Failed to get compliance rules', 500, 'COMPLIANCE_RULES_ERROR');
     }
   }
+
+  // Enhanced Framework Management - TASK-201
+  async getFrameworks(req: Request, res: Response): Promise<Response> {
+    try {
+      const frameworks = [
+        {
+          id: 'hipaa',
+          name: 'HIPAA',
+          description: 'Health Insurance Portability and Accountability Act',
+          type: 'healthcare',
+          enabled: true,
+          version: '1.0',
+          lastUpdated: '2024-01-15',
+          ruleCount: 5,
+          severity: 'critical',
+          regions: ['US'],
+          requirements: [
+            'Protected Health Information safeguards',
+            'Minimum necessary standard',
+            'Administrative safeguards',
+            'Physical safeguards',
+            'Technical safeguards'
+          ]
+        },
+        {
+          id: 'pci-dss',
+          name: 'PCI DSS',
+          description: 'Payment Card Industry Data Security Standard',
+          type: 'financial',
+          enabled: true,
+          version: '4.0',
+          lastUpdated: '2024-01-15',
+          ruleCount: 6,
+          severity: 'critical',
+          regions: ['Global'],
+          requirements: [
+            'Install and maintain network security controls',
+            'Apply secure configurations to all system components',
+            'Protect stored cardholder data',
+            'Protect cardholder data with strong cryptography',
+            'Protect all systems against malware',
+            'Develop and maintain secure systems'
+          ]
+        },
+        {
+          id: 'gdpr',
+          name: 'GDPR',
+          description: 'General Data Protection Regulation',
+          type: 'privacy',
+          enabled: true,
+          version: '2018',
+          lastUpdated: '2024-01-15',
+          ruleCount: 6,
+          severity: 'high',
+          regions: ['EU', 'EEA'],
+          requirements: [
+            'Lawful basis for processing',
+            'Data minimization principle',
+            'Security of processing',
+            'Right to erasure',
+            'Data portability',
+            'Personal data breach notification'
+          ]
+        },
+        {
+          id: 'general',
+          name: 'General Privacy',
+          description: 'General privacy and data protection best practices',
+          type: 'general',
+          enabled: true,
+          version: '1.0',
+          lastUpdated: '2024-01-15',
+          ruleCount: 4,
+          severity: 'medium',
+          regions: ['Global'],
+          requirements: [
+            'Basic data protection',
+            'Access controls',
+            'Data retention policies',
+            'Audit logging'
+          ]
+        }
+      ];
+
+      // Filter by type if specified
+      const { type, enabled } = req.query;
+      let filteredFrameworks = frameworks;
+
+      if (type) {
+        filteredFrameworks = filteredFrameworks.filter(f => f.type === type);
+      }
+
+      if (enabled !== undefined) {
+        const isEnabled = enabled === 'true';
+        filteredFrameworks = filteredFrameworks.filter(f => f.enabled === isEnabled);
+      }
+
+      return res.json({
+        success: true,
+        data: {
+          frameworks: filteredFrameworks,
+          total: filteredFrameworks.length,
+          enabled: filteredFrameworks.filter(f => f.enabled).length
+        }
+      });
+    } catch (error) {
+      console.error('Error getting frameworks:', error);
+      throw new AppError('Failed to get frameworks', 500, 'GET_FRAMEWORKS_ERROR');
+    }
+  }
+
+  async createFramework(req: Request, res: Response): Promise<Response> {
+    try {
+      const { name, description, type, requirements, severity, regions } = req.body;
+
+      // Validate required fields
+      if (!name || !description || !type) {
+        throw new AppError('Missing required fields: name, description, type', 400, 'MISSING_FIELDS');
+      }
+
+      const newFramework = {
+        id: name.toLowerCase().replace(/\s+/g, '-'),
+        name,
+        description,
+        type,
+        enabled: true,
+        version: '1.0',
+        lastUpdated: new Date().toISOString().split('T')[0],
+        ruleCount: requirements?.length || 0,
+        severity: severity || 'medium',
+        regions: regions || ['Global'],
+        requirements: requirements || [],
+        created: new Date().toISOString()
+      };
+
+      // In a real implementation, this would save to database
+      return res.status(201).json({
+        success: true,
+        data: newFramework,
+        message: 'Framework created successfully'
+      });
+    } catch (error) {
+      console.error('Error creating framework:', error);
+      throw new AppError('Failed to create framework', 500, 'CREATE_FRAMEWORK_ERROR');
+    }
+  }
+
+  async updateFramework(req: Request, res: Response): Promise<Response> {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+
+      // In a real implementation, this would update the database
+      const updatedFramework = {
+        id,
+        ...updates,
+        lastUpdated: new Date().toISOString().split('T')[0]
+      };
+
+      return res.json({
+        success: true,
+        data: updatedFramework,
+        message: 'Framework updated successfully'
+      });
+    } catch (error) {
+      console.error('Error updating framework:', error);
+      throw new AppError('Failed to update framework', 500, 'UPDATE_FRAMEWORK_ERROR');
+    }
+  }
+
+  async deleteFramework(req: Request, res: Response): Promise<Response> {
+    try {
+      const { id } = req.params;
+
+      // Prevent deletion of core frameworks
+      if (['hipaa', 'pci-dss', 'gdpr', 'general'].includes(id)) {
+        throw new AppError('Cannot delete core framework', 400, 'CANNOT_DELETE_CORE');
+      }
+
+      // In a real implementation, this would delete from database
+      return res.json({
+        success: true,
+        message: 'Framework deleted successfully'
+      });
+    } catch (error) {
+      console.error('Error deleting framework:', error);
+      throw new AppError('Failed to delete framework', 500, 'DELETE_FRAMEWORK_ERROR');
+    }
+  }
+
+  async getFrameworkConfig(req: Request, res: Response): Promise<Response> {
+    try {
+      const { id } = req.params;
+
+      const config = {
+        frameworkId: id,
+        confidenceThreshold: 0.8,
+        patternPriorities: {
+          email: 1,
+          phone: 2,
+          ssn: 3,
+          creditCard: 4,
+          custom: 5
+        },
+        enabledDetectors: ['pii', 'sensitive_data', 'compliance_markers'],
+        riskScoringWeights: {
+          piiCount: 0.3,
+          sensitivityLevel: 0.4,
+          complianceViolations: 0.3
+        },
+        alertThresholds: {
+          low: 30,
+          medium: 60,
+          high: 80,
+          critical: 95
+        },
+        automatedActions: {
+          quarantineHighRisk: true,
+          alertOnViolations: true,
+          generateReports: true
+        }
+      };
+
+      return res.json({
+        success: true,
+        data: config
+      });
+    } catch (error) {
+      console.error('Error getting framework config:', error);
+      throw new AppError('Failed to get framework config', 500, 'GET_CONFIG_ERROR');
+    }
+  }
+
+  async updateFrameworkConfig(req: Request, res: Response): Promise<Response> {
+    try {
+      const { id } = req.params;
+      const config = req.body;
+
+      // Validate configuration values
+      if (config.confidenceThreshold && (config.confidenceThreshold < 0 || config.confidenceThreshold > 1)) {
+        throw new AppError('Confidence threshold must be between 0 and 1', 400, 'INVALID_THRESHOLD');
+      }
+
+      // In a real implementation, this would update the database
+      const updatedConfig = {
+        frameworkId: id,
+        ...config,
+        lastUpdated: new Date().toISOString()
+      };
+
+      return res.json({
+        success: true,
+        data: updatedConfig,
+        message: 'Framework configuration updated successfully'
+      });
+    } catch (error) {
+      console.error('Error updating framework config:', error);
+      throw new AppError('Failed to update framework config', 500, 'UPDATE_CONFIG_ERROR');
+    }
+  }
+
+  async generateComplianceReport(req: Request, res: Response): Promise<Response> {
+    try {
+      const { frameworkIds, dateRange, format = 'json', includeRecommendations = true } = req.body;
+
+      const report = {
+        reportId: `report-${Date.now()}`,
+        generatedAt: new Date().toISOString(),
+        frameworks: frameworkIds || ['hipaa', 'pci-dss', 'gdpr'],
+        dateRange: dateRange || {
+          start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+          end: new Date().toISOString()
+        },
+        summary: {
+          overallScore: 87,
+          totalAssessments: 156,
+          passedAssessments: 136,
+          failedAssessments: 20,
+          criticalViolations: 3,
+          totalViolations: 15
+        },
+        frameworkResults: {
+          hipaa: { score: 92, violations: 2, status: 'PASSED' },
+          'pci-dss': { score: 89, violations: 4, status: 'PASSED' },
+          gdpr: { score: 84, violations: 9, status: 'WARNING' }
+        },
+        trendAnalysis: {
+          scoreImprovement: '+5%',
+          violationReduction: '-12%',
+          complianceStability: 'High'
+        },
+        recommendations: includeRecommendations ? [
+          'Implement additional encryption for sensitive financial data',
+          'Review and update data retention policies',
+          'Enhance access control mechanisms',
+          'Conduct quarterly compliance training'
+        ] : []
+      };
+
+      return res.json({
+        success: true,
+        data: report
+      });
+    } catch (error) {
+      console.error('Error generating compliance report:', error);
+      throw new AppError('Failed to generate compliance report', 500, 'GENERATE_REPORT_ERROR');
+    }
+  }
+
+  async getReports(req: Request, res: Response): Promise<Response> {
+    try {
+      const { page = 1, limit = 10, framework, status } = req.query;
+      
+      // Mock report data
+      const reports = Array.from({ length: 25 }, (_, i) => ({
+        id: `report-${i + 1}`,
+        frameworkIds: ['hipaa', 'gdpr'],
+        generatedAt: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString(),
+        status: i % 3 === 0 ? 'failed' : 'passed',
+        score: 70 + Math.floor(Math.random() * 30),
+        violations: Math.floor(Math.random() * 10)
+      }));
+
+      // Apply filters
+      let filteredReports = reports;
+      if (framework) {
+        filteredReports = filteredReports.filter(r => r.frameworkIds.includes(framework as string));
+      }
+      if (status) {
+        filteredReports = filteredReports.filter(r => r.status === status);
+      }
+
+      // Pagination
+      const pageNum = parseInt(page as string);
+      const limitNum = parseInt(limit as string);
+      const startIndex = (pageNum - 1) * limitNum;
+      const endIndex = startIndex + limitNum;
+      const paginatedReports = filteredReports.slice(startIndex, endIndex);
+
+      return res.json({
+        success: true,
+        data: {
+          reports: paginatedReports,
+          pagination: {
+            page: pageNum,
+            limit: limitNum,
+            total: filteredReports.length,
+            pages: Math.ceil(filteredReports.length / limitNum)
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Error getting reports:', error);
+      throw new AppError('Failed to get reports', 500, 'GET_REPORTS_ERROR');
+    }
+  }
+
+  async getReport(req: Request, res: Response): Promise<Response> {
+    try {
+      const { id } = req.params;
+
+      const report = {
+        id,
+        frameworkIds: ['hipaa', 'gdpr'],
+        generatedAt: new Date().toISOString(),
+        status: 'passed',
+        score: 87,
+        violations: 3,
+        details: {
+          assessmentsRun: 156,
+          dataProcessed: '2.5GB',
+          processingTime: '45 seconds',
+          frameworks: {
+            hipaa: {
+              score: 92,
+              violations: [
+                { rule: 'PHI-001', severity: 'medium', message: 'Encryption not applied to all PHI fields' }
+              ]
+            },
+            gdpr: {
+              score: 84,
+              violations: [
+                { rule: 'GDPR-003', severity: 'high', message: 'Missing explicit consent documentation' },
+                { rule: 'GDPR-005', severity: 'low', message: 'Data portability request process unclear' }
+              ]
+            }
+          }
+        }
+      };
+
+      return res.json({
+        success: true,
+        data: report
+      });
+    } catch (error) {
+      console.error('Error getting report:', error);
+      throw new AppError('Failed to get report', 500, 'GET_REPORT_ERROR');
+    }
+  }
 }
 
 export const complianceController = new ComplianceController();

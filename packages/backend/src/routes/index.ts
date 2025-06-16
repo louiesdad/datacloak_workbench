@@ -19,6 +19,8 @@ import analyticsRoutes from './analytics.routes';
 import dashboardRoutes from './dashboard.routes';
 import connectionStatusRoutes from './connection-status.routes';
 import complianceRoutes from './compliance.routes';
+import riskAssessmentRoutes from './risk-assessment.routes';
+import patternsRoutes from './patterns.routes';
 
 export const setupRoutes = (app: Application): void => {
   // Mount routes
@@ -44,4 +46,6 @@ export const setupRoutes = (app: Application): void => {
   app.use('/api/v1/dashboard', dashboardRoutes);
   app.use('/api/v1/connection', connectionStatusRoutes);
   app.use('/api/v1/compliance', complianceRoutes);
+  app.use('/api/v1/risk-assessment', riskAssessmentRoutes);
+  app.use('/api/v1/patterns', patternsRoutes);
 };
