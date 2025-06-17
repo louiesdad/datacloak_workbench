@@ -147,7 +147,7 @@ describe('Complete Compliance Workflows - End-to-End Tests', () => {
       const riskAssessment = await enhancedDataCloak.assessDataRisk(financialData, fieldNames);
 
       // Verify financial data detection
-      expect(riskAssessment.overall_risk).toBeIn(['high', 'critical']);
+      expect(['high', 'critical']).toContain(riskAssessment.overall_risk);
       expect(riskAssessment.risk_score).toBeGreaterThan(70);
       
       const financialPII = riskAssessment.pii_detected.find(pii => 
@@ -341,7 +341,7 @@ describe('Complete Compliance Workflows - End-to-End Tests', () => {
         'Address: 123 Main St, Berlin, Germany' // EU address adds GDPR
       ];
 
-      const results = [];
+      const results: Array<{ framework: ComplianceFramework; assessment: any }> = [];
 
       // Test under each framework
       const frameworks = [ComplianceFramework.HIPAA, ComplianceFramework.PCI_DSS, ComplianceFramework.GDPR];

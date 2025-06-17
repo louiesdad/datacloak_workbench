@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: packages/backend/Dockerfile.rust
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DATACLOAK_LIBRARY_PATH: /usr/local/lib/libdatacloak_core.so
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    volumes:
+      - ./packages/backend/data:/monorepo/packages/backend/data
+      - ./packages/backend/uploads:/monorepo/packages/backend/uploads
+      - ./packages/backend/logs:/monorepo/packages/backend/logs
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: packages/frontend/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      VITE_API_URL: http://localhost:3001
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
