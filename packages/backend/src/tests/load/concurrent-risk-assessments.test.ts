@@ -120,7 +120,7 @@ describe('Concurrent Risk Assessments - Load Testing', () => {
       expect(results).toHaveLength(concurrentRequests);
       results.forEach(result => {
         expect(result).toBeDefined();
-        expect(result.overall_risk).toBeIn(['low', 'medium', 'high', 'critical']);
+        expect(['low', 'medium', 'high', 'critical']).toContain(result.overall_risk);
       });
 
       expect(totalTime).toBeLessThan(30000); // Complete within 30 seconds
