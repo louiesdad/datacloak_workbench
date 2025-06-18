@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataCloak Design System - MongoDB Compass Inspired</title>
+    <style>
+        /* CSS Variables - Blue Theme inspired by MongoDB Compass */
+        :root {
+            /* Primary Blues (replacing MongoDB's greens) */
+            --primary-blue-dark: #0D47A1;
+            --primary-blue: #1565C0;
+            --primary-blue-light: #1976D2;
+            --primary-blue-lighter: #42A5F5;
+            --primary-blue-lightest: #E3F2FD;
+            
+            /* Grays from MongoDB palette */
+            --gray-light-3: #F3F5F4;
+            --gray-light-2: #E8EDEB;
+            --gray-light-1: #C1C7C6;
+            --gray-base: #889397;
+            --gray-dark-1: #5C6C75;
+            --gray-dark-2: #3D4F58;
+            --gray-dark-3: #1C2D38;
+            --gray-dark-4: #112733;
+            
+            /* Semantic Colors */
+            --success-green: #00A35C;
+            --warning-yellow: #FFA043;
+            --error-red: #E11D48;
+            --info-blue: var(--primary-blue-light);
+            
+            /* Typography - Following MongoDB's font stack */
+            --font-serif: "MongoDB Value Serif", Georgia, serif;
+            --font-sans: "Euclid Circular A", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --font-mono: "Source Code Pro", Monaco, Consolas, monospace;
+            
+            /* Spacing - Based on 4px baseline grid */
+            --spacing-xs: 4px;
+            --spacing-sm: 8px;
+            --spacing-md: 16px;
+            --spacing-lg: 24px;
+            --spacing-xl: 32px;
+            --spacing-xxl: 48px;
+            
+            /* Border Radius */
+            --radius-sm: 4px;
+            --radius-md: 6px;
+            --radius-lg: 8px;
+            
+            /* Shadows */
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Reset */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: var(--font-sans);
+            color: var(--gray-dark-3);
+            background-color: white;
+            line-height: 1.5;
+            font-size: 14px;
+        }
+        
+        /* Typography */
+        h1 {
+            font-family: var(--font-serif);
+            font-size: 32px;
+            font-weight: 500;
+            color: var(--gray-dark-4);
+            margin-bottom: var(--spacing-md);
+        }
+        
+        h2 {
+            font-family: var(--font-serif);
+            font-size: 24px;
+            font-weight: 500;
+            color: var(--gray-dark-3);
+            margin-bottom: var(--spacing-md);
+        }
+        
+        h3 {
+            font-family: var(--font-sans);
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--gray-dark-3);
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        p {
+            color: var(--gray-dark-2);
+            margin-bottom: var(--spacing-md);
+        }
+        
+        /* Layout Container */
+        .app-container {
+            display: flex;
+            height: 100vh;
+            background-color: var(--gray-light-3);
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background-color: white;
+            border-right: 1px solid var(--gray-light-2);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .sidebar-header {
+            padding: var(--spacing-lg);
+            border-bottom: 1px solid var(--gray-light-2);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--gray-dark-4);
+        }
+        
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background-color: var(--primary-blue);
+            color: white;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Navigation */
+        .nav-section {
+            padding: var(--spacing-md);
+        }
+        
+        .nav-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--gray-base);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-sm) var(--spacing-md);
+            margin: var(--spacing-xs) 0;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--gray-dark-2);
+        }
+        
+        .nav-item:hover {
+            background-color: var(--gray-light-3);
+        }
+        
+        .nav-item.active {
+            background-color: var(--primary-blue-lightest);
+            color: var(--primary-blue);
+            font-weight: 500;
+        }
+        
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+            opacity: 0.7;
+        }
+        
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: var(--spacing-xl);
+        }
+        
+        /* Cards */
+        .card {
+            background-color: white;
+            border: 1px solid var(--gray-light-2);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        /* Buttons */
+        .btn {
+            font-family: var(--font-sans);
+            font-size: 14px;
+            font-weight: 500;
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--radius-md);
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-blue);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-blue-dark);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .btn-secondary {
+            background-color: white;
+            color: var(--gray-dark-2);
+            border: 1px solid var(--gray-light-1);
+        }
+        
+        .btn-secondary:hover {
+            background-color: var(--gray-light-3);
+        }
+        
+        /* Form Elements */
+        .form-group {
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .form-label {
+            display: block;
+            font-weight: 500;
+            color: var(--gray-dark-3);
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: var(--spacing-sm) var(--spacing-md);
+            border: 1px solid var(--gray-light-1);
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(21, 101, 192, 0.1);
+        }
+        
+        /* Status Badges */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .badge-success {
+            background-color: rgba(0, 163, 92, 0.1);
+            color: var(--success-green);
+        }
+        
+        .badge-warning {
+            background-color: rgba(255, 160, 67, 0.1);
+            color: var(--warning-yellow);
+        }
+        
+        .badge-error {
+            background-color: rgba(225, 29, 72, 0.1);
+            color: var(--error-red);
+        }
+        
+        /* Data Table */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .data-table th {
+            text-align: left;
+            padding: var(--spacing-md);
+            border-bottom: 2px solid var(--gray-light-2);
+            font-weight: 600;
+            color: var(--gray-dark-3);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .data-table td {
+            padding: var(--spacing-md);
+            border-bottom: 1px solid var(--gray-light-2);
+        }
+        
+        .data-table tr:hover {
+            background-color: var(--gray-light-3);
+        }
+        
+        /* Progress Steps */
+        .progress-steps {
+            display: flex;
+            align-items: center;
+            margin-bottom: var(--spacing-xl);
+        }
+        
+        .step {
+            display: flex;
+            align-items: center;
+            flex: 1;
+        }
+        
+        .step-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: var(--gray-light-2);
+            color: var(--gray-base);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .step.active .step-circle {
+            background-color: var(--primary-blue);
+            color: white;
+        }
+        
+        .step.completed .step-circle {
+            background-color: var(--success-green);
+            color: white;
+        }
+        
+        .step-line {
+            flex: 1;
+            height: 2px;
+            background-color: var(--gray-light-2);
+            margin: 0 var(--spacing-sm);
+        }
+        
+        .step.completed .step-line {
+            background-color: var(--success-green);
+        }
+        
+        /* Upload Area */
+        .upload-area {
+            border: 2px dashed var(--gray-light-1);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-xxl);
+            text-align: center;
+            background-color: var(--gray-light-3);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .upload-area:hover {
+            border-color: var(--primary-blue);
+            background-color: var(--primary-blue-lightest);
+        }
+        
+        /* Field Grid */
+        .field-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: var(--spacing-md);
+            margin-top: var(--spacing-lg);
+        }
+        
+        .field-card {
+            padding: var(--spacing-md);
+            border: 1px solid var(--gray-light-2);
+            border-radius: var(--radius-md);
+            background-color: white;
+        }
+        
+        .field-card.pii {
+            border-color: var(--warning-yellow);
+            background-color: rgba(255, 160, 67, 0.05);
+        }
+        
+        .field-name {
+            font-weight: 600;
+            color: var(--gray-dark-3);
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        .field-type {
+            font-size: 12px;
+            color: var(--gray-base);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon">🛡️</div>
+                    <span>DataCloak</span>
+                </div>
+                <p style="font-size: 12px; color: var(--gray-base); margin: 4px 0 0 40px;">Sentiment Workbench</p>
+            </div>
+            
+            <nav class="nav-section">
+                <div class="nav-label">Workflow</div>
+                <div class="nav-item active">
+                    <span class="nav-icon">📁</span>
+                    <span>Upload Data</span>
+                </div>
+                <div class="nav-item">
+                    <span class="nav-icon">🔍</span>
+                    <span>Data Profile</span>
+                </div>
+                <div class="nav-item">
+                    <span class="nav-icon">📝</span>
+                    <span>Select Columns</span>
+                </div>
+                <div class="nav-item">
+                    <span class="nav-icon">⚙️</span>
+                    <span>Configure</span>
+                </div>
+                <div class="nav-item">
+                    <span class="nav-icon">🚀</span>
+                    <span>Analyze</span>
+                </div>
+                <div class="nav-item">
+                    <span class="nav-icon">📊</span>
+                    <span>Results</span>
+                </div>
+            </nav>
+            
+            <nav class="nav-section" style="margin-top: auto;">
+                <div class="nav-label">System</div>
+                <div class="nav-item">
+                    <span class="nav-icon">📡</span>
+                    <span>Connection Status</span>
+                </div>
+                <div class="nav-item">
+                    <span class="nav-icon">ℹ️</span>
+                    <span>Help & Support</span>
+                </div>
+            </nav>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Progress Steps -->
+            <div class="progress-steps">
+                <div class="step completed">
+                    <div class="step-circle">✓</div>
+                    <div class="step-line"></div>
+                </div>
+                <div class="step active">
+                    <div class="step-circle">2</div>
+                    <div class="step-line"></div>
+                </div>
+                <div class="step">
+                    <div class="step-circle">3</div>
+                    <div class="step-line"></div>
+                </div>
+                <div class="step">
+                    <div class="step-circle">4</div>
+                    <div class="step-line"></div>
+                </div>
+                <div class="step">
+                    <div class="step-circle">5</div>
+                    <div class="step-line"></div>
+                </div>
+                <div class="step">
+                    <div class="step-circle">6</div>
+                </div>
+            </div>
+            
+            <!-- Page Header -->
+            <h1>Data Profile</h1>
+            <p>Review your uploaded data and PII detection results before proceeding with analysis.</p>
+            
+            <!-- Dataset Overview Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Dataset Overview</h3>
+                    <span class="badge badge-success">Ready for Analysis</span>
+                </div>
+                
+                <div class="data-table">
+                    <table style="width: 100%;">
+                        <tr>
+                            <td style="font-weight: 500;">File Name</td>
+                            <td>customers-2000-records.csv</td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight: 500;">Total Records</td>
+                            <td>2,000</td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight: 500;">File Size</td>
+                            <td>156.3 KB</td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight: 500;">Encoding</td>
+                            <td>UTF-8</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Fields Detection Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Field Analysis</h3>
+                    <span class="badge badge-warning">3 PII Fields Detected</span>
+                </div>
+                
+                <div class="field-grid">
+                    <div class="field-card">
+                        <div class="field-name">CustomerID</div>
+                        <div class="field-type">Integer • Unique</div>
+                    </div>
+                    <div class="field-card pii">
+                        <div class="field-name">Name</div>
+                        <div class="field-type">String • PII: Personal Name</div>
+                    </div>
+                    <div class="field-card pii">
+                        <div class="field-name">Email</div>
+                        <div class="field-type">String • PII: Email Address</div>
+                    </div>
+                    <div class="field-card">
+                        <div class="field-name">Age</div>
+                        <div class="field-type">Integer • Range: 18-65</div>
+                    </div>
+                    <div class="field-card">
+                        <div class="field-name">Location</div>
+                        <div class="field-type">String • 50 Unique Values</div>
+                    </div>
+                    <div class="field-card">
+                        <div class="field-name">PurchaseAmount</div>
+                        <div class="field-type">Float • Currency</div>
+                    </div>
+                    <div class="field-card">
+                        <div class="field-name">Review</div>
+                        <div class="field-type">String • Text Content</div>
+                    </div>
+                    <div class="field-card">
+                        <div class="field-name">Rating</div>
+                        <div class="field-type">Integer • Range: 1-5</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Security Summary Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Security Analysis</h3>
+                </div>
+                
+                <div class="form-group">
+                    <div style="padding: 16px; background-color: rgba(255, 160, 67, 0.1); border-radius: var(--radius-md); border: 1px solid var(--warning-yellow);">
+                        <strong style="color: var(--warning-yellow);">⚠️ PII Protection Active</strong>
+                        <p style="margin: 8px 0 0 0; font-size: 14px;">DataCloak has detected personal information in your dataset. All PII will be automatically masked during sentiment analysis to ensure compliance with data protection regulations.</p>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: var(--spacing-md); margin-top: var(--spacing-lg);">
+                    <button class="btn btn-secondary">← Back to Upload</button>
+                    <button class="btn btn-primary">Continue to Column Selection →</button>
+                </div>
+            </div>
+            
+            <!-- Sample of other UI elements -->
+            <div class="card">
+                <h3>UI Component Examples</h3>
+                
+                <div class="form-group">
+                    <label class="form-label">Text Input</label>
+                    <input type="text" class="form-input" placeholder="Enter text here...">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Select Dropdown</label>
+                    <select class="form-input">
+                        <option>Basic Model (Fast)</option>
+                        <option>Advanced Model (Accurate)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Upload Area</label>
+                    <div class="upload-area">
+                        <div style="font-size: 48px; margin-bottom: 16px;">📁</div>
+                        <p style="font-weight: 500; margin-bottom: 8px;">Drop your file here or click to browse</p>
+                        <p style="font-size: 12px; color: var(--gray-base);">Supported formats: CSV, XLSX, XLS (Max 100MB)</p>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Button Variations</label>
+                    <div style="display: flex; gap: var(--spacing-md); flex-wrap: wrap;">
+                        <button class="btn btn-primary">Primary Action</button>
+                        <button class="btn btn-secondary">Secondary Action</button>
+                        <button class="btn btn-primary" disabled style="opacity: 0.5; cursor: not-allowed;">Disabled</button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Status Badges</label>
+                    <div style="display: flex; gap: var(--spacing-md); flex-wrap: wrap;">
+                        <span class="badge badge-success">Success</span>
+                        <span class="badge badge-warning">Warning</span>
+                        <span class="badge badge-error">Error</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
