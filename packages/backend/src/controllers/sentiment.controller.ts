@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { SuccessResponse } from '../types';
 import { SentimentService } from '../services/sentiment.service';
 import { CostEstimationService } from '../services/cost-estimation.service';
+import { progressEmitter } from '../services/progress-emitter.service';
 import { sentimentAnalysisSchema, batchSentimentAnalysisSchema, paginationSchema } from '../validation/schemas';
 import { AppError } from '../middleware/error.middleware';
 
@@ -353,20 +354,34 @@ export class SentimentController {
   // Progressive API methods
   async analyzePreview(req: Request, res: Response): Promise<void> {
     const { texts, fields } = req.body;
+    const jobId = `preview-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     
     // For now, minimal implementation - just process the first 1000 rows
     const previewTexts = texts.slice(0, 1000);
     
+    // Initialize progress tracking
+    progressEmitter.initializeJob(jobId, previewTexts.length);
+    
+    // Simulate processing with progress updates
+    const results = [];
+    for (let i = 0; i < previewTexts.length; i++) {
+      results.push({
+        rowIndex: i,
+        text: previewTexts[i].substring(0, 100),
+        sentiment: 'neutral',
+        confidence: 0.5
+      });
+      
+      // Update progress
+      progressEmitter.updateProgress(jobId, i + 1);
+    }
+    
     const result: SuccessResponse = {
       data: {
         preview: true,
+        jobId,
         rowsAnalyzed: previewTexts.length,
-        results: previewTexts.map((text: string, index: number) => ({
-          rowIndex: index,
-          text: text.substring(0, 100),
-          sentiment: 'neutral',
-          confidence: 0.5
-        })),
+        results,
         timeElapsed: 1000 // 1 second
       },
       message: 'Preview analysis completed'
@@ -378,16 +393,18 @@ export class SentimentController {
   async getAnalysisProgress(req: Request, res: Response): Promise<void> {
     const { jobId } = req.params;
     
-    // Minimal implementation - return mock progress
+    // Get real progress from progress emitter
+    const jobInfo = progressEmitter.getJobInfo(jobId);
+    
+    if (!jobInfo) {
+      throw new AppError('Job not found', 404, 'JOB_NOT_FOUND');
+    }
+    
     const result: SuccessResponse = {
       data: {
         jobId,
-        status: 'processing',
-        progress: 35,
-        rowsProcessed: 1750000,
-        totalRows: 5000000,
-        timeElapsed: 14520000,
-        estimatedTimeRemaining: 28800000
+        status: jobInfo.progress === 100 ? 'completed' : 'processing',
+        ...jobInfo
       },
       message: 'Job progress retrieved'
     };

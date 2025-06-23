@@ -63,7 +63,18 @@ describe('Progressive Processing', () => {
         text: `Sample text ${i}`
       }));
 
-      // Act - This method doesn't exist yet
+      // Mock the maskFields response
+      const mockResults = smallDataset.map((field, i) => ({
+        fieldName: field.fieldName,
+        originalText: field.text,
+        maskedText: field.text,
+        piiItemsFound: 0,
+        success: true
+      }));
+
+      mockDataCloak.maskFields.mockResolvedValue(mockResults);
+
+      // Act
       const previewResult = await processor.processPreview(smallDataset);
 
       // Assert
@@ -82,9 +93,20 @@ describe('Progressive Processing', () => {
         text: `Text ${i}`
       }));
 
+      // Mock maskFields to return results for each batch
+      mockDataCloak.maskFields.mockImplementation(async (fields) => {
+        return fields.map(field => ({
+          fieldName: field.fieldName,
+          originalText: field.text,
+          maskedText: field.text,
+          piiItemsFound: 0,
+          success: true
+        }));
+      });
+
       const progressUpdates: any[] = [];
       
-      // Subscribe to progress events - method doesn't exist yet
+      // Subscribe to progress events
       processor.on('progress', (update) => {
         progressUpdates.push(update);
       });
