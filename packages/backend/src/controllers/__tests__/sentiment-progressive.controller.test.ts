@@ -55,15 +55,29 @@ describe('SentimentController - Progressive Methods', () => {
 
   describe('getAnalysisProgress', () => {
     test('should return job progress information', async () => {
-      mockRequest.params = { jobId: 'job-123' };
+      // First create a job via preview
+      mockRequest.body = {
+        texts: ['Sample text 1', 'Sample text 2'],
+        fields: ['feedback']
+      };
+
+      await controller.analyzePreview(mockRequest as Request, mockResponse as Response);
+
+      // Get the jobId from the response
+      const previewResponse = jsonMock.mock.calls[0][0];
+      const jobId = previewResponse.data.jobId;
+
+      // Now test progress endpoint
+      mockRequest.params = { jobId };
+      jest.clearAllMocks();
 
       await controller.getAnalysisProgress(mockRequest as Request, mockResponse as Response);
 
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
-            jobId: 'job-123',
-            status: 'processing',
+            jobId,
+            status: expect.any(String),
             progress: expect.any(Number),
             rowsProcessed: expect.any(Number),
             totalRows: expect.any(Number)

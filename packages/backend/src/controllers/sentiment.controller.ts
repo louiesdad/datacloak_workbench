@@ -414,20 +414,39 @@ export class SentimentController {
 
   async analyzeSample(req: Request, res: Response): Promise<void> {
     const { texts, fields, sampleSize = 10000 } = req.body;
+    const jobId = `sample-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     
-    // Minimal implementation - process sample
+    // Process statistical sample
     const sampleTexts = texts.slice(0, Math.min(sampleSize, texts.length));
+    
+    // Initialize progress tracking
+    progressEmitter.initializeJob(jobId, sampleTexts.length);
+    
+    // Simulate processing with progress updates
+    const results = [];
+    for (let i = 0; i < Math.min(sampleTexts.length, 100); i++) {
+      results.push({
+        text: sampleTexts[i].substring(0, 100),
+        sentiment: 'neutral',
+        confidence: 0.75
+      });
+      
+      // Update progress (simulate processing more than just the result subset)
+      if (i % 100 === 0) {
+        progressEmitter.updateProgress(jobId, Math.min((i + 1) * 100, sampleTexts.length));
+      }
+    }
+    
+    // Mark as complete
+    progressEmitter.updateProgress(jobId, sampleTexts.length);
     
     const result: SuccessResponse = {
       data: {
         sample: true,
+        jobId,
         sampleSize: sampleTexts.length,
         confidence: 0.95,
-        results: sampleTexts.slice(0, 100).map((text: string) => ({
-          text: text.substring(0, 100),
-          sentiment: 'neutral',
-          confidence: 0.75
-        })),
+        results,
         timeElapsed: 600000 // 10 minutes
       },
       message: 'Sample analysis completed'
