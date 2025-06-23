@@ -28,9 +28,20 @@ describe('Progressive Processing', () => {
         text: `Sample text ${i} with email${i}@example.com`
       }));
 
+      // Mock the maskFields response for the first 1000 items
+      const mockResults = Array.from({ length: 1000 }, (_, i) => ({
+        fieldName: `field${i}`,
+        originalText: `Sample text ${i} with email${i}@example.com`,
+        maskedText: `Sample text ${i} with ****@****.***`,
+        piiItemsFound: 1,
+        success: true
+      }));
+
+      mockDataCloak.maskFields.mockResolvedValue(mockResults);
+
       const startTime = Date.now();
 
-      // Act - This method doesn't exist yet
+      // Act
       const previewResult = await processor.processPreview(largeDataset);
 
       const endTime = Date.now();
