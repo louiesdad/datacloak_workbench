@@ -57,7 +57,32 @@ export class SentimentController {
       throw new AppError(error.details[0].message, 400, 'VALIDATION_ERROR');
     }
 
-    const { texts, model = 'basic' } = value;
+    const { texts, model = 'basic', enablePIIMasking = true, priority = 'medium', useJobQueue = false } = value;
+    
+    // Use job queue for large batches (>100 texts) or if explicitly requested
+    if ((texts.length > 100 || useJobQueue) && this.jobQueueService) {
+      const jobId = this.jobQueueService.addJob('sentiment_analysis_batch', {
+        texts,
+        model,
+        enablePIIMasking,
+        analysisMode: 'batch'
+      }, { priority });
+
+      const result: SuccessResponse = {
+        data: {
+          jobId,
+          status: 'queued',
+          textsCount: texts.length,
+          estimatedCompletionTime: Math.ceil(texts.length / 10) // Rough estimate: 10 texts per second
+        },
+        message: `Batch sentiment analysis job queued for ${texts.length} texts. Use jobId to track progress.`,
+      };
+      
+      res.json(result);
+      return;
+    }
+
+    // Fall back to direct processing for smaller batches
     const analyses = await this.sentimentService.batchAnalyzeSentiment(texts, model);
     
     const result: SuccessResponse = {
@@ -368,24 +393,58 @@ export class SentimentController {
 
   // Progressive API methods
   async analyzePreview(req: Request, res: Response): Promise<void> {
-    const { texts, fields } = req.body;
-    const jobId = `preview-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const { texts, fields, enablePIIMasking = true, model = 'basic', useJobQueue = false } = req.body;
     
     // For now, minimal implementation - just process the first 1000 rows
     const previewTexts = texts.slice(0, 1000);
     
+    // Use job queue for larger previews or if explicitly requested
+    if ((previewTexts.length > 50 || useJobQueue) && this.jobQueueService) {
+      const jobId = this.jobQueueService.addJob('sentiment_analysis_preview', {
+        texts: previewTexts,
+        model,
+        enablePIIMasking,
+        analysisMode: 'preview'
+      }, { priority: 'high' }); // Higher priority for previews
+
+      const result: SuccessResponse = {
+        data: {
+          jobId,
+          status: 'queued',
+          preview: true,
+          textsCount: previewTexts.length,
+          estimatedCompletionTime: Math.ceil(previewTexts.length / 20) // Faster for previews
+        },
+        message: `Preview analysis job queued for ${previewTexts.length} texts. Use jobId to track progress.`,
+      };
+      
+      res.json(result);
+      return;
+    }
+
+    // Direct processing for small previews
+    const jobId = `preview-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
     // Initialize progress tracking
     progressEmitter.initializeJob(jobId, previewTexts.length);
     
-    // Simulate processing with progress updates
+    // Process each text with sentiment analysis
     const results = [];
     for (let i = 0; i < previewTexts.length; i++) {
-      results.push({
-        rowIndex: i,
-        text: previewTexts[i].substring(0, 100),
-        sentiment: 'neutral',
-        confidence: 0.5
-      });
+      try {
+        const analysis = await this.sentimentService.analyzeSentiment(previewTexts[i], enablePIIMasking, model);
+        results.push({
+          rowIndex: i,
+          text: previewTexts[i].substring(0, 100),
+          ...analysis
+        });
+      } catch (error) {
+        results.push({
+          rowIndex: i,
+          text: previewTexts[i].substring(0, 100),
+          error: 'Analysis failed'
+        });
+      }
       
       // Update progress
       progressEmitter.updateProgress(jobId, i + 1);
@@ -397,7 +456,7 @@ export class SentimentController {
         jobId,
         rowsAnalyzed: previewTexts.length,
         results,
-        timeElapsed: 1000 // 1 second
+        timeElapsed: Date.now() - parseInt(jobId.split('-')[1])
       },
       message: 'Preview analysis completed'
     };
@@ -408,7 +467,32 @@ export class SentimentController {
   async getAnalysisProgress(req: Request, res: Response): Promise<void> {
     const { jobId } = req.params;
     
-    // Get real progress from progress emitter
+    // First check if it's a job queue job
+    if (this.jobQueueService) {
+      const job = this.jobQueueService.getJob(jobId);
+      if (job) {
+        const result: SuccessResponse = {
+          data: {
+            jobId: job.id,
+            status: job.status,
+            progress: job.progress,
+            type: job.type,
+            priority: job.priority,
+            createdAt: job.createdAt,
+            startedAt: job.startedAt,
+            completedAt: job.completedAt,
+            error: job.error,
+            result: job.result
+          },
+          message: 'Job progress retrieved from queue'
+        };
+        
+        res.json(result);
+        return;
+      }
+    }
+    
+    // Fall back to progress emitter for direct processing jobs
     const jobInfo = progressEmitter.getJobInfo(jobId);
     
     if (!jobInfo) {
