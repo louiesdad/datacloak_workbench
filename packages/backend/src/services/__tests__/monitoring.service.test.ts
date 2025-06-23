@@ -102,15 +102,15 @@ describe('MonitoringService', () => {
       // Fast-forward time by 15 seconds (3 intervals)
       jest.advanceTimersByTime(15000);
       
-      // Assert
-      expect(mockGetQueueMetrics).toHaveBeenCalledTimes(3);
+      // Assert - 1 initial call + 3 interval calls = 4 total
+      expect(mockGetQueueMetrics).toHaveBeenCalledTimes(4);
       
       // Stop monitoring
       monitoringService.stopMonitoring();
       
       // Fast-forward time and ensure no more calls
       jest.advanceTimersByTime(10000);
-      expect(mockGetQueueMetrics).toHaveBeenCalledTimes(3);
+      expect(mockGetQueueMetrics).toHaveBeenCalledTimes(4);
       
       jest.useRealTimers();
     });

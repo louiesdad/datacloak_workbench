@@ -239,4 +239,43 @@ describe('Rule Engine', () => {
       expect(mockEmailAction).not.toHaveBeenCalled();
     });
   });
+
+  describe('Comparison operators', () => {
+    test.each([
+      ['equals', 'status', 'active', 'active', true],
+      ['equals', 'status', 'active', 'inactive', false],
+      ['notEquals', 'status', 'active', 'inactive', true],
+      ['notEquals', 'status', 'active', 'active', false],
+      ['greaterThanOrEquals', 'amount', 100, 100, true],
+      ['greaterThanOrEquals', 'amount', 100, 150, true],
+      ['greaterThanOrEquals', 'amount', 100, 50, false],
+      ['lessThanOrEquals', 'amount', 100, 100, true],
+      ['lessThanOrEquals', 'amount', 100, 50, true],
+      ['lessThanOrEquals', 'amount', 100, 150, false],
+    ])('should evaluate %s operator correctly', (operator, field, value, dataValue, expected) => {
+      // Arrange
+      const rule = {
+        conditions: {
+          operator: 'AND',
+          rules: [
+            {
+              field,
+              operator,
+              value
+            }
+          ]
+        }
+      };
+
+      const data = {
+        [field]: dataValue
+      };
+
+      // Act
+      const result = ruleEngine.evaluate(rule, data);
+
+      // Assert
+      expect(result).toBe(expected);
+    });
+  });
 });

@@ -64,6 +64,24 @@ jest.mock('../../controllers/sentiment.controller', () => ({
           estimatedTimeRemaining: 28800000
         }
       });
+    }),
+    
+    // Add mock for sample endpoint
+    analyzeSample: jest.fn((req, res) => {
+      const { sampleSize = 10000 } = req.body;
+      res.status(200).json({
+        data: {
+          sample: true,
+          sampleSize,
+          confidence: 0.95,
+          results: Array(Math.min(sampleSize, 100)).fill({
+            text: 'Sample text',
+            sentiment: 'neutral',
+            confidence: 0.75
+          }),
+          timeElapsed: 600000 // 10 minutes
+        }
+      });
     })
   }))
 }));
@@ -138,6 +156,34 @@ describe('Progressive API Endpoints', () => {
           totalRows: expect.any(Number)
         }
       });
+    });
+  });
+
+  describe('POST /api/v1/sentiment/analyze/sample', () => {
+    test('should analyze statistical sample within 30 minutes', async () => {
+      const testData = {
+        texts: Array(100).fill('Sample text for analysis'),
+        fields: ['feedback', 'comments'],
+        sampleSize: 10000
+      };
+
+      const response = await request(app)
+        .post('/api/v1/sentiment/analyze/sample')
+        .send(testData)
+        .expect(200);
+
+      expect(response.body).toMatchObject({
+        data: {
+          sample: true,
+          sampleSize: 10000,
+          confidence: expect.any(Number),
+          results: expect.any(Array),
+          timeElapsed: expect.any(Number)
+        }
+      });
+      
+      // Verify it returns within 30 minutes (1800000ms)
+      expect(response.body.data.timeElapsed).toBeLessThan(1800000);
     });
   });
 });

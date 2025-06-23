@@ -284,6 +284,24 @@ export class JobQueueService extends EventEmitter {
   }
 
   /**
+   * Get queue metrics for monitoring
+   */
+  getQueueMetrics(): {
+    pending: number;
+    running: number;
+    completed: number;
+    failed: number;
+  } {
+    const stats = this.getStats();
+    return {
+      pending: stats.pending,
+      running: stats.running,
+      completed: stats.completed,
+      failed: stats.failed
+    };
+  }
+
+  /**
    * Start processing jobs
    */
   private startProcessing(): void {

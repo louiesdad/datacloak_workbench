@@ -9,8 +9,15 @@ export interface RuleGroup {
   rules: Condition[];
 }
 
+export interface Action {
+  type: string;
+  handler: (config: any, data: any) => void;
+  config: any;
+}
+
 export interface Rule {
   conditions: RuleGroup;
+  actions?: Action[];
 }
 
 export class RuleEngine {
@@ -35,8 +42,24 @@ export class RuleEngine {
         return fieldValue > value;
       case 'lessThan':
         return fieldValue < value;
+      case 'equals':
+        return fieldValue === value;
+      case 'notEquals':
+        return fieldValue !== value;
+      case 'greaterThanOrEquals':
+        return fieldValue >= value;
+      case 'lessThanOrEquals':
+        return fieldValue <= value;
       default:
         return false;
+    }
+  }
+
+  executeRule(rule: Rule, data: Record<string, any>): void {
+    if (this.evaluate(rule, data) && rule.actions) {
+      rule.actions.forEach(action => {
+        action.handler(action.config, data);
+      });
     }
   }
 }

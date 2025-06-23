@@ -14,15 +14,26 @@ export const FileUploadPreview: React.FC<FileUploadPreviewProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const calculateTimeEstimates = (fileSize: number) => {
-    // Simple calculation based on PRD requirements
-    // Assuming ~10MB/s processing speed for OpenAI API
-    const bytesPerSecond = 10 * 1024 * 1024; // 10MB/s
-    const fullProcessingTime = fileSize / bytesPerSecond;
+    // Calculate time estimates based on PRD requirements:
+    // - Quick Preview: First 1,000 rows in ~5 minutes
+    // - Statistical Sample: 10,000 rows in ~30 minutes  
+    // - Full Analysis: Based on file size and OpenAI API speed constraints
+    
+    // Estimate rows based on file size 
+    // PRD states 25GB = 5M rows, so ~5000 bytes per row average
+    const estimatedRows = Math.round(fileSize / 5000);
+    const millionRows = estimatedRows / 1000000;
+    
+    // OpenAI API processing rate from PRD:
+    // 25GB file = 5M rows = ~14 hours
+    // This gives us ~6K rows/minute or 357K rows/hour
+    const hoursForFullAnalysis = Math.round(millionRows * 2.8); // 2.8 hours per million rows
     
     return {
       quickPreview: '~5 minutes', // Fixed for first 1000 rows
       statisticalSample: '~30 minutes', // Fixed for 10000 rows
-      fullAnalysis: `~${Math.round(fullProcessingTime / 3600)} hours` // Calculate based on file size
+      fullAnalysis: `~${hoursForFullAnalysis} hours`,
+      estimatedRows: estimatedRows
     };
   };
 
@@ -77,7 +88,7 @@ export const FileUploadPreview: React.FC<FileUploadPreviewProps> = ({
                 <>
                   <p>⚡ Quick Preview: {estimates.quickPreview} (first 1,000 rows)</p>
                   <p>📊 Statistical Sample: {estimates.statisticalSample} (10,000 rows)</p>
-                  <p>✓ Full Analysis: {estimates.fullAnalysis} ({Math.round(selectedFile.size / (1024 * 1024 * 1024) * 0.2)} million rows)</p>
+                  <p>✓ Full Analysis: {estimates.fullAnalysis} ({Math.round(estimates.estimatedRows / 1000000)} million rows)</p>
                 </>
               );
             })()}
