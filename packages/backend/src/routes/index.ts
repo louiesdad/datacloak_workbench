@@ -24,6 +24,7 @@ import patternsRoutes from './patterns.routes';
 import { circuitBreakerRoutes } from './circuit-breaker.routes';
 import adminRoutes from './admin.routes';
 import auditRoutes from './audit.routes';
+import predictionRoutes from './prediction.routes';
 
 export const setupRoutes = (app: Application): void => {
   // Mount routes
@@ -53,6 +54,7 @@ export const setupRoutes = (app: Application): void => {
   app.use('/api/v1/patterns', patternsRoutes);
   app.use('/api/v1/circuit-breaker', circuitBreakerRoutes);
   app.use('/api/v1/audit', auditRoutes);
+  app.use('/api/predictions', predictionRoutes);
   
   // Admin routes (protected by admin auth middleware)
   app.use('/api/admin', adminRoutes);

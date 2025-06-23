@@ -10,6 +10,8 @@ export interface MonitoringOptions {
   metricsService?: typeof metricsService;
   apiResponseTimeThreshold?: number;
   apiErrorRateThreshold?: number;
+  cpuUsageThreshold?: number;
+  memoryUsageThreshold?: number;
 }
 
 export interface QueueDepthMetrics {

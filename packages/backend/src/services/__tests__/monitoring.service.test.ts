@@ -195,4 +195,102 @@ describe('MonitoringService', () => {
       });
     });
   });
+
+  describe('Resource Usage Monitoring', () => {
+    test('should monitor CPU usage and alert on high usage', async () => {
+      // RED: This test should fail - resource monitoring not implemented
+      monitoringService = new MonitoringService({ 
+        jobQueueService: mockJobQueueService,
+        cpuUsageThreshold: 80 // 80% CPU usage
+      });
+      
+      const alertListener = jest.fn();
+      monitoringService.on('alert:cpu_usage_high', alertListener);
+      
+      // Mock high CPU usage from metrics service
+      const mockMetrics = {
+        cpu: { usage: 95, loadAverage: [3.5, 2.8, 2.1] },
+        memory: { usage: 45, total: 16000000000, used: 7200000000, free: 8800000000 },
+        process: { uptime: 3600, memoryUsage: {} as any, cpuUsage: {} as any }
+      };
+      
+      await monitoringService.checkResourceUsage(mockMetrics);
+      
+      expect(alertListener).toHaveBeenCalledWith({
+        type: 'cpu_usage_high',
+        severity: 'warning',
+        message: 'CPU usage (95%) exceeds threshold (80%)',
+        metrics: {
+          cpuUsage: 95,
+          threshold: 80,
+          loadAverage: [3.5, 2.8, 2.1],
+          timestamp: expect.any(Date)
+        }
+      });
+    });
+
+    test('should monitor memory usage and alert on high usage', async () => {
+      // RED: This test should fail - memory monitoring not implemented
+      monitoringService = new MonitoringService({ 
+        jobQueueService: mockJobQueueService,
+        memoryUsageThreshold: 80 // 80% memory usage
+      });
+      
+      const alertListener = jest.fn();
+      monitoringService.on('alert:memory_usage_high', alertListener);
+      
+      // Mock high memory usage
+      const mockMetrics = {
+        cpu: { usage: 45, loadAverage: [1.5, 1.2, 1.0] },
+        memory: { usage: 85, total: 16000000000, used: 13600000000, free: 2400000000 },
+        process: { uptime: 3600, memoryUsage: {} as any, cpuUsage: {} as any }
+      };
+      
+      await monitoringService.checkResourceUsage(mockMetrics);
+      
+      expect(alertListener).toHaveBeenCalledWith({
+        type: 'memory_usage_high',
+        severity: 'warning',
+        message: 'Memory usage (85%) exceeds threshold (80%)',
+        metrics: {
+          memoryUsage: 85,
+          threshold: 80,
+          totalMemory: 16000000000,
+          usedMemory: 13600000000,
+          freeMemory: 2400000000,
+          timestamp: expect.any(Date)
+        }
+      });
+    });
+
+    test('should integrate with metrics service for resource monitoring', async () => {
+      // RED: This test should fail - integration not implemented
+      const mockMetricsService = {
+        getCurrentMetrics: jest.fn().mockReturnValue({
+          cpu: { usage: 75, loadAverage: [2.0, 1.8, 1.5] },
+          memory: { usage: 60, total: 16000000000, used: 9600000000, free: 6400000000 },
+          process: { uptime: 7200, memoryUsage: {} as any, cpuUsage: {} as any },
+          database: { connections: 10, queries: 1000, avgResponseTime: 50 },
+          queue: { pending: 20, running: 5, completed: 100, failed: 2, throughput: 10 },
+          api: { requests: 5000, errors: 50, avgResponseTime: 150, activeConnections: 25 }
+        }),
+        recordJobProcessing: jest.fn(),
+        recordApiRequest: jest.fn()
+      };
+      
+      monitoringService = new MonitoringService({ 
+        jobQueueService: mockJobQueueService,
+        metricsService: mockMetricsService as any
+      });
+      
+      await monitoringService.startResourceMonitoring();
+      
+      // Wait a bit for monitoring to run
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      expect(mockMetricsService.getCurrentMetrics).toHaveBeenCalled();
+      
+      await monitoringService.stopResourceMonitoring();
+    });
+  });
 });

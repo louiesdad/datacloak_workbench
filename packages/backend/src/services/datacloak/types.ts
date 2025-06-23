@@ -307,3 +307,44 @@ export interface FieldMaskingOptions {
   parallel?: boolean;
   continueOnError?: boolean;
 }
+
+// Progressive Processing interfaces
+export interface ProgressiveProcessingResult {
+  rowsProcessed: number;
+  totalRows: number;
+  isComplete: boolean;
+  results: FieldMaskingResult[];
+  previewType?: 'quick' | 'statistical' | 'full';
+  processingTime?: number;
+  errors?: Array<{ index: number; fieldName: string; error: any }>;
+  totalProcessed?: number;
+  successfulRows?: number;
+  status?: 'processing' | 'completed' | 'cancelled';
+}
+
+export interface StatisticalSampleResult extends ProgressiveProcessingResult {
+  sampleSize: number;
+  confidenceLevel: number;
+  marginOfError: number;
+  isStatisticallyValid: boolean;
+}
+
+export interface ProcessingOptions {
+  mode?: 'quick' | 'balanced' | 'thorough';
+  continueOnError?: boolean;
+  stratifyBy?: string;
+}
+
+export interface ProgressUpdate {
+  processedRows: number;
+  totalRows: number;
+  percentage: number;
+  currentBatch?: number;
+  estimatedTimeRemaining?: number;
+}
+
+export interface PartialResults {
+  results: FieldMaskingResult[];
+  status: 'processing' | 'completed' | 'cancelled';
+  processedCount: number;
+}
