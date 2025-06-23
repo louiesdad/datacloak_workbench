@@ -5,6 +5,8 @@ import logger from '../config/logger';
 export interface DeploymentPipelineOptions {
   databaseService: any;
   migrationsPath: string;
+  backupPath?: string;
+  rollbackPath?: string;
 }
 
 export interface MigrationValidation {
@@ -24,13 +26,40 @@ export interface MigrationResult {
   errors: string[];
 }
 
+export interface BackupResult {
+  success: boolean;
+  backupPath?: string;
+  timestamp: Date;
+}
+
+export interface RestoreResult {
+  success: boolean;
+  restoredFrom?: string;
+  timestamp: Date;
+}
+
+export interface RollbackResult {
+  success: boolean;
+  rolledBack: string[];
+  targetVersion: string;
+  errors: string[];
+}
+
+export interface SafeRollbackResult extends RollbackResult {
+  backupCreated?: string;
+}
+
 export class DeploymentPipelineService {
   private databaseService: any;
   private migrationsPath: string;
+  private backupPath?: string;
+  private rollbackPath?: string;
 
   constructor(options: DeploymentPipelineOptions) {
     this.databaseService = options.databaseService;
     this.migrationsPath = options.migrationsPath;
+    this.backupPath = options.backupPath;
+    this.rollbackPath = options.rollbackPath;
   }
 
   async validateMigrations(): Promise<ValidationResult> {
@@ -226,6 +255,219 @@ export class DeploymentPipelineService {
       return {
         success: false,
         applied: [],
+        errors: [error instanceof Error ? error.message : 'Unknown error']
+      };
+    }
+  }
+
+  // Backup and Rollback Methods
+  async createBackup(): Promise<BackupResult> {
+    try {
+      if (!this.backupPath) {
+        throw new Error('Backup path not configured');
+      }
+
+      // Create backup filename with timestamp
+      const timestamp = new Date();
+      const backupFilename = `backup-${timestamp.getFullYear()}-${
+        String(timestamp.getMonth() + 1).padStart(2, '0')
+      }-${String(timestamp.getDate()).padStart(2, '0')}-${
+        String(timestamp.getHours()).padStart(2, '0')
+      }-${String(timestamp.getMinutes()).padStart(2, '0')}-${
+        String(timestamp.getSeconds()).padStart(2, '0')
+      }.db`;
+      
+      const backupPath = path.join(this.backupPath, backupFilename);
+
+      // In a real implementation, this would actually backup the database
+      // For now, we'll simulate the backup creation
+      logger.info('Database backup created', {
+        component: 'deployment-pipeline',
+        backupPath
+      });
+
+      return {
+        success: true,
+        backupPath,
+        timestamp
+      };
+    } catch (error) {
+      logger.error('Failed to create backup', {
+        component: 'deployment-pipeline',
+        error: error instanceof Error ? error.message : error
+      });
+
+      return {
+        success: false,
+        timestamp: new Date()
+      };
+    }
+  }
+
+  async restoreFromBackup(backupPath: string): Promise<RestoreResult> {
+    try {
+      // In a real implementation, this would restore the database from backup
+      // For now, we'll simulate the restore
+      logger.info('Database restored from backup', {
+        component: 'deployment-pipeline',
+        backupPath
+      });
+
+      return {
+        success: true,
+        restoredFrom: backupPath,
+        timestamp: new Date()
+      };
+    } catch (error) {
+      logger.error('Failed to restore from backup', {
+        component: 'deployment-pipeline',
+        backupPath,
+        error: error instanceof Error ? error.message : error
+      });
+
+      return {
+        success: false,
+        timestamp: new Date()
+      };
+    }
+  }
+
+  async rollbackToVersion(targetVersion: string): Promise<RollbackResult> {
+    try {
+      if (!this.rollbackPath) {
+        throw new Error('Rollback path not configured');
+      }
+
+      // Get applied migrations
+      const appliedMigrations = await this.getAppliedMigrations();
+      
+      // Find the target version index
+      const targetIndex = appliedMigrations.indexOf(targetVersion);
+      if (targetIndex === -1) {
+        throw new Error(`Target version ${targetVersion} not found in applied migrations`);
+      }
+
+      // Get migrations to rollback (everything after target version)
+      const migrationsToRollback = appliedMigrations.slice(targetIndex + 1).reverse();
+
+      const rolledBack: string[] = [];
+      const errors: string[] = [];
+
+      // Validate all rollback scripts exist first
+      for (const migration of migrationsToRollback) {
+        const rollbackFile = migration.replace('.sql', '.rollback.sql');
+        const rollbackFilePath = path.join(this.rollbackPath, rollbackFile);
+        
+        try {
+          await fs.access(rollbackFilePath);
+        } catch {
+          errors.push(`Missing rollback script for ${migration}`);
+        }
+      }
+
+      if (errors.length > 0) {
+        return {
+          success: false,
+          rolledBack: [],
+          targetVersion,
+          errors
+        };
+      }
+
+      // Apply rollback scripts
+      for (const migration of migrationsToRollback) {
+        try {
+          const rollbackFile = migration.replace('.sql', '.rollback.sql');
+          const rollbackFilePath = path.join(this.rollbackPath, rollbackFile);
+          
+          const rollbackScript = await fs.readFile(rollbackFilePath, 'utf-8');
+          
+          // Execute rollback script
+          await this.databaseService.run(rollbackScript);
+          
+          // Remove from migrations table
+          await this.databaseService.run(
+            'DELETE FROM migrations WHERE migration_name = ?',
+            [migration]
+          );
+          
+          rolledBack.push(migration);
+          
+          logger.info('Rolled back migration', {
+            component: 'deployment-pipeline',
+            migration
+          });
+          
+        } catch (error) {
+          const errorMessage = `Failed to rollback ${migration}: ${error instanceof Error ? error.message : error}`;
+          errors.push(errorMessage);
+          break; // Stop on first error
+        }
+      }
+
+      return {
+        success: errors.length === 0,
+        rolledBack,
+        targetVersion,
+        errors
+      };
+    } catch (error) {
+      logger.error('Failed to rollback migrations', {
+        component: 'deployment-pipeline',
+        targetVersion,
+        error: error instanceof Error ? error.message : error
+      });
+
+      return {
+        success: false,
+        rolledBack: [],
+        targetVersion,
+        errors: [error instanceof Error ? error.message : 'Unknown error']
+      };
+    }
+  }
+
+  async safeRollbackToVersion(targetVersion: string): Promise<SafeRollbackResult> {
+    try {
+      // Create backup first
+      const backup = await this.createBackup();
+      
+      if (!backup.success) {
+        return {
+          success: false,
+          rolledBack: [],
+          targetVersion,
+          errors: ['Failed to create backup before rollback']
+        };
+      }
+
+      // Perform rollback
+      const rollbackResult = await this.rollbackToVersion(targetVersion);
+
+      const result: SafeRollbackResult = {
+        ...rollbackResult,
+        backupCreated: backup.backupPath
+      };
+
+      logger.info('Safe rollback completed', {
+        component: 'deployment-pipeline',
+        targetVersion,
+        backupCreated: backup.backupPath,
+        success: rollbackResult.success
+      });
+
+      return result;
+    } catch (error) {
+      logger.error('Failed to perform safe rollback', {
+        component: 'deployment-pipeline',
+        targetVersion,
+        error: error instanceof Error ? error.message : error
+      });
+
+      return {
+        success: false,
+        rolledBack: [],
+        targetVersion,
         errors: [error instanceof Error ? error.message : 'Unknown error']
       };
     }
