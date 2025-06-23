@@ -1,4 +1,12 @@
 -- Migration 007: Add causal analysis tables for business events and impact tracking
+-- 
+-- This migration creates the necessary tables for the causal analysis feature:
+-- 1. business_events - Stores events that may impact customer sentiment (outages, price changes, etc.)
+-- 2. event_impacts - Stores calculated impacts of events on sentiment with statistical significance
+--
+-- Author: Developer 6 - Causal Analysis & Insights
+-- Date: 2024-06-23
+-- 
 -- UP
 
 -- Table for storing business events that may impact customer sentiment

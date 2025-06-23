@@ -12,10 +12,11 @@ describe('Progressive Processing', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockDataCloak = new DataCloakService() as jest.Mocked<DataCloakService>;
+    mockDataCloak = {
+      maskFields: jest.fn()
+    } as any;
     progressEvents = new EventEmitter();
     
-    // This class doesn't exist yet - tests should FAIL
     processor = new ProgressiveProcessor(mockDataCloak);
   });
 
