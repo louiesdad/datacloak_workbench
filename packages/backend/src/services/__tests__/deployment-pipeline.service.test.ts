@@ -270,6 +270,167 @@ describe('DeploymentPipelineService', () => {
     });
   });
 
+  describe('Health Checks', () => {
+    test('should perform comprehensive health check before deployment', async () => {
+      // GREEN: This test should now pass with health check implementation
+      deploymentService = new DeploymentPipelineService({
+        databaseService: mockDatabaseService,
+        migrationsPath: '/migrations'
+      });
+      
+      // Mock database connection check
+      mockDatabaseService.query.mockResolvedValueOnce([{ result: 1 }]);
+      // Mock applied migrations query
+      mockDatabaseService.query.mockResolvedValueOnce([]);
+      // Mock file system calls
+      (fs.readdir as jest.Mock).mockResolvedValue(['001_initial.sql', '002_add_users.sql']);
+      
+      const healthCheck = await deploymentService.performHealthCheck();
+      
+      expect(healthCheck).toEqual({
+        healthy: expect.any(Boolean),
+        checks: {
+          database: { status: 'healthy', responseTime: expect.any(Number) },
+          migrations: { status: 'healthy', pendingCount: expect.any(Number) },
+          diskSpace: { status: expect.any(String), availableGB: expect.any(Number) },
+          dependencies: { status: 'healthy', services: [] }
+        },
+        timestamp: expect.any(Date)
+      });
+    });
+
+    test('should detect database connectivity issues', async () => {
+      // RED: This test should fail - database health check not implemented
+      deploymentService = new DeploymentPipelineService({
+        databaseService: mockDatabaseService,
+        migrationsPath: '/migrations'
+      });
+      
+      // Mock database connection failure
+      mockDatabaseService.query.mockRejectedValueOnce(new Error('Connection refused'));
+      
+      const healthCheck = await deploymentService.performHealthCheck();
+      
+      expect(healthCheck).toEqual({
+        healthy: false,
+        checks: {
+          database: { 
+            status: 'unhealthy', 
+            error: 'Connection refused',
+            responseTime: expect.any(Number)
+          },
+          migrations: expect.any(Object),
+          diskSpace: expect.any(Object),
+          dependencies: expect.any(Object)
+        },
+        timestamp: expect.any(Date)
+      });
+    });
+
+    test('should validate deployment readiness', async () => {
+      // GREEN: This test should now pass with deployment readiness implementation
+      deploymentService = new DeploymentPipelineService({
+        databaseService: mockDatabaseService,
+        migrationsPath: '/migrations'
+      });
+      
+      // Mock healthy system and set up environment
+      process.env.NODE_ENV = 'test';
+      process.env.DATABASE_URL = 'sqlite://test.db';
+      
+      mockDatabaseService.query.mockResolvedValueOnce([{ result: 1 }]);
+      mockDatabaseService.query.mockResolvedValueOnce([]); // applied migrations
+      (fs.readdir as jest.Mock).mockResolvedValue(['001_initial.sql']);
+      
+      const readinessCheck = await deploymentService.checkDeploymentReadiness();
+      
+      expect(readinessCheck).toEqual({
+        ready: true,
+        issues: [],
+        checks: {
+          migrations: { valid: true, pending: 1 },
+          database: { connected: true, healthy: true },
+          environment: { configured: true, variables: expect.any(Array) }
+        },
+        recommendations: []
+      });
+      
+      // Clean up environment
+      delete process.env.DATABASE_URL;
+    });
+
+    test('should recommend actions for unhealthy systems', async () => {
+      // GREEN: This test should now pass with recommendation system implemented
+      deploymentService = new DeploymentPipelineService({
+        databaseService: mockDatabaseService,
+        migrationsPath: '/migrations'
+      });
+      
+      // Mock unhealthy conditions and clear environment
+      delete process.env.DATABASE_URL;
+      
+      mockDatabaseService.query.mockRejectedValueOnce(new Error('Timeout'));
+      (fs.readdir as jest.Mock).mockResolvedValue([]);
+      
+      const readinessCheck = await deploymentService.checkDeploymentReadiness();
+      
+      expect(readinessCheck).toEqual({
+        ready: false,
+        issues: expect.arrayContaining([
+          'Database connection timeout',
+          'No migration files found'
+        ]),
+        checks: {
+          migrations: { valid: false, pending: 0 },
+          database: { connected: false, healthy: false },
+          environment: expect.any(Object)
+        },
+        recommendations: expect.arrayContaining([
+          'Check database connectivity and configuration',
+          'Verify migration files exist in configured path'
+        ])
+      });
+    });
+
+    test('should generate deployment health report', async () => {
+      // GREEN: This test should now pass with health report generation implemented
+      deploymentService = new DeploymentPipelineService({
+        databaseService: mockDatabaseService,
+        migrationsPath: '/migrations',
+        backupPath: '/backups'
+      });
+      
+      // Set up environment
+      process.env.NODE_ENV = 'test';
+      process.env.DATABASE_URL = 'sqlite://test.db';
+      
+      // Mock system state
+      mockDatabaseService.query.mockResolvedValue([{ result: 1 }]);
+      mockDatabaseService.query.mockResolvedValue([]); // applied migrations for both calls
+      (fs.readdir as jest.Mock).mockResolvedValue(['001_initial.sql', '002_add_users.sql']);
+      
+      const healthReport = await deploymentService.generateHealthReport();
+      
+      expect(healthReport).toEqual({
+        timestamp: expect.any(Date),
+        overallHealth: expect.any(String),
+        systemChecks: expect.any(Object),
+        deploymentReadiness: expect.any(Object),
+        recommendations: expect.any(Array),
+        nextSteps: expect.any(Array)
+      });
+      
+      // Verify it contains the expected structure
+      expect(healthReport.systemChecks).toHaveProperty('healthy');
+      expect(healthReport.deploymentReadiness).toHaveProperty('ready');
+      expect(Array.isArray(healthReport.recommendations)).toBe(true);
+      expect(Array.isArray(healthReport.nextSteps)).toBe(true);
+      
+      // Clean up environment
+      delete process.env.DATABASE_URL;
+    });
+  });
+
   afterEach(() => {
     jest.restoreAllMocks();
   });

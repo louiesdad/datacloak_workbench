@@ -128,6 +128,17 @@ describe('Progressive Processing', () => {
         text: `Text ${i}`
       }));
 
+      // Mock maskFields to return results for each batch
+      mockDataCloak.maskFields.mockImplementation(async (fields) => {
+        return fields.map(field => ({
+          fieldName: field.fieldName,
+          originalText: field.text,
+          maskedText: field.text,
+          piiItemsFound: 0,
+          success: true
+        }));
+      });
+
       let lastProgress: any;
       processor.on('progress', (update) => {
         lastProgress = update;

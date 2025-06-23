@@ -286,10 +286,9 @@ export class PredictionService {
         )
       `).run();
 
-      const predictionId = uuidv4();
-
-      // Save each prediction point
+      // Save each prediction point with unique ID
       for (const pred of prediction.predictions) {
+        const predictionId = uuidv4();
         db.prepare(`
           INSERT INTO sentiment_predictions (
             prediction_id,
