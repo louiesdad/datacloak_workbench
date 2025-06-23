@@ -18,7 +18,7 @@ export interface Job {
   result?: any;
 }
 
-export type JobType = 'sentiment_analysis_batch' | 'file_processing' | 'security_scan' | 'data_export' | 'large_dataset_risk_assessment' | 'batch_pattern_validation' | 'compliance_framework_analysis';
+export type JobType = 'sentiment_analysis_batch' | 'sentiment_analysis_preview' | 'sentiment_analysis_sample' | 'file_processing' | 'security_scan' | 'data_export' | 'large_dataset_risk_assessment' | 'batch_pattern_validation' | 'compliance_framework_analysis';
 export type JobStatus = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
 export type JobPriority = 'low' | 'medium' | 'high' | 'critical';
 

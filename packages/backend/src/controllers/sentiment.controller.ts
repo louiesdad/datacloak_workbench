@@ -5,10 +5,25 @@ import { CostEstimationService } from '../services/cost-estimation.service';
 import { progressEmitter } from '../services/progress-emitter.service';
 import { sentimentAnalysisSchema, batchSentimentAnalysisSchema, paginationSchema } from '../validation/schemas';
 import { AppError } from '../middleware/error.middleware';
+import { getJobQueueService } from '../services/job-queue.factory';
 
 export class SentimentController {
   private sentimentService = new SentimentService();
   private costEstimationService = new CostEstimationService();
+  private jobQueueService: any = null;
+
+  constructor() {
+    // Initialize job queue asynchronously
+    this.initializeJobQueue();
+  }
+
+  private async initializeJobQueue(): Promise<void> {
+    try {
+      this.jobQueueService = await getJobQueueService();
+    } catch (error) {
+      console.warn('Job queue service not available, falling back to direct processing');
+    }
+  }
 
   async analyzeSentiment(req: Request, res: Response): Promise<void> {
     const { error, value } = sentimentAnalysisSchema.validate(req.body);

@@ -87,7 +87,7 @@ export const createSentimentAnalysisBatchHandler = (
         chunkSize: 100 * 1024 * 1024 // 100MB chunks
       });
 
-      return {
+      const finalResult = {
         totalProcessed,
         results,
         summary: {
@@ -95,6 +95,11 @@ export const createSentimentAnalysisBatchHandler = (
           failed: results.filter(r => r.error).length
         }
       };
+      
+      // Complete progress tracking
+      progressEmitter.completeJob(job.id, finalResult);
+      
+      return finalResult;
     }
     
     // Handle text array analysis (original behavior)
@@ -127,13 +132,17 @@ export const createSentimentAnalysisBatchHandler = (
         }
         
         processed++;
-        updateProgress((processed / total) * 100);
+        const progressPercent = (processed / total) * 100;
+        updateProgress(progressPercent);
+        
+        // Update progress emitter
+        progressEmitter.updateProgress(job.id, processed);
       }
 
       results.push(...batchResults);
     }
 
-    return {
+    const finalResult = {
       totalProcessed: processed,
       results,
       summary: {
@@ -141,6 +150,11 @@ export const createSentimentAnalysisBatchHandler = (
         failed: results.filter(r => r.error).length
       }
     };
+    
+    // Complete progress tracking
+    progressEmitter.completeJob(job.id, finalResult);
+    
+    return finalResult;
   };
 };
 
@@ -387,10 +401,12 @@ export const registerAllHandlers = (
     fileStreamService: FileStreamService;
   }
 ): void => {
-  jobQueue.registerHandler(
-    'sentiment_analysis_batch',
-    createSentimentAnalysisBatchHandler(services.sentimentService)
-  );
+  // All sentiment analysis variations use the same handler
+  const sentimentHandler = createSentimentAnalysisBatchHandler(services.sentimentService);
+  
+  jobQueue.registerHandler('sentiment_analysis_batch', sentimentHandler);
+  jobQueue.registerHandler('sentiment_analysis_preview', sentimentHandler);
+  jobQueue.registerHandler('sentiment_analysis_sample', sentimentHandler);
 
   jobQueue.registerHandler(
     'file_processing',

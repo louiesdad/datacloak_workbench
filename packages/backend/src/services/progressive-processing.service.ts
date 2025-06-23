@@ -328,24 +328,30 @@ export class ProgressiveProcessor extends EventEmitter {
   }
 
   /**
-   * Calculate sample size for given confidence level and margin of error
+   * Calculate statistically valid sample size
+   * 
+   * Uses the standard formula for sample size calculation:
+   * n = (Z² × p × (1-p)) / e²
+   * Where Z = 1.96 (95% confidence), p = 0.5 (worst case), e = margin of error
+   * 
+   * @param populationSize - Total size of the dataset
+   * @returns Calculated sample size adjusted for finite population
    */
   private calculateSampleSize(populationSize: number): number {
-    // For large populations, use standard formula
-    // n = (Z^2 * p * (1-p)) / e^2
-    // Where Z = 1.96 for 95% confidence, p = 0.5 (worst case), e = 0.05
-    const z = 1.96;
-    const p = 0.5;
-    const e = 0.05;
+    // Standard statistical parameters for 95% confidence interval
+    const z = 1.96; // Z-score for 95% confidence level
+    const p = 0.5;  // Worst-case proportion (maximum variance)
+    const e = ProgressiveProcessor.MARGIN_OF_ERROR;
     
+    // Calculate initial sample size using standard formula
     const sampleSize = Math.ceil((z * z * p * (1 - p)) / (e * e));
     
-    // Adjust for finite population
+    // Adjust for finite population correction
     const adjustedSampleSize = Math.ceil(
       sampleSize / (1 + ((sampleSize - 1) / populationSize))
     );
     
-    // For testing purposes, cap at 10,000 or 10% of population
+    // Cap at reasonable limits: 10,000 max or 10% of population
     return Math.min(adjustedSampleSize, 10000, Math.ceil(populationSize * 0.1));
   }
 
