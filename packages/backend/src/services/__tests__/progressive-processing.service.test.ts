@@ -283,6 +283,18 @@ describe('Progressive Processing', () => {
         text: `Text ${i}`
       }));
 
+      // Mock maskFields with delay to simulate processing time
+      mockDataCloak.maskFields.mockImplementation(async (fields) => {
+        await new Promise(resolve => setTimeout(resolve, 50)); // Small delay
+        return fields.map(field => ({
+          fieldName: field.fieldName,
+          originalText: field.text,
+          maskedText: field.text,
+          piiItemsFound: 0,
+          success: true
+        }));
+      });
+
       let processedBeforePause = 0;
       processor.on('progress', (update) => {
         if (update.processedRows >= 2000 && processedBeforePause === 0) {
@@ -295,7 +307,7 @@ describe('Progressive Processing', () => {
       const processPromise = processor.processFull(dataset);
       
       // Wait a bit then resume
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 200));
       expect(processor.isPaused()).toBe(true);
       
       processor.resume();
@@ -312,6 +324,18 @@ describe('Progressive Processing', () => {
         fieldName: `field${i}`,
         text: `Text ${i}`
       }));
+
+      // Mock maskFields with delay
+      mockDataCloak.maskFields.mockImplementation(async (fields) => {
+        await new Promise(resolve => setTimeout(resolve, 50));
+        return fields.map(field => ({
+          fieldName: field.fieldName,
+          originalText: field.text,
+          maskedText: field.text,
+          piiItemsFound: 0,
+          success: true
+        }));
+      });
 
       let cancelledAt = 0;
       processor.on('progress', (update) => {
@@ -333,6 +357,18 @@ describe('Progressive Processing', () => {
         fieldName: `field${i}`,
         text: `Text ${i}`
       }));
+
+      // Mock maskFields with delay
+      mockDataCloak.maskFields.mockImplementation(async (fields) => {
+        await new Promise(resolve => setTimeout(resolve, 50));
+        return fields.map(field => ({
+          fieldName: field.fieldName,
+          originalText: field.text,
+          maskedText: field.text,
+          piiItemsFound: 0,
+          success: true
+        }));
+      });
 
       processor.on('progress', (update) => {
         if (update.processedRows >= 2000) {
@@ -364,6 +400,17 @@ describe('Progressive Processing', () => {
         text: `Text ${i}`
       }));
 
+      // Mock with different delays for different modes
+      mockDataCloak.maskFields.mockImplementation(async (fields) => {
+        return fields.map(field => ({
+          fieldName: field.fieldName,
+          originalText: field.text,
+          maskedText: field.text,
+          piiItemsFound: 0,
+          success: true
+        }));
+      });
+
       // Act - Test different priority modes
       const quickResult = await processor.process(dataset, { mode: 'quick' });
       const balancedResult = await processor.process(dataset, { mode: 'balanced' });
@@ -384,6 +431,34 @@ describe('Progressive Processing', () => {
         text: i === 50 ? null : `Text ${i}` // Invalid data at position 50
       }));
 
+      // Mock maskFields to handle null text
+      mockDataCloak.maskFields.mockImplementation(async (fields) => {
+        return fields.map(field => {
+          if (field.text === null) {
+            return {
+              fieldName: field.fieldName,
+              originalText: '',
+              maskedText: '',
+              piiItemsFound: 0,
+              success: false,
+              error: {
+                code: 'TEXT_MASKING_FAILED',
+                message: 'Text cannot be null or undefined',
+                type: 'validation',
+                retryable: false
+              }
+            };
+          }
+          return {
+            fieldName: field.fieldName,
+            originalText: field.text,
+            maskedText: field.text,
+            piiItemsFound: 0,
+            success: true
+          };
+        });
+      });
+
       // Act
       const result = await processor.processFull(dataset, { continueOnError: true });
 
@@ -401,6 +476,34 @@ describe('Progressive Processing', () => {
         { fieldName: 'field2', text: null },
         { fieldName: 'field3', text: 'Another valid text' }
       ];
+
+      // Mock maskFields to handle errors
+      mockDataCloak.maskFields.mockImplementation(async (fields) => {
+        return fields.map(field => {
+          if (field.text === null) {
+            return {
+              fieldName: field.fieldName,
+              originalText: '',
+              maskedText: '',
+              piiItemsFound: 0,
+              success: false,
+              error: {
+                code: 'TEXT_MASKING_FAILED',
+                message: 'Text cannot be null or undefined',
+                type: 'validation',
+                retryable: false
+              }
+            };
+          }
+          return {
+            fieldName: field.fieldName,
+            originalText: field.text,
+            maskedText: field.text,
+            piiItemsFound: 0,
+            success: true
+          };
+        });
+      });
 
       const errors: any[] = [];
       processor.on('error', (error) => {

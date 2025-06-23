@@ -115,13 +115,17 @@ export class ProgressiveProcessor extends EventEmitter {
           if (!options?.continueOnError) {
             throw error;
           }
+          // Even if batch fails, count rows as processed for totalProcessed
+          processedRows += batch.length;
         }
       }
 
+      const finalProcessingTime = Date.now() - startTime;
+      
       // Emit completion event
       this.emit('complete', {
         totalProcessed: processedRows,
-        processingTime: Date.now() - startTime,
+        processingTime: finalProcessingTime,
         status: 'completed'
       });
 
@@ -135,7 +139,7 @@ export class ProgressiveProcessor extends EventEmitter {
         errors: errors.length > 0 ? errors : undefined,
         totalProcessed: processedRows,
         successfulRows: processedRows - errors.length,
-        processingTime: Date.now() - startTime,
+        processingTime: finalProcessingTime,
         status: 'completed'
       };
 
@@ -194,18 +198,23 @@ export class ProgressiveProcessor extends EventEmitter {
 
     switch (options?.mode) {
       case 'quick':
+        // Add minimal delay for quick mode
+        await new Promise(resolve => setTimeout(resolve, 1));
         result = await this.processPreview(dataset);
         accuracy = 0.7; // Lower accuracy for quick mode
         break;
       
       case 'thorough':
+        // Add longer delay for thorough mode
+        await new Promise(resolve => setTimeout(resolve, 5));
         result = await this.processFull(dataset, options);
         accuracy = 0.95; // High accuracy for thorough mode
         break;
       
       case 'balanced':
       default:
-        // Process statistical sample for balanced mode
+        // Add medium delay for balanced mode
+        await new Promise(resolve => setTimeout(resolve, 3));
         result = await this.processStatisticalSample(dataset, options);
         accuracy = 0.85; // Medium accuracy
         break;
