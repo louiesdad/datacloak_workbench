@@ -115,4 +115,84 @@ describe('MonitoringService', () => {
       jest.useRealTimers();
     });
   });
+
+  describe('API Response Time Monitoring', () => {
+    test('should track API response times and alert on high latency', async () => {
+      // RED: This test should fail - MonitoringService doesn't have API monitoring yet
+      monitoringService = new MonitoringService({ 
+        jobQueueService: mockJobQueueService,
+        apiResponseTimeThreshold: 2000 // 2 seconds
+      });
+      
+      const alertListener = jest.fn();
+      monitoringService.on('alert:api_response_time_high', alertListener);
+      
+      // Simulate high API response time
+      await monitoringService.recordApiResponse('/api/analyze', 3500, true);
+      
+      // Assert
+      expect(alertListener).toHaveBeenCalledWith({
+        type: 'api_response_time_high',
+        severity: 'warning',
+        message: 'API response time (3500ms) exceeds threshold (2000ms) for /api/analyze',
+        metrics: {
+          endpoint: '/api/analyze',
+          responseTime: 3500,
+          threshold: 2000,
+          timestamp: expect.any(Date)
+        }
+      });
+    });
+
+    test('should calculate average API response times', async () => {
+      // RED: This test should fail - testing average calculation
+      monitoringService = new MonitoringService({ 
+        jobQueueService: mockJobQueueService
+      });
+      
+      // Record multiple API responses
+      await monitoringService.recordApiResponse('/api/analyze', 1000, true);
+      await monitoringService.recordApiResponse('/api/analyze', 2000, true);
+      await monitoringService.recordApiResponse('/api/analyze', 1500, true);
+      
+      const avgResponseTime = await monitoringService.getAverageApiResponseTime('/api/analyze');
+      
+      expect(avgResponseTime).toBe(1500); // (1000 + 2000 + 1500) / 3
+    });
+
+    test('should track API error rates and alert on high error percentage', async () => {
+      // RED: This test should fail - testing error rate monitoring
+      monitoringService = new MonitoringService({ 
+        jobQueueService: mockJobQueueService,
+        apiErrorRateThreshold: 0.1 // 10% error rate
+      });
+      
+      const alertListener = jest.fn();
+      monitoringService.on('alert:api_error_rate_high', alertListener);
+      
+      // Simulate API calls with errors
+      await monitoringService.recordApiResponse('/api/analyze', 500, true);
+      await monitoringService.recordApiResponse('/api/analyze', 600, false); // error
+      await monitoringService.recordApiResponse('/api/analyze', 550, true);
+      await monitoringService.recordApiResponse('/api/analyze', 700, false); // error
+      await monitoringService.recordApiResponse('/api/analyze', 450, true);
+      await monitoringService.recordApiResponse('/api/analyze', 500, false); // error
+      
+      // 3 errors out of 6 requests = 50% error rate
+      await monitoringService.checkApiErrorRate();
+      
+      expect(alertListener).toHaveBeenCalledWith({
+        type: 'api_error_rate_high',
+        severity: 'critical',
+        message: 'API error rate (50.0%) exceeds threshold (10.0%)',
+        metrics: {
+          errorRate: 0.5,
+          threshold: 0.1,
+          totalRequests: 6,
+          failedRequests: 3,
+          timestamp: expect.any(Date)
+        }
+      });
+    });
+  });
 });

@@ -71,13 +71,31 @@ export class ComprehensiveDataGenerator {
   }
 
   private generateEcommerceRecord(index: number): DatasetRecord {
-    const customerId = `CUST-${String(index + 1).padStart(5, '0')}`;
+    // Select customer - 70% chance of existing customer, 30% sequential assignment
+    let customerId: string;
+    let customerIndex: number;
+    
+    if (this.rng() < 0.7 && this.customerOrderHistory.size > 0) {
+      // Pick from existing customers
+      customerIndex = this.randomInt(0, Math.min(this.customerOrderHistory.size - 1, this.customerPool.length - 1));
+      customerId = this.customerPool[customerIndex];
+    } else {
+      // Use sequential customer assignment
+      customerIndex = Math.min(index, this.customerPool.length - 1);
+      customerId = this.customerPool[customerIndex];
+    }
+    
+    // Generate order date considering customer history
+    const orderDate = this.generateOrderDateForCustomer(customerId);
+    
+    // Extract customer number for email
+    const customerNum = parseInt(customerId.replace('CUST-', ''));
     
     return {
       customer_id: customerId,
-      email: `test.user${index + 1}@example.com`,
+      email: `test.user${customerNum}@example.com`,
       phone: `(555) ${this.randomInt(100, 999)}-${String(this.randomInt(1000, 9999)).padStart(4, '0')}`,
-      order_date: this.generateOrderDate(),
+      order_date: orderDate.toISOString(),
       product_review: this.generateProductReview(),
       customer_comment: this.generateCustomerComment(),
       support_ticket: this.generateSupportTicket(),
@@ -95,6 +113,42 @@ export class ComprehensiveDataGenerator {
     const baseDate = new Date('2024-06-23T00:00:00.000Z'); // Fixed base date for reproducibility
     baseDate.setDate(baseDate.getDate() - daysAgo);
     return baseDate.toISOString();
+  }
+
+  private generateOrderDateForCustomer(customerId: string): Date {
+    const baseDate = new Date('2024-06-23T00:00:00.000Z');
+    
+    // Get customer's order history
+    if (!this.customerOrderHistory.has(customerId)) {
+      this.customerOrderHistory.set(customerId, []);
+    }
+    
+    const history = this.customerOrderHistory.get(customerId)!;
+    
+    if (history.length === 0) {
+      // First order - random date in the past 18 months
+      const daysAgo = this.randomInt(30, 540);
+      const orderDate = new Date(baseDate);
+      orderDate.setDate(orderDate.getDate() - daysAgo);
+      history.push(orderDate);
+      return orderDate;
+    } else {
+      // Subsequent order - must be after the last order
+      const lastOrder = history[history.length - 1];
+      const daysSinceLastOrder = Math.floor((baseDate.getTime() - lastOrder.getTime()) / (1000 * 60 * 60 * 24));
+      
+      if (daysSinceLastOrder <= 1) {
+        // If last order was very recent, use current date
+        return new Date(baseDate);
+      }
+      
+      // Random date between last order and now
+      const daysAfterLastOrder = this.randomInt(1, Math.max(1, daysSinceLastOrder - 1));
+      const orderDate = new Date(lastOrder);
+      orderDate.setDate(orderDate.getDate() + daysAfterLastOrder);
+      history.push(orderDate);
+      return orderDate;
+    }
   }
 
   private generateProductReview(): string {

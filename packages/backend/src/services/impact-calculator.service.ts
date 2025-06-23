@@ -40,10 +40,20 @@ interface CalculateImpactOptions {
   daysAfter?: number;
 }
 
+// Constants
+const IMPACT_CONSTANTS = {
+  DEFAULT_DAYS_BEFORE: 30,
+  DEFAULT_DAYS_AFTER: 30,
+  SIGNIFICANCE_LEVEL: 0.05,
+  SMALL_SAMPLE_SIZE: 30,
+  EFFECT_SIZE_THRESHOLDS: {
+    NEGLIGIBLE: 0.2,
+    SMALL: 0.5,
+    MEDIUM: 0.8,
+  },
+} as const;
+
 export class ImpactCalculator {
-  private readonly DEFAULT_DAYS_BEFORE = 30;
-  private readonly DEFAULT_DAYS_AFTER = 30;
-  private readonly SIGNIFICANCE_LEVEL = 0.05;
 
   constructor(
     private database: DatabaseService,
@@ -54,8 +64,8 @@ export class ImpactCalculator {
     eventId: string, 
     options: CalculateImpactOptions = {}
   ): Promise<ImpactAnalysis> {
-    const daysBefore = options.daysBefore || this.DEFAULT_DAYS_BEFORE;
-    const daysAfter = options.daysAfter || this.DEFAULT_DAYS_AFTER;
+    const daysBefore = options.daysBefore || IMPACT_CONSTANTS.DEFAULT_DAYS_BEFORE;
+    const daysAfter = options.daysAfter || IMPACT_CONSTANTS.DEFAULT_DAYS_AFTER;
 
     // Get event details
     const events = await this.eventRegistry.getEventsByDateRange(
@@ -197,7 +207,7 @@ export class ImpactCalculator {
     // For simplicity, using critical values
     const criticalValue = this.getCriticalValue(df);
     const pValue = tStatistic > criticalValue ? 0.001 : 0.1;
-    const isSignificant = pValue < this.SIGNIFICANCE_LEVEL;
+    const isSignificant = pValue < IMPACT_CONSTANTS.SIGNIFICANCE_LEVEL;
     const confidence = 1 - pValue;
 
     const result: TTestResult = {
