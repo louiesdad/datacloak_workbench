@@ -20,13 +20,9 @@ describe('Causal Analysis Migration', () => {
     const upMatch = migrationSQL.match(/-- UP([\s\S]*?)(?=-- DOWN|$)/);
     if (upMatch) {
       const upSQL = upMatch[1].trim();
-      // Split by semicolon and execute each statement
-      const statements = upSQL.split(';').filter(s => s.trim());
-      statements.forEach(statement => {
-        if (statement.trim()) {
-          db.exec(statement);
-        }
-      });
+      // Execute the entire UP migration as one block
+      // This handles multi-line statements like CREATE TRIGGER properly
+      db.exec(upSQL);
     }
   });
 
@@ -180,22 +176,22 @@ describe('Causal Analysis Migration', () => {
   });
 
   describe('rollback', () => {
-    test('should be able to rollback migration', async () => {
+    test('should be able to rollback migration', () => {
       // Extract and run DOWN migration
-      const downMatch = migrationSQL.match(/-- DOWN([\s\S]*?)(?=-- UP|$)/);
+      const downMatch = migrationSQL.match(/-- DOWN([\s\S]*?)$/);
       if (downMatch) {
         const downSQL = downMatch[1].trim();
         
-        // Run rollback
-        await database.query(downSQL);
+        // Execute the entire DOWN migration as one block
+        db.exec(downSQL);
         
         // Verify tables are dropped
-        const tables = await database.query(`
+        const tables = db.prepare(`
           SELECT name FROM sqlite_master WHERE type='table' 
           AND name IN ('business_events', 'event_impacts')
-        `);
+        `).all();
         
-        expect(tables.rows).toHaveLength(0);
+        expect(tables).toHaveLength(0);
       }
     });
   });

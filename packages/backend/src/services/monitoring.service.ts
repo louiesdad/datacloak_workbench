@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import { JobQueueService } from './job-queue.service';
-import { metricsService } from './metrics.service';
+import { metricsService, SystemMetrics } from './metrics.service';
 import logger from '../config/logger';
 
 export interface MonitoringOptions {
@@ -38,6 +38,10 @@ export class MonitoringService extends EventEmitter {
   private metrics: typeof metricsService;
   private apiResponseTimeThreshold: number;
   private apiErrorRateThreshold: number;
+  private cpuUsageThreshold: number;
+  private memoryUsageThreshold: number;
+  private resourceMonitoringInterval?: NodeJS.Timeout;
+  private isResourceMonitoring = false;
   
   // Track API metrics
   private apiMetrics: Map<string, {
@@ -54,6 +58,8 @@ export class MonitoringService extends EventEmitter {
     this.metrics = options.metricsService || metricsService;
     this.apiResponseTimeThreshold = options.apiResponseTimeThreshold || 5000; // 5 seconds default
     this.apiErrorRateThreshold = options.apiErrorRateThreshold || 0.05; // 5% default
+    this.cpuUsageThreshold = options.cpuUsageThreshold || 90; // 90% default
+    this.memoryUsageThreshold = options.memoryUsageThreshold || 90; // 90% default
   }
 
   async getQueueDepthMetrics(): Promise<QueueDepthMetrics> {
@@ -258,6 +264,113 @@ export class MonitoringService extends EventEmitter {
         failedRequests: totalErrors
       });
     }
+  }
+
+  // Resource Usage Monitoring Methods
+  async checkResourceUsage(metrics?: SystemMetrics): Promise<void> {
+    // Use provided metrics or get current metrics from metrics service
+    const systemMetrics = metrics || this.metrics.getCurrentMetrics();
+    
+    // Check CPU usage
+    if (systemMetrics.cpu.usage > this.cpuUsageThreshold) {
+      const alert: Alert = {
+        type: 'cpu_usage_high',
+        severity: 'warning',
+        message: `CPU usage (${systemMetrics.cpu.usage}%) exceeds threshold (${this.cpuUsageThreshold}%)`,
+        metrics: {
+          cpuUsage: systemMetrics.cpu.usage,
+          threshold: this.cpuUsageThreshold,
+          loadAverage: systemMetrics.cpu.loadAverage,
+          timestamp: new Date()
+        }
+      };
+      
+      this.emit('alert:cpu_usage_high', alert);
+      
+      logger.warn('High CPU usage detected', {
+        component: 'monitoring',
+        cpuUsage: systemMetrics.cpu.usage,
+        threshold: this.cpuUsageThreshold,
+        loadAverage: systemMetrics.cpu.loadAverage
+      });
+    }
+    
+    // Check memory usage
+    if (systemMetrics.memory.usage > this.memoryUsageThreshold) {
+      const alert: Alert = {
+        type: 'memory_usage_high',
+        severity: 'warning',
+        message: `Memory usage (${systemMetrics.memory.usage}%) exceeds threshold (${this.memoryUsageThreshold}%)`,
+        metrics: {
+          memoryUsage: systemMetrics.memory.usage,
+          threshold: this.memoryUsageThreshold,
+          totalMemory: systemMetrics.memory.total,
+          usedMemory: systemMetrics.memory.used,
+          freeMemory: systemMetrics.memory.free,
+          timestamp: new Date()
+        }
+      };
+      
+      this.emit('alert:memory_usage_high', alert);
+      
+      logger.warn('High memory usage detected', {
+        component: 'monitoring',
+        memoryUsage: systemMetrics.memory.usage,
+        threshold: this.memoryUsageThreshold,
+        totalMemory: systemMetrics.memory.total,
+        usedMemory: systemMetrics.memory.used
+      });
+    }
+  }
+
+  async startResourceMonitoring(): Promise<void> {
+    if (this.isResourceMonitoring) {
+      logger.warn('Resource monitoring already started', { component: 'monitoring' });
+      return;
+    }
+
+    this.isResourceMonitoring = true;
+    
+    // Initial check
+    this.checkResourceUsage().catch(error => {
+      logger.error('Failed to check resource usage', { 
+        component: 'monitoring', 
+        error: error instanceof Error ? error.message : error 
+      });
+    });
+
+    // Set up interval for resource monitoring
+    this.resourceMonitoringInterval = setInterval(() => {
+      this.checkResourceUsage().catch(error => {
+        logger.error('Failed to check resource usage', { 
+          component: 'monitoring', 
+          error: error instanceof Error ? error.message : error 
+        });
+      });
+    }, this.monitoringInterval);
+
+    logger.info('Resource monitoring started', { 
+      component: 'monitoring',
+      interval: this.monitoringInterval,
+      cpuThreshold: this.cpuUsageThreshold,
+      memoryThreshold: this.memoryUsageThreshold
+    });
+  }
+
+  async stopResourceMonitoring(): Promise<void> {
+    if (!this.isResourceMonitoring) {
+      logger.warn('Resource monitoring not running', { component: 'monitoring' });
+      return;
+    }
+
+    this.isResourceMonitoring = false;
+    
+    if (this.resourceMonitoringInterval) {
+      clearInterval(this.resourceMonitoringInterval);
+      this.resourceMonitoringInterval = undefined;
+    }
+
+    logger.info('Resource monitoring stopped', { component: 'monitoring' });
   }
 }
 

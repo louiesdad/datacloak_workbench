@@ -191,7 +191,8 @@ describe('PredictionController', () => {
         .get('/api/predictions/high-risk?threshold=invalid')
         .expect(400);
 
-      expect(response.body.message).toContain('Invalid threshold');
+      expect(response.body).toHaveProperty('error');
+      expect(response.body.error.message).toContain('Invalid threshold');
     });
   });
 
