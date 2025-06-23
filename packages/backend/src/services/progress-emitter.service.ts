@@ -74,7 +74,10 @@ export class ProgressEmitter {
           totalRows: job.totalRows,
           timeElapsed
         });
-        this.jobs.delete(jobId);
+        // Keep completed jobs for a while so progress can be queried
+        setTimeout(() => {
+          this.jobs.delete(jobId);
+        }, 60000); // Delete after 1 minute
       }
     }
   }
