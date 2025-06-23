@@ -37,6 +37,12 @@ export class ComprehensiveDataGenerator {
   generateEcommerceStandardDataset(): Dataset {
     const records: DatasetRecord[] = [];
     const recordCount = 10000;
+    
+    // Initialize customer pool with some customers (about 3000 unique customers for 10000 orders)
+    const uniqueCustomerCount = 3000;
+    for (let i = 0; i < uniqueCustomerCount; i++) {
+      this.customerPool.push(`CUST-${String(i + 1).padStart(5, '0')}`);
+    }
 
     for (let i = 0; i < recordCount; i++) {
       records.push(this.generateEcommerceRecord(i));

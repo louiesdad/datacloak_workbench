@@ -22,43 +22,54 @@ export interface TriggerExecution {
 export class AutomationRulesSchema {
   constructor(private db: duckdb.Database) {}
 
-  async createTables(): Promise<void> {
-    // Create automation_rules table
-    await this.db.run(`
-      CREATE TABLE IF NOT EXISTS automation_rules (
-        id VARCHAR PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
-        name VARCHAR(255) NOT NULL,
-        conditions TEXT NOT NULL,
-        actions TEXT NOT NULL,
-        is_active BOOLEAN DEFAULT false,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-
-    // Create trigger_executions table
-    await this.db.run(`
-      CREATE TABLE IF NOT EXISTS trigger_executions (
-        id VARCHAR PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
-        rule_id VARCHAR NOT NULL,
-        triggered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        customer_id VARCHAR(255) NOT NULL,
-        actions_taken TEXT NOT NULL,
-        success BOOLEAN NOT NULL,
-        FOREIGN KEY (rule_id) REFERENCES automation_rules(id)
-      )
-    `);
-
-    // Create index for performance
-    await this.db.run(`
-      CREATE INDEX IF NOT EXISTS idx_trigger_executions_rule_id 
-      ON trigger_executions(rule_id)
-    `);
-
-    await this.db.run(`
-      CREATE INDEX IF NOT EXISTS idx_trigger_executions_customer_id 
-      ON trigger_executions(customer_id)
-    `);
+  createTables(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      // Create automation_rules table
+      this.db.run(`
+        CREATE TABLE IF NOT EXISTS automation_rules (
+          id VARCHAR PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+          name VARCHAR(255) NOT NULL,
+          conditions TEXT NOT NULL,
+          actions TEXT NOT NULL,
+          is_active BOOLEAN DEFAULT false,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `, (err) => {
+        if (err) return reject(err);
+        
+        // Create trigger_executions table
+        this.db.run(`
+          CREATE TABLE IF NOT EXISTS trigger_executions (
+            id VARCHAR PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+            rule_id VARCHAR NOT NULL,
+            triggered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            customer_id VARCHAR(255) NOT NULL,
+            actions_taken TEXT NOT NULL,
+            success BOOLEAN NOT NULL,
+            FOREIGN KEY (rule_id) REFERENCES automation_rules(id)
+          )
+        `, (err) => {
+          if (err) return reject(err);
+          
+          // Create indexes
+          this.db.run(`
+            CREATE INDEX IF NOT EXISTS idx_trigger_executions_rule_id 
+            ON trigger_executions(rule_id)
+          `, (err) => {
+            if (err) return reject(err);
+            
+            this.db.run(`
+              CREATE INDEX IF NOT EXISTS idx_trigger_executions_customer_id 
+              ON trigger_executions(customer_id)
+            `, (err) => {
+              if (err) return reject(err);
+              resolve();
+            });
+          });
+        });
+      });
+    });
   }
 
   async createRule(rule: Omit<AutomationRule, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
