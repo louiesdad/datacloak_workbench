@@ -134,14 +134,14 @@ export class ImpactCalculator {
     // Calculate sentiment change for control group
     const controlBeforeStats = await this.getSentimentStats(
       controlGroup,
-      new Date(event.eventDate.getTime() - this.DEFAULT_DAYS_BEFORE * 24 * 60 * 60 * 1000),
+      new Date(event.eventDate.getTime() - IMPACT_CONSTANTS.DEFAULT_DAYS_BEFORE * 24 * 60 * 60 * 1000),
       event.eventDate
     );
 
     const controlAfterStats = await this.getSentimentStats(
       controlGroup,
       event.eventDate,
-      new Date(event.eventDate.getTime() + this.DEFAULT_DAYS_AFTER * 24 * 60 * 60 * 1000)
+      new Date(event.eventDate.getTime() + IMPACT_CONSTANTS.DEFAULT_DAYS_AFTER * 24 * 60 * 60 * 1000)
     );
 
     const controlGroupImpact = controlAfterStats.mean - controlBeforeStats.mean;
@@ -218,7 +218,8 @@ export class ImpactCalculator {
     };
 
     // Add warning for small sample sizes
-    if (beforeData.count < 30 || afterData.count < 30) {
+    if (beforeData.count < IMPACT_CONSTANTS.SMALL_SAMPLE_SIZE || 
+        afterData.count < IMPACT_CONSTANTS.SMALL_SAMPLE_SIZE) {
       result.warning = 'Small sample size may affect reliability';
       result.confidence = Math.min(result.confidence, 0.9);
     }
@@ -236,9 +237,11 @@ export class ImpactCalculator {
   }
 
   interpretEffectSize(effectSize: number): string {
-    if (effectSize < 0.2) return 'negligible';
-    if (effectSize < 0.5) return 'small';
-    if (effectSize < 0.8) return 'medium';
+    const { NEGLIGIBLE, SMALL, MEDIUM } = IMPACT_CONSTANTS.EFFECT_SIZE_THRESHOLDS;
+    
+    if (effectSize < NEGLIGIBLE) return 'negligible';
+    if (effectSize < SMALL) return 'small';
+    if (effectSize < MEDIUM) return 'medium';
     return 'large';
   }
 
