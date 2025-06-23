@@ -1,11 +1,13 @@
 import { EventEmitter } from 'events';
 import { JobQueueService } from './job-queue.service';
+import { metricsService } from './metrics.service';
 import logger from '../config/logger';
 
 export interface MonitoringOptions {
   jobQueueService: JobQueueService;
   queueDepthThreshold?: number;
   monitoringInterval?: number;
+  metricsService?: typeof metricsService;
 }
 
 export interface QueueDepthMetrics {
@@ -29,12 +31,14 @@ export class MonitoringService extends EventEmitter {
   private monitoringInterval: number;
   private intervalId?: NodeJS.Timeout;
   private isMonitoring = false;
+  private metrics: typeof metricsService;
 
   constructor(options: MonitoringOptions) {
     super();
     this.jobQueueService = options.jobQueueService;
     this.queueDepthThreshold = options.queueDepthThreshold || 100;
     this.monitoringInterval = options.monitoringInterval || 10000; // 10 seconds default
+    this.metrics = options.metricsService || metricsService;
   }
 
   async getQueueDepthMetrics(): Promise<QueueDepthMetrics> {
@@ -50,7 +54,17 @@ export class MonitoringService extends EventEmitter {
   }
 
   async checkQueueDepth(): Promise<void> {
+    const startTime = Date.now();
     const metrics = await this.getQueueDepthMetrics();
+    const duration = Date.now() - startTime;
+    
+    // Record the queue depth check as a performance event
+    this.metrics.recordJobProcessing('queue_depth_check', duration, true, {
+      queueDepth: metrics.depth,
+      running: metrics.running,
+      completed: metrics.completed,
+      failed: metrics.failed
+    });
     
     if (metrics.depth > this.queueDepthThreshold) {
       const alert: Alert = {

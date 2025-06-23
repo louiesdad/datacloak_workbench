@@ -45,7 +45,7 @@ export class ComprehensiveDataGenerator {
         recordCount,
         filename: 'test_ecommerce_standard_10k.csv',
         seed: this.seed,
-        generatedAt: new Date().toISOString()
+        generatedAt: new Date('2024-06-23T00:00:00.000Z').toISOString()
       },
       headers: [
         'customer_id',
@@ -84,9 +84,9 @@ export class ComprehensiveDataGenerator {
 
   private generateOrderDate(): string {
     const daysAgo = this.randomInt(0, 540); // Last 18 months
-    const date = new Date();
-    date.setDate(date.getDate() - daysAgo);
-    return date.toISOString();
+    const baseDate = new Date('2024-06-23T00:00:00.000Z'); // Fixed base date for reproducibility
+    baseDate.setDate(baseDate.getDate() - daysAgo);
+    return baseDate.toISOString();
   }
 
   private generateProductReview(): string {

@@ -208,8 +208,8 @@ describe('Prediction Service', () => {
 
       // Assert
       expect(riskAssessment.highRiskCustomers).toHaveLength(2);
-      expect(riskAssessment.highRiskCustomers[0].customerId).toBe('cust-1');
-      expect(riskAssessment.highRiskCustomers[1].customerId).toBe('cust-3');
+      expect(riskAssessment.highRiskCustomers[0].customerId).toBe('cust-3'); // cust-3 has lower sentiment (20) and only 7 days until threshold
+      expect(riskAssessment.highRiskCustomers[1].customerId).toBe('cust-1'); // cust-1 has higher sentiment (35) and 15 days until threshold
       expect(riskAssessment.totalAssessed).toBe(3);
     });
   });
@@ -217,10 +217,41 @@ describe('Prediction Service', () => {
   describe('Batch Prediction Processing', () => {
     test('should process predictions for all customers in batch', async () => {
       // Arrange
-      const mockStmt = {
-        run: jest.fn().mockReturnValue({ changes: 3 }),
+      const mockCustomerStmt = {
+        all: jest.fn().mockReturnValue([
+          { customer_id: 'cust-1', data_points: 10 },
+          { customer_id: 'cust-2', data_points: 15 },
+        ]),
       };
-      mockDb.prepare.mockReturnValue(mockStmt as any);
+      
+      const mockHistoryStmt = {
+        all: jest.fn()
+          .mockReturnValueOnce([
+            { date: '2024-01-01', sentiment: 0.8, confidence: 0.9 },
+            { date: '2024-01-08', sentiment: 0.75, confidence: 0.85 },
+            { date: '2024-01-15', sentiment: 0.7, confidence: 0.88 },
+          ])
+          .mockReturnValueOnce([
+            { date: '2024-01-01', sentiment: 0.6, confidence: 0.9 },
+            { date: '2024-01-08', sentiment: 0.65, confidence: 0.85 },
+            { date: '2024-01-15', sentiment: 0.7, confidence: 0.88 },
+          ]),
+      };
+      
+      const mockCreateTableStmt = {
+        run: jest.fn(),
+      };
+      
+      const mockInsertStmt = {
+        run: jest.fn(),
+      };
+      
+      mockDb.prepare
+        .mockReturnValueOnce(mockCustomerStmt as any)
+        .mockReturnValueOnce(mockHistoryStmt as any)
+        .mockReturnValueOnce(mockHistoryStmt as any)
+        .mockReturnValueOnce(mockCreateTableStmt as any)
+        .mockReturnValue(mockInsertStmt as any);
 
       const mockBatchResult = [
         {

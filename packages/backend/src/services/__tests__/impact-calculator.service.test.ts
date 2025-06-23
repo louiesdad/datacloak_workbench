@@ -31,7 +31,7 @@ describe('Impact Analysis', () => {
       const daysAfter = 30;
 
       // Mock event data
-      mockEventRegistry.getEventsByDateRange = jest.fn().mockResolvedValueOnce([{
+      mockEventRegistry.getEventsByDateRange.mockResolvedValueOnce([{
         id: eventId,
         eventType: 'outage',
         eventDate,
@@ -73,7 +73,7 @@ describe('Impact Analysis', () => {
       const eventId = 'event-123';
       const eventDate = new Date('2024-05-03');
 
-      mockEventRegistry.getEventsByDateRange = jest.fn().mockResolvedValueOnce([{
+      mockEventRegistry.getEventsByDateRange.mockResolvedValueOnce([{
         id: eventId,
         eventType: 'price_increase',
         eventDate,
@@ -113,13 +113,21 @@ describe('Impact Analysis', () => {
       const eventDate = new Date('2024-05-03');
       const affectedCustomers = ['customer-1', 'customer-2', 'customer-3'];
 
-      mockEventRegistry.getEventsByDateRange = jest.fn().mockResolvedValueOnce([{
-        id: eventId,
-        eventType: 'regional_outage',
-        eventDate,
-        description: 'Regional outage',
-        affectedCustomers,
-      }]);
+      mockEventRegistry.getEventsByDateRange
+        .mockResolvedValueOnce([{
+          id: eventId,
+          eventType: 'regional_outage',
+          eventDate,
+          description: 'Regional outage',
+          affectedCustomers,
+        }])
+        .mockResolvedValueOnce([{
+          id: eventId,
+          eventType: 'regional_outage',
+          eventDate,
+          description: 'Regional outage',
+          affectedCustomers,
+        }]);
 
       // Mock control group identification
       mockDatabase.query.mockResolvedValueOnce({

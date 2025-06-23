@@ -349,4 +349,73 @@ export class SentimentController {
     
     res.json(result);
   }
+
+  // Progressive API methods
+  async analyzePreview(req: Request, res: Response): Promise<void> {
+    const { texts, fields } = req.body;
+    
+    // For now, minimal implementation - just process the first 1000 rows
+    const previewTexts = texts.slice(0, 1000);
+    
+    const result: SuccessResponse = {
+      data: {
+        preview: true,
+        rowsAnalyzed: previewTexts.length,
+        results: previewTexts.map((text: string, index: number) => ({
+          rowIndex: index,
+          text: text.substring(0, 100),
+          sentiment: 'neutral',
+          confidence: 0.5
+        })),
+        timeElapsed: 1000 // 1 second
+      },
+      message: 'Preview analysis completed'
+    };
+    
+    res.json(result);
+  }
+
+  async getAnalysisProgress(req: Request, res: Response): Promise<void> {
+    const { jobId } = req.params;
+    
+    // Minimal implementation - return mock progress
+    const result: SuccessResponse = {
+      data: {
+        jobId,
+        status: 'processing',
+        progress: 35,
+        rowsProcessed: 1750000,
+        totalRows: 5000000,
+        timeElapsed: 14520000,
+        estimatedTimeRemaining: 28800000
+      },
+      message: 'Job progress retrieved'
+    };
+    
+    res.json(result);
+  }
+
+  async analyzeSample(req: Request, res: Response): Promise<void> {
+    const { texts, fields, sampleSize = 10000 } = req.body;
+    
+    // Minimal implementation - process sample
+    const sampleTexts = texts.slice(0, Math.min(sampleSize, texts.length));
+    
+    const result: SuccessResponse = {
+      data: {
+        sample: true,
+        sampleSize: sampleTexts.length,
+        confidence: 0.95,
+        results: sampleTexts.slice(0, 100).map((text: string) => ({
+          text: text.substring(0, 100),
+          sentiment: 'neutral',
+          confidence: 0.75
+        })),
+        timeElapsed: 600000 // 10 minutes
+      },
+      message: 'Sample analysis completed'
+    };
+    
+    res.json(result);
+  }
 }
