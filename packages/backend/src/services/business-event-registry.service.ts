@@ -1,5 +1,11 @@
 import { DatabaseService } from './enhanced-database.service';
 
+// Constants
+const ERROR_MESSAGES = {
+  FUTURE_DATE: 'Event date cannot be in the future',
+  EVENT_NOT_FOUND: 'Event not found',
+} as const;
+
 export interface BusinessEvent {
   id?: string;
   eventType: string;
@@ -24,7 +30,7 @@ export class BusinessEventRegistry {
   async createEvent(event: Omit<BusinessEvent, 'id' | 'createdAt'>): Promise<BusinessEvent> {
     // Validate event date
     if (event.eventDate > new Date()) {
-      throw new Error('Event date cannot be in the future');
+      throw new Error(ERROR_MESSAGES.FUTURE_DATE);
     }
 
     const query = `
@@ -72,21 +78,22 @@ export class BusinessEventRegistry {
     const query = `
       SELECT * FROM business_events 
       WHERE (
-        affected_customers::jsonb = '"all"' 
+        affected_customers::jsonb = '"all"'::jsonb 
         OR affected_customers::jsonb @> $1::jsonb
       )
       AND deleted_at IS NULL
       ORDER BY event_date DESC
     `;
 
-    const result = await this.database.query(query, [JSON.stringify(customerId)]);
+    const customerIdJson = JSON.stringify(customerId);
+    const result = await this.database.query(query, [customerIdJson]);
     return result.rows.map(row => this.mapRowToBusinessEvent(row));
   }
 
   async updateEvent(eventId: string, updates: EventUpdateData): Promise<BusinessEvent> {
     // Validate event date if provided
     if (updates.eventDate && updates.eventDate > new Date()) {
-      throw new Error('Event date cannot be in the future');
+      throw new Error(ERROR_MESSAGES.FUTURE_DATE);
     }
 
     const setClauses: string[] = [];

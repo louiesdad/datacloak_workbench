@@ -132,7 +132,9 @@ export class TrendCalculator {
     
     // Wider intervals for predictions further in the future
     const timeMultiplier = 1 + (daysAhead / 30); // Increase uncertainty over time more aggressively
-    const margin = Math.max(1, this.T_STATISTIC_95 * predictionSE * timeMultiplier); // Ensure margin is at least 1
+    // For perfect linear data (se = 0), add a base uncertainty that increases with time
+    const baseUncertainty = se === 0 ? 0.5 * timeMultiplier : 0;
+    const margin = Math.max(1, this.T_STATISTIC_95 * predictionSE * timeMultiplier + baseUncertainty); // Ensure margin is at least 1
 
     return {
       predicted,

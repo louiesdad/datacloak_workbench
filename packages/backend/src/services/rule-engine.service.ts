@@ -19,9 +19,11 @@ export class RuleEngine {
     
     if (conditions.operator === 'AND') {
       return conditions.rules.every(condition => this.evaluateCondition(condition, data));
+    } else if (conditions.operator === 'OR') {
+      return conditions.rules.some(condition => this.evaluateCondition(condition, data));
     }
     
-    return false; // For now, only implementing AND
+    return false;
   }
 
   private evaluateCondition(condition: Condition, data: Record<string, any>): boolean {

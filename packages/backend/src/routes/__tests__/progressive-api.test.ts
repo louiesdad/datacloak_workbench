@@ -51,7 +51,20 @@ jest.mock('../../controllers/sentiment.controller', () => ({
     }),
     
     // Add mock for progress endpoint
-    getAnalysisProgress: jest.fn()
+    getAnalysisProgress: jest.fn((req, res) => {
+      const { jobId } = req.params;
+      res.status(200).json({
+        data: {
+          jobId,
+          status: 'processing',
+          progress: 35,
+          rowsProcessed: 1750000,
+          totalRows: 5000000,
+          timeElapsed: 14520000,
+          estimatedTimeRemaining: 28800000
+        }
+      });
+    })
   }))
 }));
 
@@ -112,30 +125,10 @@ describe('Progressive API Endpoints', () => {
 
   describe('GET /api/v1/sentiment/analyze/progress/:jobId', () => {
     test('should return current job progress status', async () => {
-      // Add mock for progress endpoint
-      const mockGetProgress = jest.fn(async (req, res) => {
-        const { jobId } = req.params;
-        res.status(200).json({
-          data: {
-            jobId,
-            status: 'processing',
-            progress: 35,
-            rowsProcessed: 1750000,
-            totalRows: 5000000,
-            timeElapsed: 14520000, // 4 hours 12 minutes in ms
-            estimatedTimeRemaining: 28800000 // 8 hours in ms
-          }
-        });
-      });
-      
-      const SentimentController = require('../../controllers/sentiment.controller').SentimentController;
-      const mockInstance = SentimentController.mock.results[0].value;
-      mockInstance.getAnalysisProgress = mockGetProgress;
-
       const response = await request(app)
         .get('/api/v1/sentiment/analyze/progress/job-123')
         .expect(200);
-
+      
       expect(response.body).toMatchObject({
         data: {
           jobId: 'job-123',
