@@ -8,6 +8,8 @@ export interface MonitoringOptions {
   queueDepthThreshold?: number;
   monitoringInterval?: number;
   metricsService?: typeof metricsService;
+  apiResponseTimeThreshold?: number;
+  apiErrorRateThreshold?: number;
 }
 
 export interface QueueDepthMetrics {
@@ -32,6 +34,15 @@ export class MonitoringService extends EventEmitter {
   private intervalId?: NodeJS.Timeout;
   private isMonitoring = false;
   private metrics: typeof metricsService;
+  private apiResponseTimeThreshold: number;
+  private apiErrorRateThreshold: number;
+  
+  // Track API metrics
+  private apiMetrics: Map<string, {
+    responseTimes: number[];
+    successCount: number;
+    errorCount: number;
+  }> = new Map();
 
   constructor(options: MonitoringOptions) {
     super();
@@ -39,6 +50,8 @@ export class MonitoringService extends EventEmitter {
     this.queueDepthThreshold = options.queueDepthThreshold || 100;
     this.monitoringInterval = options.monitoringInterval || 10000; // 10 seconds default
     this.metrics = options.metricsService || metricsService;
+    this.apiResponseTimeThreshold = options.apiResponseTimeThreshold || 5000; // 5 seconds default
+    this.apiErrorRateThreshold = options.apiErrorRateThreshold || 0.05; // 5% default
   }
 
   async getQueueDepthMetrics(): Promise<QueueDepthMetrics> {
@@ -135,6 +148,114 @@ export class MonitoringService extends EventEmitter {
     }
 
     logger.info('Monitoring stopped', { component: 'monitoring' });
+  }
+
+  // API Response Time Monitoring Methods
+  async recordApiResponse(endpoint: string, responseTime: number, success: boolean): Promise<void> {
+    // Initialize metrics for endpoint if not exists
+    if (!this.apiMetrics.has(endpoint)) {
+      this.apiMetrics.set(endpoint, {
+        responseTimes: [],
+        successCount: 0,
+        errorCount: 0
+      });
+    }
+
+    const endpointMetrics = this.apiMetrics.get(endpoint)!;
+    
+    // Record response time
+    endpointMetrics.responseTimes.push(responseTime);
+    
+    // Keep only last 100 response times to prevent memory leak
+    if (endpointMetrics.responseTimes.length > 100) {
+      endpointMetrics.responseTimes.shift();
+    }
+    
+    // Update success/error counts
+    if (success) {
+      endpointMetrics.successCount++;
+    } else {
+      endpointMetrics.errorCount++;
+    }
+    
+    // Record in metrics service
+    this.metrics.recordApiRequest(endpoint, responseTime, success);
+    
+    // Check if response time exceeds threshold
+    if (responseTime > this.apiResponseTimeThreshold) {
+      const alert: Alert = {
+        type: 'api_response_time_high',
+        severity: 'warning',
+        message: `API response time (${responseTime}ms) exceeds threshold (${this.apiResponseTimeThreshold}ms) for ${endpoint}`,
+        metrics: {
+          endpoint,
+          responseTime,
+          threshold: this.apiResponseTimeThreshold,
+          timestamp: new Date()
+        }
+      };
+      
+      this.emit('alert:api_response_time_high', alert);
+      
+      logger.warn('High API response time detected', {
+        component: 'monitoring',
+        endpoint,
+        responseTime,
+        threshold: this.apiResponseTimeThreshold
+      });
+    }
+  }
+
+  async getAverageApiResponseTime(endpoint: string): Promise<number> {
+    const endpointMetrics = this.apiMetrics.get(endpoint);
+    
+    if (!endpointMetrics || endpointMetrics.responseTimes.length === 0) {
+      return 0;
+    }
+    
+    const sum = endpointMetrics.responseTimes.reduce((acc, time) => acc + time, 0);
+    return sum / endpointMetrics.responseTimes.length;
+  }
+
+  async checkApiErrorRate(): Promise<void> {
+    // Calculate overall error rate across all endpoints
+    let totalRequests = 0;
+    let totalErrors = 0;
+    
+    for (const [endpoint, metrics] of this.apiMetrics) {
+      const endpointTotal = metrics.successCount + metrics.errorCount;
+      totalRequests += endpointTotal;
+      totalErrors += metrics.errorCount;
+    }
+    
+    if (totalRequests === 0) return;
+    
+    const errorRate = totalErrors / totalRequests;
+    
+    if (errorRate > this.apiErrorRateThreshold) {
+      const alert: Alert = {
+        type: 'api_error_rate_high',
+        severity: 'critical',
+        message: `API error rate (${(errorRate * 100).toFixed(1)}%) exceeds threshold (${(this.apiErrorRateThreshold * 100).toFixed(1)}%)`,
+        metrics: {
+          errorRate,
+          threshold: this.apiErrorRateThreshold,
+          totalRequests,
+          failedRequests: totalErrors,
+          timestamp: new Date()
+        }
+      };
+      
+      this.emit('alert:api_error_rate_high', alert);
+      
+      logger.error('High API error rate detected', {
+        component: 'monitoring',
+        errorRate,
+        threshold: this.apiErrorRateThreshold,
+        totalRequests,
+        failedRequests: totalErrors
+      });
+    }
   }
 }
 
