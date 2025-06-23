@@ -161,6 +161,17 @@ describe('Progressive Processing', () => {
         text: `Text ${i}`
       }));
 
+      // Mock maskFields to return results
+      mockDataCloak.maskFields.mockImplementation(async (fields) => {
+        return fields.map(field => ({
+          fieldName: field.fieldName,
+          originalText: field.text,
+          maskedText: field.text,
+          piiItemsFound: 0,
+          success: true
+        }));
+      });
+
       let completionEvent: any;
       processor.on('complete', (event) => {
         completionEvent = event;
@@ -214,6 +225,17 @@ describe('Progressive Processing', () => {
         ...Array.from({ length: 5000 }, () => ({ fieldName: 'neutral', text: 'It is okay.' })),
         ...Array.from({ length: 2000 }, () => ({ fieldName: 'negative', text: 'Bad experience.' }))
       ];
+
+      // Mock the response to preserve fieldName
+      mockDataCloak.maskFields.mockImplementation(async (fields) => {
+        return fields.map(field => ({
+          fieldName: field.fieldName,
+          originalText: field.text,
+          maskedText: field.text,
+          piiItemsFound: 0,
+          success: true
+        }));
+      });
 
       // Act
       const sampleResult = await processor.processStatisticalSample(dataset, {

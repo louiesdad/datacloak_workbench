@@ -1,6 +1,6 @@
 /**
  * Analysis Audit Service
- * API client for interacting with the analysis audit endpoints
+ * API client for interacting with the analysis audit endpoints and causal analysis
  */
 
 export interface DecisionLog {
@@ -137,6 +137,32 @@ export interface SessionSummary {
   highConfidenceCount: number;
 }
 
+// Causal Analysis interfaces
+export interface EventImpact {
+  eventId: string;
+  eventType: string;
+  eventDate: string;
+  description: string;
+  impact: number;
+  percentageChange: number;
+  isSignificant: boolean;
+  confidence: number;
+  customersAffected: number;
+  pValue?: number;
+  sentimentBefore?: number;
+  sentimentAfter?: number;
+}
+
+export interface BusinessEvent {
+  id: string;
+  eventType: string;
+  eventDate: string;
+  description: string;
+  affectedCustomers: string[] | 'all';
+  createdAt: string;
+  updatedAt?: string;
+}
+
 class AnalysisAuditService {
   private baseURL: string;
 
@@ -213,6 +239,61 @@ class AnalysisAuditService {
     return this.fetchAPI(`/api/v1/audit/question/${decisionId}`, {
       method: 'POST',
       body: JSON.stringify({ question }),
+    });
+  }
+
+  // Causal Analysis API methods
+  async getEventImpacts(startDate: string, endDate: string): Promise<EventImpact[]> {
+    const params = new URLSearchParams({
+      startDate,
+      endDate,
+    });
+    return this.fetchAPI(`/api/v1/causal-analysis/event-impacts?${params}`);
+  }
+
+  async getEventsByDateRange(startDate: string, endDate: string): Promise<BusinessEvent[]> {
+    const params = new URLSearchParams({
+      startDate,
+      endDate,
+    });
+    return this.fetchAPI(`/api/v1/causal-analysis/events?${params}`);
+  }
+
+  async createBusinessEvent(event: Omit<BusinessEvent, 'id' | 'createdAt'>): Promise<BusinessEvent> {
+    return this.fetchAPI('/api/v1/causal-analysis/events', {
+      method: 'POST',
+      body: JSON.stringify(event),
+    });
+  }
+
+  async updateBusinessEvent(eventId: string, updates: Partial<BusinessEvent>): Promise<BusinessEvent> {
+    return this.fetchAPI(`/api/v1/causal-analysis/events/${eventId}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    });
+  }
+
+  async deleteBusinessEvent(eventId: string): Promise<void> {
+    return this.fetchAPI(`/api/v1/causal-analysis/events/${eventId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async calculateEventImpact(eventId: string, options?: {
+    beforeDays?: number;
+    afterDays?: number;
+    customerSegment?: string;
+  }): Promise<EventImpact> {
+    const params = new URLSearchParams();
+    if (options?.beforeDays) params.set('beforeDays', options.beforeDays.toString());
+    if (options?.afterDays) params.set('afterDays', options.afterDays.toString());
+    if (options?.customerSegment) params.set('customerSegment', options.customerSegment);
+    
+    const queryString = params.toString();
+    const url = `/api/v1/causal-analysis/events/${eventId}/impact${queryString ? `?${queryString}` : ''}`;
+    
+    return this.fetchAPI(url, {
+      method: 'POST',
     });
   }
 }
