@@ -1,6 +1,6 @@
 import { JobQueueService, Job } from '../job-queue.service';
 import { progressEmitter } from '../progress-emitter.service';
-import { eventEmitter } from '../event.service';
+import { eventEmitter, EventTypes } from '../event.service';
 
 // Mock dependencies to avoid external service issues
 jest.mock('../sentiment.service');
@@ -139,16 +139,16 @@ describe('Job Queue Progressive Integration', () => {
 
       // Verify WebSocket events were emitted
       const jobEvents = emittedEvents.filter(e => 
-        e.event === 'JOB_CREATED' || 
-        e.event === 'JOB_PROGRESS' || 
-        e.event === 'JOB_COMPLETE'
+        e.event === EventTypes.JOB_CREATED || 
+        e.event === EventTypes.JOB_PROGRESS || 
+        e.event === EventTypes.JOB_COMPLETE
       );
 
       expect(jobEvents.length).toBeGreaterThan(0);
       
       // Should have at least job created and completed events
-      const createdEvent = jobEvents.find(e => e.event === 'JOB_CREATED');
-      const completedEvent = jobEvents.find(e => e.event === 'JOB_COMPLETE');
+      const createdEvent = jobEvents.find(e => e.event === EventTypes.JOB_CREATED);
+      const completedEvent = jobEvents.find(e => e.event === EventTypes.JOB_COMPLETE);
       
       expect(createdEvent).toBeDefined();
       expect(createdEvent.data.jobId).toBe(jobId);

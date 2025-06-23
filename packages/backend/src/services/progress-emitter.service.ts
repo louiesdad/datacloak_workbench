@@ -111,6 +111,25 @@ export class ProgressEmitter {
     });
   }
 
+  completeJob(jobId: string, result: any): void {
+    const job = this.jobs.get(jobId);
+    if (!job) return;
+
+    const timeElapsed = Date.now() - job.startTime;
+    
+    eventEmitter.emit('job:complete', {
+      jobId,
+      totalRows: job.totalRows,
+      timeElapsed,
+      result
+    });
+
+    // Keep completed jobs for a while so progress can be queried
+    setTimeout(() => {
+      this.jobs.delete(jobId);
+    }, 60000); // Delete after 1 minute
+  }
+
   getJobInfo(jobId: string): any {
     const job = this.jobs.get(jobId);
     if (!job) return null;

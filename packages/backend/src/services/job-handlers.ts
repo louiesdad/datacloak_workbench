@@ -3,6 +3,7 @@ import { SentimentService } from './sentiment.service';
 import { DataService } from './data.service';
 import { SecurityService } from './security.service';
 import { FileStreamService, StreamProgress } from './file-stream.service';
+import { progressEmitter } from './progress-emitter.service';
 import * as fs from 'fs';
 import * as path from 'path';
 import csv from 'csv-parser';
@@ -16,6 +17,14 @@ export const createSentimentAnalysisBatchHandler = (
 ): JobHandler => {
   return async (job: Job, updateProgress: (progress: number) => void) => {
     const { texts, enablePIIMasking = true, datasetId, filePath, selectedColumns, analysisMode, model = 'basic' } = job.data;
+    
+    // Initialize progress tracking with progress emitter
+    if (texts && Array.isArray(texts)) {
+      progressEmitter.initializeJob(job.id, texts.length);
+    } else if (filePath) {
+      // For file-based processing, we'll update the total as we discover it
+      progressEmitter.initializeJob(job.id, 1000); // Initial estimate
+    }
     
     // Handle full dataset analysis
     if (filePath && datasetId) {
@@ -35,6 +44,8 @@ export const createSentimentAnalysisBatchHandler = (
 
       const progressCallback = (progress: StreamProgress) => {
         updateProgress(progress.percentComplete);
+        // Also update progress emitter with row count
+        progressEmitter.updateProgress(job.id, progress.processedRows);
       };
 
       const chunkCallback = async (chunkResult: any) => {
