@@ -26,6 +26,8 @@ export interface Dataset {
 export class ComprehensiveDataGenerator {
   private rng: seedrandom.PRNG;
   private seed: number;
+  private customerPool: string[] = [];
+  private customerOrderHistory: Map<string, Date[]> = new Map();
 
   constructor(seed: number = Date.now()) {
     this.seed = seed;

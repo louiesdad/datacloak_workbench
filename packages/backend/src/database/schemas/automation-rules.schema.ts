@@ -1,4 +1,4 @@
-import { Database } from 'duckdb-async';
+import * as duckdb from 'duckdb';
 
 export interface AutomationRule {
   id?: string;
@@ -20,7 +20,7 @@ export interface TriggerExecution {
 }
 
 export class AutomationRulesSchema {
-  constructor(private db: Database) {}
+  constructor(private db: duckdb.Database) {}
 
   async createTables(): Promise<void> {
     // Create automation_rules table

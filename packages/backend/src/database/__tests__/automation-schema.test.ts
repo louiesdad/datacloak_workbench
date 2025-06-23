@@ -1,18 +1,24 @@
-import { Database } from 'duckdb-async';
+import * as duckdb from 'duckdb';
 import { AutomationRulesSchema } from '../schemas/automation-rules.schema';
 
 describe('Automation Rules Database Schema', () => {
-  let db: Database;
+  let db: duckdb.Database;
   let schema: AutomationRulesSchema;
 
-  beforeEach(async () => {
+  beforeEach((done) => {
     // Create in-memory database for testing
-    db = await Database.create(':memory:');
-    schema = new AutomationRulesSchema(db);
+    db = new duckdb.Database(':memory:', (err) => {
+      if (err) {
+        done(err);
+      } else {
+        schema = new AutomationRulesSchema(db);
+        done();
+      }
+    });
   });
 
-  afterEach(async () => {
-    await db.close();
+  afterEach((done) => {
+    db.close(() => done());
   });
 
   describe('Table creation', () => {

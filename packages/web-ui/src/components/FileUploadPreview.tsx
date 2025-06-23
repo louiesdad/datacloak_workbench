@@ -94,40 +94,60 @@ export const FileUploadPreview: React.FC<FileUploadPreviewProps> = ({
     return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
   };
 
-  return (
-    <div className="file-upload-preview">
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".csv"
-        onChange={handleFileChange}
-        data-testid="file-input"
-      />
+  const timeEstimates = selectedFile ? calculateTimeEstimates(selectedFile.size) : null;
 
-      {selectedFile && (
+  return (
+    <div className="file-upload-preview" data-testid="file-upload-preview">
+      <div className="upload-section">
+        <h2>Upload Your Data File</h2>
+        <div className="file-input-wrapper">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept={acceptedFileTypes.join(',')}
+            onChange={handleFileChange}
+            data-testid="file-input"
+            id="file-upload-input"
+          />
+          <label htmlFor="file-upload-input" className="file-input-label">
+            {selectedFile ? 'Change File' : 'Select File'}
+          </label>
+        </div>
+        <p className="file-requirements">
+          Supported formats: {acceptedFileTypes.join(', ')} | Maximum size: {maxFileSizeGB}GB
+        </p>
+      </div>
+
+      {selectedFile && timeEstimates && (
         <div className="file-info">
           <h3>File: {selectedFile.name} ({formatFileSize(selectedFile.size)})</h3>
           
           <div className="time-estimates">
-            {(() => {
-              const estimates = calculateTimeEstimates(selectedFile.size);
-              return (
-                <>
-                  <p>⚡ Quick Preview: {estimates.quickPreview} (first 1,000 rows)</p>
-                  <p>📊 Statistical Sample: {estimates.statisticalSample} (10,000 rows)</p>
-                  <p>✓ Full Analysis: {estimates.fullAnalysis} ({Math.round(estimates.estimatedRows / 1000000)} million rows)</p>
-                </>
-              );
-            })()}
+            <h4>Processing Time Estimates:</h4>
+            <p>⚡ Quick Preview: {timeEstimates.quickPreview} (first {PREVIEW_ROWS.toLocaleString()} rows)</p>
+            <p>📊 Statistical Sample: {timeEstimates.statisticalSample} ({SAMPLE_ROWS.toLocaleString()} rows)</p>
+            <p>✓ Full Analysis: {timeEstimates.fullAnalysis} (~{(timeEstimates.estimatedRows / 1000000).toFixed(1)} million rows)</p>
           </div>
 
           <div className="action-buttons">
-            <button onClick={handleQuickPreview}>Start Quick Preview</button>
-            <button onClick={handleFullProcess}>Process Full File</button>
+            <button 
+              onClick={handleQuickPreview} 
+              className="btn-primary"
+              data-testid="quick-preview-button"
+            >
+              Start Quick Preview
+            </button>
+            <button 
+              onClick={handleFullProcess}
+              className="btn-secondary"
+              data-testid="full-process-button"
+            >
+              Process Full File
+            </button>
           </div>
 
           <div className="info-message">
-            ℹ️ You'll see initial results in 5 minutes and can decide whether to continue with full processing
+            <p>ℹ️ You'll see initial results in 5 minutes and can decide whether to continue with full processing</p>
           </div>
         </div>
       )}

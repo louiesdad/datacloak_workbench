@@ -208,6 +208,27 @@ describe('Impact Analysis', () => {
         }
       ]);
 
+      // Need to mock getEventsByDateRange calls for each event's impact calculation
+      mockEventRegistry.getEventsByDateRange
+        .mockResolvedValueOnce([
+          {
+            id: 'event-1',
+            eventType: 'outage',
+            eventDate: new Date('2024-05-03'),
+            description: 'Outage',
+            affectedCustomers: ['customer-1', 'customer-2'],
+          }
+        ])
+        .mockResolvedValueOnce([
+          {
+            id: 'event-2',
+            eventType: 'price_increase',
+            eventDate: new Date('2024-06-01'),
+            description: 'Price increase',
+            affectedCustomers: 'all',
+          }
+        ]);
+
       // Mock impact calculations for each event
       mockDatabase.query
         // Event 1 before
