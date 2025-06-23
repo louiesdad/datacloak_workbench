@@ -115,6 +115,7 @@ export class RiskAssessmentService extends EventEmitter {
   private complianceRules: Map<ComplianceFramework, any>;
   private geographicRules: Map<string, any>;
   private initialized = false;
+  private assessmentHistory: RiskAssessmentResult[] = [];
 
   constructor() {
     super();
@@ -178,9 +179,9 @@ export class RiskAssessmentService extends EventEmitter {
       });
 
       // Detailed assessments
-      const geographicAssessment = this.assessGeographicRisk(data.processingContext.jurisdiction);
-      const dataSensitivity = this.classifyDataSensitivity(data.piiDetections, data.fieldData);
-      const violations = this.detectComplianceViolations(data.piiDetections, data.complianceFrameworks, data.processingContext);
+      const geographicAssessment = this.assessGeographicRiskPrivate(data.processingContext.jurisdiction);
+      const dataSensitivity = this.classifyDataSensitivityPrivate(data.piiDetections, data.fieldData);
+      const violations = this.detectComplianceViolationsPrivate(data.piiDetections, data.complianceFrameworks, data.processingContext);
       const riskFactors = this.identifyRiskFactors(data);
 
       // Generate recommendations
@@ -239,7 +240,7 @@ export class RiskAssessmentService extends EventEmitter {
   /**
    * Geographic risk analysis with cross-border transfer detection
    */
-  private assessGeographicRisk(jurisdictions: string[]): GeographicRiskAssessment {
+  private assessGeographicRiskPrivate(jurisdictions: string[]): GeographicRiskAssessment {
     const isEUJurisdiction = jurisdictions.some(j => ['EU', 'DE', 'FR', 'IT', 'ES', 'NL'].includes(j.toUpperCase()));
     const isUSJurisdiction = jurisdictions.includes('US');
     const isChinaJurisdiction = jurisdictions.includes('CN');
@@ -290,7 +291,7 @@ export class RiskAssessmentService extends EventEmitter {
   /**
    * Data sensitivity classification system
    */
-  private classifyDataSensitivity(piiDetections: any[], fieldData: any): DataSensitivityClassification {
+  private classifyDataSensitivityPrivate(piiDetections: any[], fieldData: any): DataSensitivityClassification {
     const criticalTypes = ['ssn', 'medical_record_number', 'credit_card', 'passport'];
     const sensitiveTypes = ['email', 'phone', 'drivers_license', 'bank_account'];
     
@@ -348,7 +349,7 @@ export class RiskAssessmentService extends EventEmitter {
   /**
    * Automated violation detection and reporting
    */
-  private detectComplianceViolations(
+  private detectComplianceViolationsPrivate(
     piiDetections: any[],
     frameworks: ComplianceFramework[],
     processingContext: any
@@ -796,6 +797,394 @@ export class RiskAssessmentService extends EventEmitter {
     });
     
     return status;
+  }
+
+  /**
+   * Assess geographic risk based on jurisdictions
+   */
+  async assessGeographicRisk(jurisdictions: string[]): Promise<GeographicRiskAssessment> {
+    const crossBorderTransfer = jurisdictions.length > 1;
+    const gdprApplicable = jurisdictions.some(j => 
+      ['EU', 'DE', 'FR', 'IT', 'ES', 'NL', 'BE', 'PL', 'SE', 'DK', 'FI', 'AT', 'IE', 'PT', 'GR', 'CZ', 'HU', 'RO', 'BG', 'HR', 'SK', 'SI', 'LT', 'LV', 'EE', 'CY', 'LU', 'MT'].includes(j)
+    );
+    
+    const additionalRegulations = this.getApplicableRegulations(jurisdictions);
+    const transferRestrictions = crossBorderTransfer ? ['Implement Standard Contractual Clauses', 'Ensure adequate safeguards'] : [];
+    const dataLocalizationRequirements = jurisdictions.includes('CN') || jurisdictions.includes('RU');
+    
+    const riskScore = 
+      (crossBorderTransfer ? 30 : 0) +
+      (gdprApplicable ? 20 : 0) +
+      (dataLocalizationRequirements ? 30 : 0) +
+      (jurisdictions.length * 5);
+    
+    return {
+      jurisdiction: jurisdictions,
+      crossBorderTransfer,
+      gdprApplicable,
+      additionalRegulations,
+      riskScore: Math.min(100, riskScore),
+      transferRestrictions,
+      dataLocalizationRequirements
+    };
+  }
+
+  /**
+   * Classify data sensitivity based on fields and record count
+   */
+  async classifyDataSensitivity(fields: string[], recordCount: number): Promise<DataSensitivityClassification> {
+    const sensitiveFields = ['ssn', 'credit_card', 'bank_account', 'medical_record'];
+    const piiFields = ['name', 'email', 'phone', 'address'];
+    
+    const hasSensitive = fields.some(f => sensitiveFields.some(sf => f.toLowerCase().includes(sf)));
+    const hasPII = fields.some(f => piiFields.some(pf => f.toLowerCase().includes(pf)));
+    
+    let classification: 'public' | 'internal' | 'confidential' | 'restricted';
+    let sensitivityScore: number;
+    let categories: string[] = [];
+    
+    if (hasSensitive) {
+      classification = 'restricted';
+      sensitivityScore = 90 + (recordCount > 1000 ? 10 : 0);
+      categories = ['Financial', 'Medical'];
+    } else if (hasPII) {
+      classification = 'confidential';
+      sensitivityScore = 60 + (recordCount > 10000 ? 20 : 0);
+      categories = ['PII'];
+    } else {
+      classification = fields.length > 5 ? 'internal' : 'public';
+      sensitivityScore = fields.length > 5 ? 30 : 10;
+      categories = [];
+    }
+    
+    return {
+      classification,
+      sensitivityScore: Math.min(100, sensitivityScore),
+      categories,
+      subjectRights: hasPII ? ['access', 'rectification', 'deletion', 'portability'] : [],
+      processingRestrictions: hasSensitive ? ['encryption required', 'limited access'] : [],
+      retentionRequirements: this.determineRetentionRequirements(fields)
+    };
+  }
+
+  /**
+   * Detect compliance violations
+   */
+  async detectComplianceViolations(assessment: any): Promise<ComplianceViolation[]> {
+    const violations: ComplianceViolation[] = [];
+    
+    // Check GDPR violations
+    if (assessment.frameworks.includes(ComplianceFramework.GDPR)) {
+      violations.push(...this.checkGDPRViolations(
+        assessment.records.map((r: any) => ({ 
+          fieldName: Object.keys(r)[0], 
+          piiType: 'personal_data' 
+        })),
+        { jurisdiction: ['EU'], encryption: false }
+      ));
+    }
+    
+    // Check HIPAA violations
+    if (assessment.frameworks.includes(ComplianceFramework.HIPAA) && 
+        assessment.dataSensitivity.categories.includes('Medical')) {
+      violations.push({
+        id: crypto.randomUUID(),
+        framework: ComplianceFramework.HIPAA,
+        violationType: 'phi_exposure',
+        severity: 'critical',
+        description: 'Protected Health Information (PHI) detected without proper safeguards',
+        affectedFields: ['patient_id', 'diagnosis', 'medication'],
+        recommendation: 'Implement HIPAA-compliant security measures',
+        requiresImmediateAction: true,
+        potentialFines: '$50,000 to $1.5 million per violation',
+        remediation: {
+          steps: ['Encrypt PHI at rest and in transit', 'Implement access controls', 'Conduct risk assessment'],
+          timeframe: '30 days',
+          cost: 'high'
+        }
+      });
+    }
+    
+    return violations;
+  }
+
+  /**
+   * Calculate weighted risk score
+   */
+  calculateRiskScore(factors: Array<{ weight: number; score: number }>): number {
+    if (factors.length === 0) return 0;
+    
+    const totalWeight = factors.reduce((sum, f) => sum + f.weight, 0);
+    const weightedSum = factors.reduce((sum, f) => sum + (f.weight * f.score), 0);
+    
+    return Math.round(totalWeight > 0 ? weightedSum / totalWeight : 0);
+  }
+
+  /**
+   * Generate mitigation plan
+   */
+  async generateMitigationPlan(assessment: RiskAssessmentResult): Promise<any> {
+    const plan: any = {
+      planId: crypto.randomUUID(),
+      riskAssessmentId: assessment.assessmentId,
+      priority: assessment.riskLevel === 'critical' || assessment.overallRiskScore > 80 ? 'immediate' : 'high',
+      estimatedCost: 50000,
+      actions: [],
+      timeline: {
+        start: new Date(),
+        milestones: [],
+        estimatedCompletion: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)
+      },
+      resources: {
+        internal: ['Security Team', 'Legal', 'IT'],
+        external: ['Compliance Consultant']
+      },
+      costBreakdown: {
+        technology: 20000,
+        consulting: 25000,
+        training: 5000
+      },
+      successCriteria: ['Compliance score > 90%', 'No critical violations'],
+      riskReduction: {
+        current: assessment.overallRiskScore,
+        target: 30,
+        estimatedReduction: assessment.overallRiskScore - 30
+      }
+    };
+    
+    // Add immediate actions
+    if (assessment.immediateActions.length > 0) {
+      plan.actions.push(...assessment.immediateActions.map(action => ({
+        id: crypto.randomUUID(),
+        description: action,
+        priority: 'immediate' as const,
+        status: 'pending' as const,
+        assignee: 'Security Team',
+        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        timeline: 'within 7 days'
+      })));
+    }
+    
+    // Add short-term actions
+    plan.actions.push(...assessment.shortTermActions.map(action => ({
+      id: crypto.randomUUID(),
+      description: action,
+      priority: 'high' as const,
+      status: 'pending' as const,
+      assignee: 'IT Team',
+      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      timeline: 'within 30 days'
+    })));
+    
+    return plan;
+  }
+
+  /**
+   * Get risk trends over time
+   */
+  async getRiskTrends(period: string = '30d'): Promise<any> {
+    const assessments = this.assessmentHistory.slice(-30);
+    
+    const dataPoints = assessments.map(a => ({
+      date: a.timestamp,
+      score: a.overallRiskScore,
+      level: a.riskLevel
+    }));
+    
+    const averageRisk = dataPoints.reduce((sum, dp) => sum + dp.score, 0) / dataPoints.length;
+    const trend = dataPoints.length > 1 && 
+                  dataPoints[dataPoints.length - 1].score > dataPoints[0].score ? 'increasing' :
+                  dataPoints.length > 1 && 
+                  dataPoints[dataPoints.length - 1].score < dataPoints[0].score ? 'decreasing' : 'stable';
+    
+    return {
+      period,
+      dataPoints,
+      averageRisk,
+      trend,
+      highRiskPeriods: dataPoints.filter(dp => dp.score > 70).length
+    };
+  }
+
+  /**
+   * Export risk report
+   */
+  async exportRiskReport(assessmentId: string, format: string): Promise<any> {
+    const assessment = this.assessmentHistory.find(a => a.assessmentId === assessmentId);
+    if (!assessment) throw new Error('Assessment not found');
+    
+    return {
+      format,
+      data: assessment,
+      generatedAt: new Date(),
+      exportId: crypto.randomUUID()
+    };
+  }
+
+  /**
+   * Get risk recommendations
+   */
+  async getRiskRecommendations(riskLevel: string, categories: string[]): Promise<any> {
+    const recommendations = {
+      immediate: [] as any[],
+      shortTerm: [] as any[],
+      longTerm: [] as any[]
+    };
+    
+    if (riskLevel === 'critical' || riskLevel === 'high') {
+      recommendations.immediate.push({
+        priority: 'critical',
+        action: 'Implement encryption for all sensitive data',
+        impact: 'Reduces data breach risk by 80%',
+        cost: 'medium'
+      });
+    }
+    
+    if (categories.includes('PII') || categories.includes('Financial')) {
+      recommendations.shortTerm.push({
+        priority: 'high',
+        action: 'Implement data loss prevention (DLP) policies',
+        impact: 'Prevents unauthorized data transfers',
+        cost: 'medium'
+      });
+    }
+    
+    recommendations.longTerm.push({
+      priority: 'medium',
+      action: 'Establish comprehensive compliance program',
+      impact: 'Ensures ongoing regulatory compliance',
+      cost: 'high'
+    });
+    
+    return recommendations;
+  }
+
+  /**
+   * Validate mitigation implementation
+   */
+  async validateMitigationImplementation(plan: RiskMitigationPlan): Promise<any> {
+    const completedActions = plan.mitigationSteps?.filter((a: any) => (a as any).status === 'completed').length || 0;
+    const totalActions = plan.mitigationSteps?.length || 0;
+    
+    return {
+      completionRate: totalActions > 0 ? (completedActions / totalActions) * 100 : 0,
+      remainingActions: totalActions - completedActions,
+      isComplete: completedActions === totalActions,
+      validation: {
+        date: new Date(),
+        validator: 'System',
+        findings: []
+      }
+    };
+  }
+
+  /**
+   * Perform risk assessment
+   */
+  async performRiskAssessment(data: any): Promise<RiskAssessmentResult> {
+    if (!data || !data.records) {
+      throw new Error('Invalid data for risk assessment');
+    }
+
+    const assessmentId = crypto.randomUUID();
+    const startTime = Date.now();
+    
+    // Extract fields from records
+    const fields = data.records.length > 0 ? Object.keys(data.records[0]) : [];
+    const recordCount = data.records.length;
+    
+    // Perform assessments
+    const jurisdictions = data.metadata?.jurisdiction || ['US'];
+    const geographicAssessment = await this.assessGeographicRisk(jurisdictions);
+    const dataSensitivity = await this.classifyDataSensitivity(fields, recordCount);
+    
+    // Detect PII
+    interface PIIDetection {
+      fieldName: string;
+      piiType: string;
+      confidence: number;
+    }
+    
+    const piiDetections: PIIDetection[] = [];
+    for (const record of data.records.slice(0, 10)) { // Sample first 10 records
+      for (const [field, value] of Object.entries(record)) {
+        if (typeof value === 'string' && value.match(/\d{3}-\d{2}-\d{4}/)) {
+          piiDetections.push({ fieldName: field, piiType: 'ssn', confidence: 0.9 });
+        }
+        if (typeof value === 'string' && value.match(/\S+@\S+\.\S+/)) {
+          piiDetections.push({ fieldName: field, piiType: 'email', confidence: 0.95 });
+        }
+      }
+    }
+    
+    // Calculate risk scores
+    const dataRisk = dataSensitivity.sensitivityScore;
+    const complianceRisk = piiDetections.length * 10;
+    const geographicRisk = geographicAssessment.riskScore;
+    const processingRisk = recordCount > 10000 ? 50 : 20;
+    
+    const overallRiskScore = this.calculateRiskScore([
+      { weight: 0.3, score: dataRisk },
+      { weight: 0.3, score: complianceRisk },
+      { weight: 0.2, score: geographicRisk },
+      { weight: 0.2, score: processingRisk }
+    ]);
+    
+    const riskLevel = overallRiskScore >= 80 ? 'critical' :
+                     overallRiskScore >= 60 ? 'high' :
+                     overallRiskScore >= 40 ? 'medium' : 'low';
+    
+    // Generate recommendations
+    const immediateActions = riskLevel === 'critical' || riskLevel === 'high' ? 
+      ['Implement encryption immediately', 'Review data access controls'] : [];
+    const shortTermActions = ['Conduct compliance audit', 'Implement monitoring'];
+    const longTermActions = ['Develop data governance framework'];
+    
+    // Detect violations
+    const frameworks = geographicAssessment.gdprApplicable ? [ComplianceFramework.GDPR] : [];
+    const violations = await this.detectComplianceViolations({
+      records: data.records,
+      frameworks,
+      dataSensitivity
+    });
+    
+    const result: RiskAssessmentResult = {
+      assessmentId,
+      timestamp: new Date(),
+      overallRiskScore,
+      riskLevel,
+      dataRisk,
+      complianceRisk,
+      geographicRisk,
+      processingRisk,
+      geographicAssessment,
+      dataSensitivity,
+      violations,
+      riskFactors: this.identifyRiskFactors({
+        processingContext: {
+          encryption: false,
+          jurisdiction: jurisdictions
+        },
+        fieldData: data.records
+      }),
+      immediateActions,
+      shortTermActions,
+      longTermActions,
+      complianceStatus: this.assessComplianceStatus(frameworks, piiDetections, { encryption: false }),
+      assessmentMetadata: {
+        recordsAnalyzed: recordCount,
+        piiItemsFound: piiDetections.length,
+        processingTime: Date.now() - startTime,
+        assessmentMethod: 'automated',
+        confidence: 0.85
+      }
+    };
+    
+    // Store in history
+    this.assessmentHistory.push(result);
+    this.emit('risk:detected', result);
+    
+    return result;
   }
 }
 

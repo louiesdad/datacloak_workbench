@@ -13,7 +13,7 @@ import './ResultExplorer.css';
 
 interface ResultExplorerProps {
   results: SentimentResult[];
-  onExport?: (format: 'csv' | 'excel' | 'json') => void;
+  onExport?: (format: 'csv' | 'excel' | 'json' | 'pdf') => void;
   onClose?: () => void;
 }
 
@@ -181,7 +181,7 @@ export const ResultExplorer: React.FC<ResultExplorerProps> = ({
     };
   }, [filteredResults]);
 
-  const handleExport = async (format: 'csv' | 'excel' | 'json') => {
+  const handleExport = async (format: 'csv' | 'excel' | 'json' | 'pdf') => {
     // This is now handled by ExportErrorHandler
     if (onExport) {
       await onExport(format);
@@ -372,6 +372,20 @@ export const ResultExplorer: React.FC<ResultExplorerProps> = ({
                   title="Export all results as JSON"
                 >
                   📄 JSON
+                </button>
+                <button
+                  className="export-quick-button"
+                  onClick={() => {
+                    const exportData = selectedResults.length > 0 
+                      ? filteredResults.filter(r => selectedResults.includes(r.id))
+                      : filteredResults;
+                    exportHandler.exportData(exportData, 'pdf', 'sentiment-results', { selectedColumns });
+                  }}
+                  disabled={exportHandler.isExporting}
+                  data-testid="quick-export-pdf"
+                  title="Export all results as PDF report"
+                >
+                  📑 PDF
                 </button>
               </div>
             </div>
@@ -591,6 +605,27 @@ export const ResultExplorer: React.FC<ResultExplorerProps> = ({
                     <div className="export-details">
                       <span className="format-name">JSON Format</span>
                       <span className="format-description">Structured data format for developers and APIs</span>
+                    </div>
+                  </button>
+                </div>
+                
+                <div className="format-option">
+                  <button
+                    className="export-button pdf"
+                    onClick={() => {
+                      const exportData = selectedResults.length > 0 
+                        ? filteredResults.filter(r => selectedResults.includes(r.id))
+                        : filteredResults;
+                      exportHandler.exportData(exportData, 'pdf', 'sentiment-results', { selectedColumns });
+                    }}
+                    disabled={exportHandler.isExporting}
+                    data-testid="export-pdf"
+                    aria-label="Export as PDF"
+                  >
+                    <span className="export-icon">📑</span>
+                    <div className="export-details">
+                      <span className="format-name">PDF Report</span>
+                      <span className="format-description">Professional audit report with charts and statistics</span>
                     </div>
                   </button>
                 </div>

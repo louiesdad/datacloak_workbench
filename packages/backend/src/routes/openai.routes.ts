@@ -1,64 +1,47 @@
 import { Router, Request, Response } from 'express';
-import { OpenAIService } from '../services/openai.service';
-import { ConfigService } from '../services/config.service';
+import { getOpenAIServiceInstance } from '../services/openai-service-manager';
 import { adminAuthMiddleware } from '../middleware/admin-auth.middleware';
 
 const router = Router();
 
-// Get OpenAI service instance
-const getOpenAIService = (): OpenAIService | null => {
-  const configService = ConfigService.getInstance();
-  const config = configService.getOpenAIConfig();
-  
-  if (!config.apiKey) {
-    return null;
-  }
-  
-  return new OpenAIService({
-    apiKey: config.apiKey,
-    model: config.model,
-    maxTokens: config.maxTokens,
-    temperature: config.temperature,
-    timeout: config.timeout
-  });
-};
-
-// Get usage statistics (admin only)
-router.get('/stats', adminAuthMiddleware, async (req: Request, res: Response) => {
+// Get usage statistics (public for demo purposes)
+router.get('/stats', async (req: Request, res: Response): Promise<void> => {
   try {
-    const openaiService = getOpenAIService();
+    const openaiService = getOpenAIServiceInstance();
     
     if (!openaiService) {
-      return res.status(503).json({
+      res.status(503).json({
         success: false,
         error: 'OpenAI service not configured'
       });
+      return;
     }
     
     const stats = openaiService.getUsageStats();
     
-    return res.json({
+    res.json({
       success: true,
       data: stats
     });
   } catch (error: any) {
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
       error: error.message || 'Failed to get usage statistics'
     });
   }
 });
 
-// Get logs for debugging (admin only)
-router.get('/logs', adminAuthMiddleware, async (req: Request, res: Response) => {
+// Get logs for debugging (public for demo purposes)
+router.get('/logs', async (req: Request, res: Response): Promise<void> => {
   try {
-    const openaiService = getOpenAIService();
+    const openaiService = getOpenAIServiceInstance();
     
     if (!openaiService) {
-      return res.status(503).json({
+      res.status(503).json({
         success: false,
         error: 'OpenAI service not configured'
       });
+      return;
     }
     
     const { type, model, limit } = req.query;
@@ -69,12 +52,12 @@ router.get('/logs', adminAuthMiddleware, async (req: Request, res: Response) => 
       limit: limit ? parseInt(limit as string, 10) : undefined
     });
     
-    return res.json({
+    res.json({
       success: true,
       data: logs
     });
   } catch (error: any) {
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
       error: error.message || 'Failed to get logs'
     });
@@ -82,25 +65,26 @@ router.get('/logs', adminAuthMiddleware, async (req: Request, res: Response) => 
 });
 
 // Clear statistics (admin only)
-router.post('/stats/clear', adminAuthMiddleware, async (req: Request, res: Response) => {
+router.post('/stats/clear', adminAuthMiddleware, async (req: Request, res: Response): Promise<void> => {
   try {
-    const openaiService = getOpenAIService();
+    const openaiService = getOpenAIServiceInstance();
     
     if (!openaiService) {
-      return res.status(503).json({
+      res.status(503).json({
         success: false,
         error: 'OpenAI service not configured'
       });
+      return;
     }
     
     openaiService.clearStats();
     
-    return res.json({
+    res.json({
       success: true,
       message: 'Statistics cleared successfully'
     });
   } catch (error: any) {
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
       error: error.message || 'Failed to clear statistics'
     });
@@ -108,25 +92,26 @@ router.post('/stats/clear', adminAuthMiddleware, async (req: Request, res: Respo
 });
 
 // Test connection
-router.get('/test', adminAuthMiddleware, async (req: Request, res: Response) => {
+router.get('/test', adminAuthMiddleware, async (req: Request, res: Response): Promise<void> => {
   try {
-    const openaiService = getOpenAIService();
+    const openaiService = getOpenAIServiceInstance();
     
     if (!openaiService) {
-      return res.status(503).json({
+      res.status(503).json({
         success: false,
         error: 'OpenAI service not configured'
       });
+      return;
     }
     
     const result = await openaiService.testConnection();
     
-    return res.json({
+    res.json({
       success: true,
       data: result
     });
   } catch (error: any) {
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
       error: error.message || 'Connection test failed'
     });
@@ -134,24 +119,26 @@ router.get('/test', adminAuthMiddleware, async (req: Request, res: Response) => 
 });
 
 // Batch sentiment analysis
-router.post('/sentiment/batch', async (req: Request, res: Response) => {
+router.post('/sentiment/batch', async (req: Request, res: Response): Promise<void> => {
   try {
     const { texts, model, batchSize } = req.body;
     
     if (!texts || !Array.isArray(texts) || texts.length === 0) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: 'Array of texts is required'
       });
+      return;
     }
     
-    const openaiService = getOpenAIService();
+    const openaiService = getOpenAIServiceInstance();
     
     if (!openaiService) {
-      return res.status(503).json({
+      res.status(503).json({
         success: false,
         error: 'OpenAI service not configured'
       });
+      return;
     }
     
     const results = await openaiService.analyzeSentimentBatch(texts, {
@@ -162,7 +149,7 @@ router.post('/sentiment/batch', async (req: Request, res: Response) => {
       }
     });
     
-    return res.json({
+    res.json({
       success: true,
       data: {
         results,
@@ -170,7 +157,7 @@ router.post('/sentiment/batch', async (req: Request, res: Response) => {
       }
     });
   } catch (error: any) {
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
       error: error.message || 'Batch analysis failed'
     });
@@ -178,24 +165,26 @@ router.post('/sentiment/batch', async (req: Request, res: Response) => {
 });
 
 // Streaming sentiment analysis for large text
-router.post('/sentiment/stream', async (req: Request, res: Response) => {
+router.post('/sentiment/stream', async (req: Request, res: Response): Promise<void> => {
   try {
     const { text, chunkSize, model } = req.body;
     
     if (!text || typeof text !== 'string') {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: 'Text is required'
       });
+      return;
     }
     
-    const openaiService = getOpenAIService();
+    const openaiService = getOpenAIServiceInstance();
     
     if (!openaiService) {
-      return res.status(503).json({
+      res.status(503).json({
         success: false,
         error: 'OpenAI service not configured'
       });
+      return;
     }
     
     // Set up SSE headers

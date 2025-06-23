@@ -11,16 +11,17 @@ interface LoginDto {
 }
 
 // Admin login
-router.post('/login', async (req: Request<{}, {}, LoginDto>, res: Response) => {
+router.post('/login', async (req: Request<{}, {}, LoginDto>, res: Response): Promise<void> => {
   try {
     const configService = ConfigService.getInstance();
     const { username, password } = req.body;
     
     if (!username || !password) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: 'Username and password are required',
       });
+      return;
     }
     
     const adminUsername = configService.get('ADMIN_USERNAME');
@@ -28,20 +29,22 @@ router.post('/login', async (req: Request<{}, {}, LoginDto>, res: Response) => {
     
     // Validate username
     if (username !== adminUsername) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         error: 'Invalid credentials',
       });
+      return;
     }
     
     // Validate password
     const isValidPassword = await comparePassword(password, adminPassword);
     
     if (!isValidPassword) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         error: 'Invalid credentials',
       });
+      return;
     }
     
     // Generate JWT token
@@ -60,14 +63,14 @@ router.post('/login', async (req: Request<{}, {}, LoginDto>, res: Response) => {
       }
     );
     
-    return res.json({
+    res.json({
       success: true,
       token,
       expiresIn,
     });
   } catch (error: any) {
     console.error('Login error:', error);
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
       error: 'Authentication failed',
     });
@@ -75,33 +78,35 @@ router.post('/login', async (req: Request<{}, {}, LoginDto>, res: Response) => {
 });
 
 // Verify token
-router.post('/verify', async (req: Request, res: Response) => {
+router.post('/verify', async (req: Request, res: Response): Promise<void> => {
   try {
     const { token } = req.body;
     
     if (!token) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: 'Token is required',
       });
+      return;
     }
     
     const configService = ConfigService.getInstance();
     const jwtSecret = configService.get('JWT_SECRET');
     const decoded = jwt.verify(token, jwtSecret) as any;
     
-    return res.json({
+    res.json({
       success: true,
       valid: true,
       username: decoded.username,
       role: decoded.role,
     });
   } catch (error) {
-    return res.status(401).json({
+    res.status(401).json({
       success: false,
       valid: false,
       error: 'Invalid or expired token',
     });
+    return;
   }
 });
 

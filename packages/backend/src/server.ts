@@ -1,3 +1,15 @@
+import './console-override'; // Must be first to override console.log
+
+// Add global error handlers
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1);
+});
 import { createApp } from './app';
 import { config } from './config/env';
 import { initializeDatabases } from './database';
@@ -6,14 +18,21 @@ import { realTimeSentimentFeedService } from './services/realtime-sentiment-feed
 import { analyticsService } from './services/analytics.service';
 import { insightsService } from './services/insights.service';
 import { connectionStatusService } from './services/connection-status.service';
+import { analysisAuditService } from './services/analysis-audit.service';
 
 const startServer = async () => {
   try {
+    console.log('Starting server initialization...');
+    
     // Initialize databases
+    console.log('Initializing databases...');
     await initializeDatabases();
+    console.log('Databases initialized successfully');
 
     // Create Express app
-    const app = createApp();
+    console.log('Creating Express app...');
+    const app = await createApp();
+    console.log('Express app created successfully');
 
     // Start server
     const server = app.listen(config.port, () => {
@@ -36,6 +55,9 @@ const startServer = async () => {
       }).catch(error => {
         console.error('Failed to initialize analytics services:', error);
       });
+      
+      // Initialize analysis audit service for transparency
+      console.log('Analysis audit service initialized for decision transparency');
       
       // Initialize connection status service
       connectionStatusService.initialize();
@@ -66,4 +88,7 @@ const startServer = async () => {
   }
 };
 
-startServer();
+startServer().catch(error => {
+  console.error('Server startup failed:', error);
+  process.exit(1);
+});

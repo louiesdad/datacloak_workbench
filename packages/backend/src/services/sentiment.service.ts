@@ -1,4 +1,4 @@
-import { getSQLiteConnection } from '../database/sqlite';
+import { getSQLiteConnection } from '../database/sqlite-refactored';
 import { runDuckDB } from '../database/duckdb-pool';
 import { v4 as uuidv4 } from 'uuid';
 import { AppError } from '../middleware/error.middleware';
@@ -8,6 +8,7 @@ import { DataCloakIntegrationService, DataCloakSentimentRequest } from './datacl
 import { ConfigService } from './config.service';
 import { eventEmitter, EventTypes } from './event.service';
 import { getCacheService, ICacheService } from './cache.service';
+import { getOpenAIServiceInstance } from './openai-service-manager';
 import * as crypto from 'crypto';
 
 export interface SentimentAnalysisResult {
@@ -62,8 +63,8 @@ export class SentimentService {
     this.configService = ConfigService.getInstance();
     this.cacheService = getCacheService();
     
-    // Initialize OpenAI service from ConfigService
-    this.initializeOpenAIService();
+    // Get OpenAI service from manager
+    this.openaiService = getOpenAIServiceInstance() || undefined;
 
     // Initialize DataCloak integration service
     this.dataCloakService = new DataCloakIntegrationService(this.openaiService);
@@ -71,8 +72,8 @@ export class SentimentService {
     // Listen for configuration updates
     this.configService.on('config.updated', async (event) => {
       if (event.key && event.key.toString().startsWith('OPENAI_')) {
-        console.log('OpenAI configuration updated, reinitializing service...');
-        this.initializeOpenAIService();
+        console.log('OpenAI configuration updated, getting updated service...');
+        this.openaiService = getOpenAIServiceInstance() || undefined;
         // Update DataCloak service with new OpenAI instance
         this.dataCloakService.setOpenAIService(this.openaiService);
         // Invalidate related caches
@@ -81,33 +82,6 @@ export class SentimentService {
     });
   }
 
-  private initializeOpenAIService(): void {
-    if (this.configService.isOpenAIConfigured()) {
-      try {
-        const openaiConfig = this.configService.getOpenAIConfig();
-        
-        if (!openaiConfig.apiKey) {
-          throw new Error('OpenAI API key is not configured');
-        }
-        
-        this.openaiService = new OpenAIService({
-          apiKey: openaiConfig.apiKey,
-          model: openaiConfig.model || 'gpt-3.5-turbo',
-          maxTokens: openaiConfig.maxTokens || 150,
-          temperature: openaiConfig.temperature || 0.1,
-          timeout: openaiConfig.timeout || 30000
-        });
-        
-        console.log('OpenAI service initialized with ConfigService settings');
-      } catch (error) {
-        console.warn('Failed to initialize OpenAI service:', error);
-        this.openaiService = undefined;
-      }
-    } else {
-      console.log('OpenAI API key not configured');
-      this.openaiService = undefined;
-    }
-  }
 
   /**
    * Generate cache key for sentiment analysis
@@ -509,7 +483,7 @@ export class SentimentService {
     }
     
     // Store in SQLite
-    const db = getSQLiteConnection();
+    const db = await getSQLiteConnection();
     if (!db) {
       throw new AppError('Database connection not available', 500, 'DB_ERROR');
     }
@@ -618,7 +592,7 @@ export class SentimentService {
     }
 
     // Store results in database
-    const db = getSQLiteConnection();
+    const db = await getSQLiteConnection();
     if (db) {
       try {
         const stmt = db.prepare(`
@@ -660,7 +634,7 @@ export class SentimentService {
   private async performBasicBatchAnalysis(texts: string[], model: string, batchId: string): Promise<SentimentAnalysisResult[]> {
     const startTime = Date.now();
     const results: SentimentAnalysisResult[] = [];
-    const db = getSQLiteConnection();
+    const db = await getSQLiteConnection();
     
     if (!db) {
       throw new AppError('Database connection not available', 500, 'DB_ERROR');
@@ -728,7 +702,7 @@ export class SentimentService {
     };
     filter?: ResultsFilter;
   }> {
-    const db = getSQLiteConnection();
+    const db = await getSQLiteConnection();
     if (!db) {
       throw new AppError('Database connection not available', 500, 'DB_ERROR');
     }
@@ -812,7 +786,7 @@ export class SentimentService {
   }
 
   async getStatistics(includeTrends: boolean = false): Promise<SentimentStatistics> {
-    const db = getSQLiteConnection();
+    const db = await getSQLiteConnection();
     if (!db) {
       throw new AppError('Database connection not available', 500, 'DB_ERROR');
     }
@@ -889,7 +863,7 @@ export class SentimentService {
    * Get sentiment analysis result by ID
    */
   async getAnalysisById(id: number): Promise<SentimentAnalysisResult | null> {
-    const db = getSQLiteConnection();
+    const db = await getSQLiteConnection();
     if (!db) {
       throw new AppError('Database connection not available', 500, 'DB_ERROR');
     }
@@ -908,7 +882,7 @@ export class SentimentService {
    * Delete sentiment analysis results
    */
   async deleteAnalysisResults(ids: number[]): Promise<{ deleted: number }> {
-    const db = getSQLiteConnection();
+    const db = await getSQLiteConnection();
     if (!db) {
       throw new AppError('Database connection not available', 500, 'DB_ERROR');
     }
@@ -986,7 +960,7 @@ export class SentimentService {
     hourlyDistribution: { hour: number; count: number; avgScore: number }[];
     confidenceDistribution: { range: string; count: number }[];
   }> {
-    const db = getSQLiteConnection();
+    const db = await getSQLiteConnection();
     if (!db) {
       throw new AppError('Database connection not available', 500, 'DB_ERROR');
     }
@@ -1208,7 +1182,7 @@ export class SentimentService {
     positive: { word: string; count: number }[];
     negative: { word: string; count: number }[];
   }> {
-    const db = getSQLiteConnection();
+    const db = await getSQLiteConnection();
     if (!db) {
       // Return fallback data if no database
       return {

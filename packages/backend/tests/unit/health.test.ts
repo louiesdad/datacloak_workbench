@@ -1,7 +1,7 @@
-import { getSQLiteConnection } from '../../src/database/sqlite';
+import { getSQLiteConnection } from '../../src/database/sqlite-refactored';
 
 // Mock the database connection
-jest.mock('../../src/database/sqlite');
+jest.mock('../../src/database/sqlite-refactored');
 
 describe('Health Routes', () => {
 
@@ -10,7 +10,7 @@ describe('Health Routes', () => {
     const { createApp } = require('../../src/app');
     const request = require('supertest');
     
-    const app = createApp();
+    const app = await createApp();
     
     const response = await request(app)
       .get('/health')
@@ -32,7 +32,7 @@ describe('Health Routes', () => {
       })
     });
 
-    const app = createApp();
+    const app = await createApp();
     
     const response = await request(app)
       .get('/api/v1/health/status')
@@ -49,7 +49,7 @@ describe('Health Routes', () => {
     // Mock failed database connection
     (getSQLiteConnection as jest.Mock).mockReturnValue(null);
 
-    const app = createApp();
+    const app = await createApp();
     
     const response = await request(app)
       .get('/api/v1/health/status')

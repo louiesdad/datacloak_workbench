@@ -1,8 +1,8 @@
 // Security service with DataCloak integration
 import { AppError } from '../middleware/error.middleware';
-import { getSQLiteConnection } from '../database/sqlite';
+import { withSQLiteConnection, getSQLiteConnection } from '../database/sqlite-refactored';
 import { v4 as uuidv4 } from 'uuid';
-import { dataCloak } from './datacloak.service';
+import { getDataCloakInstance } from './datacloak-wrapper';
 import { getCacheService, ICacheService } from './cache.service';
 import { ComplianceService, ComplianceCheckData } from './compliance.service';
 import * as crypto from 'crypto';
@@ -51,6 +51,7 @@ export interface SecurityAuditResult {
 }
 
 export class SecurityService {
+  private dataCloak: any;
   private initialized = false;
   private cacheService: ICacheService;
   private complianceService: ComplianceService;
@@ -58,6 +59,11 @@ export class SecurityService {
   constructor() {
     this.cacheService = getCacheService();
     this.complianceService = new ComplianceService();
+    this.initializeDataCloak();
+  }
+
+  private async initializeDataCloak() {
+    this.dataCloak = await getDataCloakInstance();
   }
 
   /**
@@ -87,7 +93,10 @@ export class SecurityService {
 
     try {
       // Initialize DataCloak service
-      await dataCloak.initialize();
+      if (!this.dataCloak) {
+        this.dataCloak = await getDataCloakInstance();
+      }
+      await this.dataCloak.initialize({});
       this.initialized = true;
       console.log('Security service initialized with DataCloak');
     } catch (error) {
@@ -119,7 +128,7 @@ export class SecurityService {
 
     try {
       // Use DataCloak's ML-powered PII detection
-      const datacloakResults = await dataCloak.detectPII(text);
+      const datacloakResults = await this.dataCloak.detectPII(text);
       
       // Convert DataCloak results to our format
       const results: PIIDetectionResult[] = datacloakResults.map(result => {
@@ -138,18 +147,22 @@ export class SecurityService {
         };
       });
       
-      // Log security event
-      await this.logSecurityEvent({
-        type: 'pii_detected',
-        severity: results.length > 0 ? 'medium' : 'low',
-        details: {
-          textLength: text.length,
-          piiFound: results.length,
-          types: results.map((r: any) => r.piiType),
-          datacloak: true // Mark that we used DataCloak
-        },
-        source: 'api_request'
-      });
+      // Skip logging for individual PII detections during bulk processing
+      // to avoid database connection pool exhaustion
+      if (text.length > 1000) {
+        // Only log for significant text blocks
+        await this.logSecurityEvent({
+          type: 'pii_detected',
+          severity: results.length > 0 ? 'medium' : 'low',
+          details: {
+            textLength: text.length,
+            piiFound: results.length,
+            types: results.map((r: any) => r.piiType),
+            datacloak: true // Mark that we used DataCloak
+          },
+          source: 'api_request'
+        });
+      }
 
       // Cache the results (TTL: 30 minutes)
       try {
@@ -185,7 +198,7 @@ export class SecurityService {
       const startTime = Date.now();
       
       // Use DataCloak's masking functionality
-      const datacloakResult = await dataCloak.maskText(text);
+      const datacloakResult = await this.dataCloak.maskText(text);
       
       // Get detailed PII information
       const detectedPII = await this.detectPII(text);
@@ -210,7 +223,7 @@ export class SecurityService {
         metadata: {
           processingTime: Date.now() - startTime,
           fieldsProcessed: 1,
-          piiItemsFound: datacloakResult.piiItemsFound
+          piiItemsFound: datacloakResult.metadata?.piiItemsFound || detectedPII.length
         }
       };
 
@@ -252,7 +265,7 @@ export class SecurityService {
       // If we have a file path, analyze it for PII
       if (filePath) {
         try {
-          const datacloakAudit = await dataCloak.auditSecurity(filePath);
+          const datacloakAudit = await this.dataCloak.auditSecurity(filePath);
           piiDetected = datacloakAudit.piiResults || [];
           dataTypes = this.inferDataTypes(datacloakAudit);
         } catch (error) {
@@ -342,21 +355,20 @@ export class SecurityService {
     source: string;
   }): Promise<void> {
     try {
-      const db = getSQLiteConnection();
-      if (!db) return;
-
-      const stmt = db.prepare(`
-        INSERT INTO security_events (id, type, severity, details, source, created_at)
-        VALUES (?, ?, ?, ?, ?, datetime('now'))
-      `);
-      
-      stmt.run(
-        uuidv4(),
-        event.type,
-        event.severity,
-        JSON.stringify(event.details),
-        event.source
-      );
+      await withSQLiteConnection(async (db) => {
+        const stmt = db.prepare(`
+          INSERT INTO security_events (id, type, severity, details, source, created_at)
+          VALUES (?, ?, ?, ?, ?, datetime('now'))
+        `);
+        
+        stmt.run(
+          uuidv4(),
+          event.type,
+          event.severity,
+          JSON.stringify(event.details),
+          event.source
+        );
+      });
     } catch (error) {
       console.warn('Failed to log security event:', error);
     }
@@ -366,7 +378,7 @@ export class SecurityService {
     await this.ensureInitialized();
 
     try {
-      const db = getSQLiteConnection();
+      const db = await getSQLiteConnection();
       if (!db) {
         return {
           totalScans: 0,
@@ -403,7 +415,7 @@ export class SecurityService {
 
     try {
       // Use DataCloak to audit the file
-      const datacloakAudit = await dataCloak.auditSecurity(filePath);
+      const datacloakAudit = await this.dataCloak.auditSecurity(filePath);
       
       // Convert DataCloak audit result to our format
       const result: SecurityAuditResult = {
@@ -476,7 +488,7 @@ export class SecurityService {
 
       // Log dataset scan event
       await this.logSecurityEvent({
-        type: 'dataset_scan',
+        type: 'audit_completed',
         severity: mockResult.violations.length > 0 ? 'medium' : 'low',
         details: {
           datasetId,
@@ -500,7 +512,7 @@ export class SecurityService {
     await this.ensureInitialized();
 
     try {
-      const db = getSQLiteConnection();
+      const db = await getSQLiteConnection();
       if (!db) {
         return [];
       }

@@ -7,6 +7,8 @@ export const sentimentAnalysisSchema = Joi.object({
     'string.max': 'Text cannot exceed 10,000 characters',
     'any.required': 'Text is required',
   }),
+  model: Joi.string().valid('basic', 'gpt-3.5-turbo', 'gpt-4', 'gpt-4-turbo').optional(),
+  enablePIIMasking: Joi.boolean().optional()
 });
 
 export const batchSentimentAnalysisSchema = Joi.object({
@@ -20,6 +22,7 @@ export const batchSentimentAnalysisSchema = Joi.object({
       'array.max': 'Cannot process more than 1000 texts in a single batch',
       'any.required': 'Texts array is required',
     }),
+  model: Joi.string().valid('basic', 'gpt-3.5-turbo', 'gpt-4', 'gpt-4-turbo').optional()
 });
 
 export const paginationSchema = Joi.object({

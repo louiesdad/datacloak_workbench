@@ -28,6 +28,6 @@ export const authorize = (requiredRole: string) => {
       });
     }
 
-    next();
+    return next();
   };
 };

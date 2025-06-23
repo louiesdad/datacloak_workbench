@@ -267,11 +267,21 @@ export class JobController {
   private validateJobData(type: JobType, data: any): void {
     switch (type) {
       case 'sentiment_analysis_batch':
-        if (!data.texts || !Array.isArray(data.texts) || data.texts.length === 0) {
-          throw new AppError('Job data must include texts array', 400, 'INVALID_JOB_DATA');
-        }
-        if (data.texts.length > 10000) {
-          throw new AppError('Maximum 10,000 texts per batch', 400, 'BATCH_TOO_LARGE');
+        // Allow either texts array or dataset info
+        if (data.texts) {
+          if (!Array.isArray(data.texts) || data.texts.length === 0) {
+            throw new AppError('texts must be a non-empty array', 400, 'INVALID_JOB_DATA');
+          }
+          if (data.texts.length > 10000) {
+            throw new AppError('Maximum 10,000 texts per batch', 400, 'BATCH_TOO_LARGE');
+          }
+        } else if (data.datasetId && data.filePath) {
+          // Valid dataset-based job
+          if (!data.selectedColumns || !Array.isArray(data.selectedColumns) || data.selectedColumns.length === 0) {
+            throw new AppError('selectedColumns must be a non-empty array for dataset analysis', 400, 'INVALID_JOB_DATA');
+          }
+        } else {
+          throw new AppError('Job data must include either texts array or datasetId/filePath', 400, 'INVALID_JOB_DATA');
         }
         break;
 

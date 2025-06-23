@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: packages/backend/Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - DATABASE_URL=./data/app.db
+      - DUCKDB_PATH=./data/analytics.db
+      - JWT_SECRET=your-super-secret-jwt-key-here-12345678
+      - ENCRYPTION_KEY=your-32-char-encryption-key-here1234
+      - ADMIN_PASSWORD=admin123
+      - OPENAI_API_KEY=sk-test1234567890abcdefghijklmnop
+      - DATACLOAK_ENABLED=true
+    volumes:
+      - ./packages/backend/data:/monorepo/packages/backend/data
+      - ./packages/backend/uploads:/monorepo/packages/backend/uploads
+      - ./packages/backend/logs:/monorepo/packages/backend/logs
+    depends_on:
+      redis:
+        condition: service_healthy
+    command: >
+      sh -c "
+        echo 'Waiting for Redis...' &&
+        sleep 5 &&
+        node dist/server.js
+      "
+
+  web-ui:
+    build:
+      context: ./packages/web-ui
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://localhost:3001
+    depends_on:
+      - backend
+
+volumes:
+  redis_data:

@@ -1,15 +1,20 @@
-// Import jest types
-import { jest, beforeEach, afterAll } from '@jest/globals';
+import { TestDatabaseManager } from './utils/test-database-manager';
+import { setupTestServiceContainer, cleanupTestServiceContainer } from './utils/service-integration-setup';
+import { loadTestEnvironment, validateTestEnvironment, ensureTestDirectories } from '../src/config/test-env';
 
-// Set test environment
-process.env.NODE_ENV = 'test';
-// Use unique in-memory database for each test run
-process.env.SQLITE_DB_PATH = `file::memory:${Math.random()}?cache=shared`;
-// DuckDB will use :memory: mode in test environment (see config/env.ts)
-process.env.SKIP_DUCKDB = 'false';
+// Load and validate test environment
+loadTestEnvironment();
+const validation = validateTestEnvironment();
+if (!validation.valid) {
+  console.error('Test environment validation failed:');
+  validation.errors.forEach(error => console.error(`  - ${error}`));
+  process.exit(1);
+}
 
-// Global test timeout
-jest.setTimeout(30000); // Increased timeout for database operations
+// Ensure test directories exist
+ensureTestDirectories();
+
+// Global test timeout is configured in jest.config.js
 
 // Mock console methods for cleaner test output
 const originalConsole = { ...console };
@@ -30,12 +35,45 @@ console.error = (...args) => {
   originalConsole.error(...args);
 };
 
-// Add a small delay between tests to avoid database locks
-beforeEach(async () => {
-  await new Promise(resolve => setTimeout(resolve, 100));
+// Setup service container for all tests
+beforeAll(() => {
+  setupTestServiceContainer();
+});
+
+// Clear any module cache between tests (less aggressive approach)
+beforeEach(() => {
+  jest.clearAllMocks();
+  jest.clearAllTimers();
+  // Only reset specific modules that are causing test interference
+  // jest.resetModules(); // Too aggressive - breaks database initialization
+  // Re-setup service container to ensure clean state (but don't reset everything)
+  try {
+    setupTestServiceContainer();
+  } catch (error) {
+    // Ignore container setup errors in isolated tests
+  }
+});
+
+// Clean up after each test to prevent memory leaks
+afterEach(() => {
+  // Clear all timers to prevent hanging tests
+  jest.clearAllTimers();
+  
+  // Force garbage collection if available (V8)
+  if (global.gc) {
+    global.gc();
+  }
 });
 
 // Restore console after tests
-afterAll(() => {
+afterAll(async () => {
   global.console = originalConsole;
+  // Cleanup service container
+  cleanupTestServiceContainer();
+  // Cleanup any test databases
+  await TestDatabaseManager.cleanupAll();
+  
+  // Final cleanup of any remaining timers
+  jest.clearAllTimers();
+  jest.useRealTimers();
 });

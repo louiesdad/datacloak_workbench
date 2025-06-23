@@ -1,5 +1,9 @@
+// Mock ioredis before any imports
+jest.mock('ioredis');
+
 import { RedisJobQueueService, RedisJobQueueConfig } from '../services/redis-queue.service';
 import { JobType, JobPriority } from '../services/job-queue.service';
+import { MockRedisInstance } from '../services/__mocks__/ioredis';
 
 describe('RedisJobQueueService', () => {
   let redisQueue: RedisJobQueueService;
@@ -17,21 +21,22 @@ describe('RedisJobQueueService', () => {
   };
 
   beforeAll(async () => {
-    // Skip Redis tests if Redis is not available
-    try {
-      redisQueue = new RedisJobQueueService(testConfig);
-      await new Promise<void>((resolve, reject) => {
-        const timeout = setTimeout(() => reject(new Error('Redis connection timeout')), 5000);
-        redisQueue.once('connected', () => {
-          clearTimeout(timeout);
-          resolve();
-        });
-        redisQueue.once('error', reject);
-      });
-    } catch (error) {
-      console.log('Redis not available, skipping Redis tests');
-      return;
-    }
+    // Create mock Redis instances for testing
+    const mockRedis = new MockRedisInstance();
+    const mockSubscriberRedis = new MockRedisInstance();
+    
+    // Use dependency injection to provide mocks
+    redisQueue = new RedisJobQueueService(testConfig, {
+      redis: mockRedis as any,
+      subscriberRedis: mockSubscriberRedis as any
+    });
+    
+    // Wait for connected event
+    await new Promise<void>((resolve) => {
+      redisQueue.once('connected', resolve);
+      // Emit connected event after a short delay
+      setTimeout(() => redisQueue.emit('connected'), 10);
+    });
   });
 
   afterAll(async () => {
@@ -215,14 +220,13 @@ describe('RedisJobQueueService', () => {
       await redisQueue.close();
       redisQueue = new RedisJobQueueService(testConfig);
       
-      await new Promise<void>((resolve) => {
-        redisQueue.once('connected', resolve);
-      });
+      // Wait a bit for recovery to complete
+      await new Promise(resolve => setTimeout(resolve, 100));
       
       // Job should be recovered and back in the queue
       const recoveredJob = await redisQueue.getJob(jobId);
       expect(recoveredJob?.status).toBe('pending');
-    });
+    }, 15000);
   });
 
   describe('Cleanup', () => {

@@ -19,3 +19,6 @@ npm-debug.log*
 *.swo
 *~
 .cache/
+# Test environment files
+.env.test
+!.env.test.example

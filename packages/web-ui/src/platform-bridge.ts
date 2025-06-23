@@ -56,6 +56,11 @@ export interface FileFilter {
   extensions: string[];
 }
 
+export interface FileSelectOptions {
+  multiple?: boolean;
+  accept?: string[];
+}
+
 export interface NotificationAPI {
   show: (title: string, body: string, options?: NotificationOptions) => Promise<void>;
   requestPermission: () => Promise<boolean>;
@@ -362,6 +367,15 @@ class BrowserPlatformBridge extends EventEmitter implements PlatformBridge {
     platform: 'browser'
   };
 
+  platform = {
+    name: 'web' as const,
+    version: '1.0.0',
+    capabilities: {
+      largeFileSupport: false,
+      nativeFileDialogs: false
+    }
+  };
+
   backend: BackendAPI = new BackendAPIClient();
 
   // Use the new File System Access API implementation
@@ -422,6 +436,40 @@ class BrowserPlatformBridge extends EventEmitter implements PlatformBridge {
       return false;
     }
   };
+
+  // Method to handle file selection
+  selectFiles = (options?: FileSelectOptions): Promise<FileInfo[]> => {
+    return new Promise((resolve, reject) => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.multiple = options?.multiple || false;
+      
+      if (options?.accept) {
+        input.accept = options.accept.join(',');
+      }
+
+      input.addEventListener('change', (event) => {
+        const target = event.target as HTMLInputElement;
+        const files = Array.from(target.files || []);
+        
+        const fileInfos: FileInfo[] = files.map(file => ({
+          name: file.name,
+          path: file.name,
+          size: file.size,
+          type: file.type,
+          lastModified: file.lastModified
+        }));
+        
+        resolve(fileInfos);
+      });
+
+      input.addEventListener('cancel', () => {
+        resolve([]);
+      });
+
+      input.click();
+    });
+  };
 }
 
 // Electron implementation
@@ -433,6 +481,15 @@ class ElectronPlatformBridge extends EventEmitter implements PlatformBridge {
     hasMenuBar: true,
     canMinimizeToTray: true,
     platform: 'electron'
+  };
+
+  platform = {
+    name: 'electron' as const,
+    version: '1.0.0',
+    capabilities: {
+      largeFileSupport: true,
+      nativeFileDialogs: true
+    }
   };
 
   backend: BackendAPI = new BackendAPIClient();
@@ -599,6 +656,18 @@ function createAsyncIterator(streamId: string): AsyncIterableIterator<Uint8Array
     }
   };
 }
+
+// Factory functions for tests
+export function createWebPlatformBridge(): PlatformBridge {
+  return new BrowserPlatformBridge();
+}
+
+export function createElectronPlatformBridge(): PlatformBridge {
+  return new ElectronPlatformBridge();
+}
+
+// Export additional types for tests
+export type { FileSelectOptions };
 
 // Initialize the bridge on import
 if (typeof window !== 'undefined') {

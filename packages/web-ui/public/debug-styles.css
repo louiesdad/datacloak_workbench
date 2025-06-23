@@ -1,0 +1,40 @@
+/* Debug styles to make all elements visible */
+.workflow-manager {
+  min-height: 100vh;
+  background: #f5f5f5;
+  padding: 20px;
+}
+
+.workflow-step-container {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  min-height: 400px;
+}
+
+.step-header {
+  margin-bottom: 20px;
+}
+
+.step-header h1 {
+  color: #333;
+  margin: 0 0 10px 0;
+}
+
+.step-header p {
+  color: #666;
+  margin: 0;
+}
+
+/* Make sure all content is visible */
+* {
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+}
+
+/* Except these which should stay as designed */
+.hidden, [hidden] {
+  display: none !important;
+}

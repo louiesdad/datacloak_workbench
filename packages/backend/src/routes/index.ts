@@ -6,7 +6,7 @@ import securityRoutes from './security.routes';
 import jobRoutes from './jobs.routes';
 import { transformRoutes } from './transform.routes';
 import monitoringRoutes from './monitoring.routes';
-import exportRoutes from './export.routes';
+// import exportRoutes from './export.routes';
 import sseRoutes from './sse.routes';
 import { streamRoutes } from './stream.routes';
 import authRoutes from './auth.routes';
@@ -21,6 +21,9 @@ import connectionStatusRoutes from './connection-status.routes';
 import complianceRoutes from './compliance.routes';
 import riskAssessmentRoutes from './risk-assessment.routes';
 import patternsRoutes from './patterns.routes';
+import { circuitBreakerRoutes } from './circuit-breaker.routes';
+import adminRoutes from './admin.routes';
+import auditRoutes from './audit.routes';
 
 export const setupRoutes = (app: Application): void => {
   // Mount routes
@@ -31,7 +34,7 @@ export const setupRoutes = (app: Application): void => {
   app.use('/api/v1/jobs', jobRoutes);
   app.use('/api/v1/transform', transformRoutes);
   app.use('/api/v1/monitoring', monitoringRoutes);
-  app.use('/api/v1/export', exportRoutes);
+  // app.use('/api/v1/export', exportRoutes);
   app.use('/api/v1/sse', sseRoutes);
   app.use('/api/v1/stream', streamRoutes);
   app.use('/api/v1/websocket', websocketRoutes);
@@ -48,4 +51,9 @@ export const setupRoutes = (app: Application): void => {
   app.use('/api/v1/compliance', complianceRoutes);
   app.use('/api/v1/risk-assessment', riskAssessmentRoutes);
   app.use('/api/v1/patterns', patternsRoutes);
+  app.use('/api/v1/circuit-breaker', circuitBreakerRoutes);
+  app.use('/api/v1/audit', auditRoutes);
+  
+  // Admin routes (protected by admin auth middleware)
+  app.use('/api/admin', adminRoutes);
 };

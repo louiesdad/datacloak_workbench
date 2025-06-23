@@ -1,4 +1,4 @@
-import { getSQLiteConnection } from '../database/sqlite';
+import { getSQLiteConnection } from '../database/sqlite-refactored';
 import { AppError } from '../middleware/error.middleware';
 import { analyticsService } from './analytics.service';
 
@@ -97,7 +97,7 @@ export class InsightsService {
   }
 
   private async generateSentimentTrendInsights(): Promise<Insight[]> {
-    const db = getSQLiteConnection();
+    const db = await getSQLiteConnection();
     if (!db) return [];
 
     const insights: Insight[] = [];
@@ -197,7 +197,7 @@ export class InsightsService {
   }
 
   private async generateVolumePatternInsights(): Promise<Insight[]> {
-    const db = getSQLiteConnection();
+    const db = await getSQLiteConnection();
     if (!db) return [];
 
     const insights: Insight[] = [];
@@ -346,7 +346,7 @@ export class InsightsService {
   }
 
   private async generatePerformanceInsights(): Promise<Insight[]> {
-    const db = getSQLiteConnection();
+    const db = await getSQLiteConnection();
     if (!db) return [];
 
     const insights: Insight[] = [];
@@ -546,7 +546,7 @@ export class InsightsService {
   }
 
   async getBusinessInsights(): Promise<BusinessInsight[]> {
-    const db = getSQLiteConnection();
+    const db = await getSQLiteConnection();
     if (!db) return [];
 
     const insights: BusinessInsight[] = [];
@@ -607,6 +607,111 @@ export class InsightsService {
     }
 
     return insights;
+  }
+
+  /**
+   * Get insights filtered by type
+   */
+  async getInsightsByType(type: Insight['type']): Promise<Insight[]> {
+    const allCategories = await this.generateAllInsights();
+    const insights: Insight[] = [];
+    
+    for (const category of allCategories) {
+      insights.push(...category.insights.filter(i => i.type === type));
+    }
+    
+    return insights;
+  }
+
+  /**
+   * Get high priority insights
+   */
+  async getHighPriorityInsights(): Promise<Insight[]> {
+    const allCategories = await this.generateAllInsights();
+    const insights: Insight[] = [];
+    
+    for (const category of allCategories) {
+      insights.push(...category.insights.filter(i => i.severity === 'high'));
+    }
+    
+    return insights;
+  }
+
+  /**
+   * Get actionable insights
+   */
+  async getActionableInsights(): Promise<Insight[]> {
+    const allCategories = await this.generateAllInsights();
+    const insights: Insight[] = [];
+    
+    for (const category of allCategories) {
+      insights.push(...category.insights.filter(i => i.actionable));
+    }
+    
+    return insights;
+  }
+
+
+  /**
+   * Get insight history from database
+   */
+  async getInsightHistory(days: number = 7): Promise<Insight[]> {
+    const db = await getSQLiteConnection();
+    if (!db) return [];
+
+    try {
+      const results = db.prepare(`
+        SELECT * FROM insights
+        WHERE created_at >= datetime('now', '-${days} days')
+        ORDER BY timestamp DESC
+      `).all() as any[];
+
+      return results.map(r => ({
+        id: r.id,
+        type: r.type,
+        title: r.title,
+        description: r.description,
+        severity: r.severity,
+        confidence: r.confidence,
+        timestamp: r.timestamp,
+        data: JSON.parse(r.data || '{}'),
+        actionable: r.actionable === 1,
+        actions: JSON.parse(r.actions || '[]')
+      }));
+    } catch (error) {
+      console.error('Error fetching insight history:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Mark insight as viewed
+   */
+  async markInsightAsViewed(insightId: string): Promise<void> {
+    const db = await getSQLiteConnection();
+    if (!db) throw new Error('Database not connected');
+
+    const result = db.prepare(`
+      UPDATE insights SET viewed = 1, viewed_at = datetime('now')
+      WHERE id = ?
+    `).run(insightId);
+
+    if (result.changes === 0) {
+      throw new Error('Insight not found');
+    }
+  }
+
+  /**
+   * Dismiss an insight
+   */
+  async dismissInsight(insightId: string): Promise<void> {
+    const db = await getSQLiteConnection();
+    if (!db) throw new Error('Database not connected');
+
+    db.prepare(`
+      UPDATE insights SET dismissed = 1, dismissed_at = datetime('now')
+      WHERE id = ?
+    `).run(insightId);
   }
 }
 

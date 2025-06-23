@@ -162,7 +162,7 @@ export class WebSocketController {
 
       // Find client by userId
       const clients = websocketService.getAllClients();
-      let clientId = null;
+      let clientId: string | null = null;
       
       for (const [id, client] of clients.entries()) {
         if (client.userId === userId) {
@@ -257,7 +257,7 @@ export class WebSocketController {
 
       // Find client by userId
       const clients = websocketService.getAllClients();
-      let clientId = null;
+      let clientId: string | null = null;
       
       for (const [id, client] of clients.entries()) {
         if (client.userId === userId) {
@@ -393,7 +393,7 @@ export class WebSocketController {
   async getActiveRiskSubscriptions(req: Request, res: Response<ApiResponse>): Promise<void> {
     try {
       const clients = websocketService.getAllClients();
-      const subscriptions = [];
+      const subscriptions: any[] = [];
 
       for (const [clientId, client] of clients.entries()) {
         const riskSubscriptions = Array.from(client.subscriptions)
@@ -402,7 +402,7 @@ export class WebSocketController {
             clientId,
             userId: client.userId,
             subscription: sub,
-            subscriptionData: client.subscriptionData?.[sub] || {},
+            subscriptionData: (client as any).subscriptionData?.[sub] || {},
             isAlive: client.isAlive,
             lastActivity: client.lastActivity
           }));

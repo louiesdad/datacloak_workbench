@@ -1,0 +1,510 @@
+import { DataCloakService } from '../datacloak.service';
+import { AppError } from '../../middleware/error.middleware';
+import * as path from 'path';
+
+// Mock the bridge modules
+jest.mock('../../../../security/src/datacloak/real-ffi-bridge', () => {
+  throw new Error('Real FFI bridge not available');
+});
+
+jest.mock('../../../../security/src/datacloak/binary-bridge', () => {
+  throw new Error('Binary bridge not available');
+});
+
+jest.mock('../../../../security/src/datacloak/ffi-bridge', () => {
+  throw new Error('FFI bridge not available');
+});
+
+// Mock environment variables
+const originalEnv = process.env;
+
+describe('DataCloakService', () => {
+  let service: DataCloakService;
+  let mockBridge: any;
+  let consoleLogSpy: jest.SpyInstance;
+  let consoleWarnSpy: jest.SpyInstance;
+  let consoleErrorSpy: jest.SpyInstance;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    
+    // Reset environment
+    process.env = { ...originalEnv };
+    
+    // Spy on console methods
+    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
+    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+
+    // Create mock bridge
+    mockBridge = {
+      initialize: jest.fn().mockResolvedValue(undefined),
+      detectPII: jest.fn().mockResolvedValue([]),
+      maskText: jest.fn().mockResolvedValue({
+        originalText: 'original',
+        maskedText: 'masked',
+        detectedPII: [],
+        metadata: {
+          processingTime: 100,
+          fieldsProcessed: 1,
+          piiItemsFound: 0
+        }
+      }),
+      auditSecurity: jest.fn().mockResolvedValue({
+        score: 85,
+        findings: []
+      }),
+      isAvailable: jest.fn().mockReturnValue(true),
+      getVersion: jest.fn().mockReturnValue('1.0.0-mock')
+    };
+
+    // Mock createMockBridge method
+    DataCloakService.prototype['createMockBridge'] = jest.fn().mockReturnValue(mockBridge);
+
+    service = new DataCloakService();
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
+    consoleLogSpy.mockRestore();
+    consoleWarnSpy.mockRestore();
+    consoleErrorSpy.mockRestore();
+  });
+
+  describe('initialization', () => {
+    it('should initialize with mock bridge when real bridges are not available', () => {
+      expect(service).toBeDefined();
+      expect(consoleWarnSpy).toHaveBeenCalledWith('⚠️ Real DataCloak bridges not available, using mock implementation');
+    });
+
+    it('should load configuration from environment variables', () => {
+      process.env.DATACLOAK_API_KEY = 'test-key';
+      process.env.DATACLOAK_API_ENDPOINT = 'https://test.endpoint.com';
+      process.env.DATACLOAK_TIMEOUT = '60000';
+      process.env.DATACLOAK_RETRY_ATTEMPTS = '5';
+      process.env.DATACLOAK_REDOS_PROTECTION = 'true';
+      process.env.DATACLOAK_EMAIL_VALIDATION = 'hybrid';
+      process.env.DATACLOAK_CC_VALIDATION = 'full';
+      process.env.DATACLOAK_MONITORING = 'true';
+      process.env.DATACLOAK_PERFORMANCE_MODE = 'fast';
+      process.env.DATACLOAK_MAX_TEXT_LENGTH = '200000';
+      process.env.DATACLOAK_REGEX_TIMEOUT = '2000';
+
+      const newService = new DataCloakService();
+      const stats = newService['config'];
+
+      expect(stats.apiKey).toBe('test-key');
+      expect(stats.endpoint).toBe('https://test.endpoint.com');
+      expect(stats.timeout).toBe(60000);
+      expect(stats.retryAttempts).toBe(5);
+      expect(stats.redosProtection).toBe(true);
+      expect(stats.emailValidation).toBe('hybrid');
+      expect(stats.creditCardValidation).toBe('full');
+      expect(stats.enableMonitoring).toBe(true);
+      expect(stats.performanceMode).toBe('fast');
+      expect(stats.maxTextLength).toBe(200000);
+      expect(stats.regexTimeout).toBe(2000);
+    });
+
+    it('should use default configuration values', () => {
+      const stats = service['config'];
+
+      expect(stats.endpoint).toBe('https://api.openai.com/v1/chat/completions');
+      expect(stats.timeout).toBe(30000);
+      expect(stats.retryAttempts).toBe(3);
+      expect(stats.emailValidation).toBe('validator');
+      expect(stats.creditCardValidation).toBe('luhn');
+      expect(stats.performanceMode).toBe('balanced');
+      expect(stats.maxTextLength).toBe(100000);
+      expect(stats.regexTimeout).toBe(1000);
+    });
+
+    it('should initialize bridge on first use', async () => {
+      await service.initialize();
+
+      expect(mockBridge.initialize).toHaveBeenCalledWith(service['config']);
+      expect(consoleLogSpy).toHaveBeenCalledWith('DataCloak initialized successfully. Version: 1.0.0-mock');
+    });
+
+    it('should not initialize twice', async () => {
+      await service.initialize();
+      await service.initialize();
+
+      expect(mockBridge.initialize).toHaveBeenCalledTimes(1);
+    });
+
+    it('should throw error if initialization fails', async () => {
+      mockBridge.initialize.mockRejectedValue(new Error('Init failed'));
+
+      await expect(service.initialize()).rejects.toThrow(
+        new AppError('Failed to initialize DataCloak', 500, 'DATACLOAK_INIT_ERROR')
+      );
+      expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to initialize DataCloak:', expect.any(Error));
+    });
+  });
+
+  describe('getDataCloakBinaryPath', () => {
+    it('should return correct path for macOS', () => {
+      Object.defineProperty(process, 'platform', { value: 'darwin', writable: true });
+      
+      const binaryPath = service['getDataCloakBinaryPath']();
+      
+      expect(binaryPath).toContain(path.join('security', 'bin', 'macos', 'datacloak'));
+    });
+
+    it('should return correct path for Windows', () => {
+      Object.defineProperty(process, 'platform', { value: 'win32', writable: true });
+      
+      const binaryPath = service['getDataCloakBinaryPath']();
+      
+      expect(binaryPath).toContain(path.join('security', 'bin', 'windows', 'datacloak.exe'));
+    });
+
+    it('should return correct path for Linux', () => {
+      Object.defineProperty(process, 'platform', { value: 'linux', writable: true });
+      
+      const binaryPath = service['getDataCloakBinaryPath']();
+      
+      expect(binaryPath).toContain(path.join('security', 'bin', 'linux', 'datacloak'));
+    });
+
+    it('should throw error for unsupported platform', () => {
+      Object.defineProperty(process, 'platform', { value: 'freebsd', writable: true });
+      
+      expect(() => service['getDataCloakBinaryPath']()).toThrow(
+        new AppError('Unsupported platform: freebsd', 500, 'UNSUPPORTED_PLATFORM')
+      );
+    });
+  });
+
+  describe('detectPII', () => {
+    const mockPIIResults = [
+      {
+        fieldName: 'email',
+        piiType: 'EMAIL',
+        confidence: 0.95,
+        sample: 'test@example.com',
+        masked: '[EMAIL]'
+      },
+      {
+        fieldName: 'phone',
+        piiType: 'PHONE',
+        confidence: 0.90,
+        sample: '555-1234',
+        masked: '[PHONE]'
+      }
+    ];
+
+    beforeEach(() => {
+      mockBridge.detectPII.mockResolvedValue(mockPIIResults);
+    });
+
+    it('should detect PII in text', async () => {
+      const text = 'Contact me at test@example.com or 555-1234';
+      const results = await service.detectPII(text);
+
+      expect(results).toEqual(mockPIIResults);
+      expect(mockBridge.detectPII).toHaveBeenCalledWith(text);
+    });
+
+    it('should initialize before detecting PII if not initialized', async () => {
+      await service.detectPII('test text');
+
+      expect(mockBridge.initialize).toHaveBeenCalled();
+    });
+
+    it('should handle detection errors', async () => {
+      mockBridge.detectPII.mockRejectedValue(new Error('Detection failed'));
+
+      await expect(service.detectPII('test')).rejects.toThrow(
+        new AppError('PII detection failed', 500, 'PII_DETECTION_ERROR')
+      );
+      expect(consoleErrorSpy).toHaveBeenCalledWith('PII detection failed:', expect.any(Error));
+    });
+  });
+
+  describe('maskText', () => {
+    it('should mask text and return simplified result', async () => {
+      const text = 'test@example.com';
+      const result = await service.maskText(text);
+
+      expect(result).toEqual({
+        originalText: 'original',
+        maskedText: 'masked',
+        piiItemsFound: 0
+      });
+      expect(mockBridge.maskText).toHaveBeenCalledWith(text);
+    });
+
+    it('should initialize before masking if not initialized', async () => {
+      await service.maskText('test text');
+
+      expect(mockBridge.initialize).toHaveBeenCalled();
+    });
+
+    it('should handle masking errors', async () => {
+      mockBridge.maskText.mockRejectedValue(new Error('Masking failed'));
+
+      await expect(service.maskText('test')).rejects.toThrow(
+        new AppError('Text masking failed', 500, 'TEXT_MASKING_ERROR')
+      );
+      expect(consoleErrorSpy).toHaveBeenCalledWith('Text masking failed:', expect.any(Error));
+    });
+  });
+
+  describe('detectPIIBatch', () => {
+    it('should process texts in batches', async () => {
+      const texts = new Array(250).fill('test@example.com');
+      mockBridge.detectPII.mockResolvedValue([{
+        fieldName: 'email',
+        piiType: 'EMAIL',
+        confidence: 0.95,
+        sample: 'test@example.com',
+        masked: '[EMAIL]'
+      }]);
+
+      const results = await service.detectPIIBatch(texts);
+
+      expect(results).toHaveLength(250);
+      expect(mockBridge.detectPII).toHaveBeenCalledTimes(250);
+    });
+
+    it('should handle empty batch', async () => {
+      const results = await service.detectPIIBatch([]);
+
+      expect(results).toEqual([]);
+      expect(mockBridge.detectPII).not.toHaveBeenCalled();
+    });
+
+    it('should process large batches efficiently', async () => {
+      const texts = new Array(150).fill('test text');
+      mockBridge.detectPII.mockResolvedValue([]);
+
+      const results = await service.detectPIIBatch(texts);
+
+      expect(results).toHaveLength(150);
+      // Should process in 2 batches (100 + 50)
+      expect(mockBridge.detectPII).toHaveBeenCalledTimes(150);
+    });
+  });
+
+  describe('maskTextBatch', () => {
+    it('should process texts in batches', async () => {
+      const texts = new Array(250).fill('test@example.com');
+      
+      const results = await service.maskTextBatch(texts);
+
+      expect(results).toHaveLength(250);
+      expect(results[0]).toEqual({
+        originalText: 'original',
+        maskedText: 'masked',
+        piiItemsFound: 0
+      });
+      expect(mockBridge.maskText).toHaveBeenCalledTimes(250);
+    });
+
+    it('should handle empty batch', async () => {
+      const results = await service.maskTextBatch([]);
+
+      expect(results).toEqual([]);
+      expect(mockBridge.maskText).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('auditSecurity', () => {
+    it('should perform security audit', async () => {
+      const filePath = '/path/to/file.csv';
+      const mockAuditResult = {
+        score: 85,
+        findings: ['No critical issues found'],
+        recommendations: ['Enable encryption']
+      };
+      mockBridge.auditSecurity.mockResolvedValue(mockAuditResult);
+
+      const result = await service.auditSecurity(filePath);
+
+      expect(result).toEqual(mockAuditResult);
+      expect(mockBridge.auditSecurity).toHaveBeenCalledWith(filePath);
+    });
+
+    it('should initialize before audit if not initialized', async () => {
+      await service.auditSecurity('/path/to/file');
+
+      expect(mockBridge.initialize).toHaveBeenCalled();
+    });
+
+    it('should handle audit errors', async () => {
+      mockBridge.auditSecurity.mockRejectedValue(new Error('Audit failed'));
+
+      await expect(service.auditSecurity('/path/to/file')).rejects.toThrow(
+        new AppError('Security audit failed', 500, 'SECURITY_AUDIT_ERROR')
+      );
+      expect(consoleErrorSpy).toHaveBeenCalledWith('Security audit failed:', expect.any(Error));
+    });
+  });
+
+  describe('utility methods', () => {
+    it('should check if service is available', () => {
+      expect(service.isAvailable()).toBe(true);
+      expect(mockBridge.isAvailable).toHaveBeenCalled();
+    });
+
+    it('should get version', () => {
+      expect(service.getVersion()).toBe('1.0.0-mock');
+      expect(mockBridge.getVersion).toHaveBeenCalled();
+    });
+
+    it('should get comprehensive stats', async () => {
+      await service.initialize();
+      const stats = await service.getStats();
+
+      expect(stats).toMatchObject({
+        version: '1.0.0-mock',
+        available: true,
+        initialized: true,
+        binaryPath: expect.any(String),
+        config: {
+          timeout: 30000,
+          retryAttempts: 3,
+          redosProtection: false,
+          emailValidation: 'validator',
+          creditCardValidation: 'luhn',
+          enableMonitoring: false,
+          performanceMode: 'balanced'
+        }
+      });
+    });
+  });
+
+  describe('runPerformanceTest', () => {
+    beforeEach(() => {
+      // Mock detectPII to return varying results
+      let callCount = 0;
+      mockBridge.detectPII.mockImplementation(() => {
+        callCount++;
+        // Return PII for every other call
+        return callCount % 2 === 0 ? [{
+          fieldName: 'email',
+          piiType: 'EMAIL',
+          confidence: 0.95,
+          sample: 'test@example.com',
+          masked: '[EMAIL]'
+        }] : [];
+      });
+    });
+
+    it('should run performance test with default count', async () => {
+      const result = await service.runPerformanceTest();
+
+      expect(result).toMatchObject({
+        recordsProcessed: 1000,
+        totalTimeMs: expect.any(Number),
+        averageTimePerRecord: expect.any(Number),
+        piiDetectionRate: 0.5, // 50% have PII based on mock
+        performanceMeetsTarget: true // Mocked calls are fast
+      });
+
+      expect(mockBridge.detectPII).toHaveBeenCalledTimes(1000);
+      expect(consoleLogSpy).toHaveBeenCalledWith('Starting performance test with 1000 records...');
+      expect(consoleLogSpy).toHaveBeenCalledWith('Performance Test Results:', expect.any(Object));
+    });
+
+    it('should run performance test with custom count', async () => {
+      const result = await service.runPerformanceTest(500);
+
+      expect(result.recordsProcessed).toBe(500);
+      expect(mockBridge.detectPII).toHaveBeenCalledTimes(500);
+    });
+
+    it('should log progress during test', async () => {
+      await service.runPerformanceTest(200);
+
+      expect(consoleLogSpy).toHaveBeenCalledWith('Processed 100/200 records');
+      expect(consoleLogSpy).toHaveBeenCalledWith('Processed 200/200 records');
+    });
+
+    it('should calculate performance metrics correctly', async () => {
+      // Mock to always find PII
+      mockBridge.detectPII.mockResolvedValue([
+        { fieldName: 'email', piiType: 'EMAIL', confidence: 0.95, sample: 'test@example.com', masked: '[EMAIL]' },
+        { fieldName: 'phone', piiType: 'PHONE', confidence: 0.90, sample: '555-1234', masked: '[PHONE]' }
+      ]);
+
+      const result = await service.runPerformanceTest(100);
+
+      expect(result.piiDetectionRate).toBe(2); // 2 PII items per record
+      expect(result.averageTimePerRecord).toBeLessThan(100); // Should meet target
+      expect(result.performanceMeetsTarget).toBe(true);
+    });
+  });
+
+  describe('generateTestData', () => {
+    it('should generate appropriate test data', () => {
+      const data = service['generateTestData'](10);
+
+      expect(data).toHaveLength(10);
+      expect(data[0]).toContain('john.doe@example.com');
+      expect(data[1]).toContain('555-123-4567');
+      expect(data[2]).toContain('123-45-6789');
+      expect(data[4]).not.toContain('@'); // Text without PII
+    });
+
+    it('should cycle through sample data', () => {
+      const data = service['generateTestData'](20);
+
+      expect(data).toHaveLength(20);
+      // Should repeat samples
+      expect(data[0]).toBe(data[6]);
+      expect(data[1]).toBe(data[7]);
+    });
+  });
+
+  describe('edge cases', () => {
+    it('should handle bridge returning undefined', async () => {
+      mockBridge.detectPII.mockResolvedValue(undefined);
+
+      const result = await service.detectPII('test');
+
+      expect(result).toBeUndefined();
+    });
+
+    it('should handle bridge returning null metadata', async () => {
+      mockBridge.maskText.mockResolvedValue({
+        originalText: 'test',
+        maskedText: 'masked',
+        metadata: null
+      });
+
+      await expect(service.maskText('test')).rejects.toThrow();
+    });
+
+    it('should handle concurrent operations', async () => {
+      const promises = Array(10).fill(null).map((_, i) => 
+        service.detectPII(`test${i}@example.com`)
+      );
+
+      const results = await Promise.all(promises);
+
+      expect(results).toHaveLength(10);
+      expect(mockBridge.initialize).toHaveBeenCalledTimes(1); // Should only initialize once
+    });
+  });
+
+  describe('mock bridge creation', () => {
+    it('should create mock bridge with sample data', () => {
+      // Reset the mock to test the actual implementation
+      delete DataCloakService.prototype['createMockBridge'];
+      
+      const newService = new DataCloakService();
+      const bridge = newService['bridge'];
+
+      expect(bridge).toBeDefined();
+      expect(typeof bridge.initialize).toBe('function');
+      expect(typeof bridge.detectPII).toBe('function');
+      expect(typeof bridge.maskText).toBe('function');
+      expect(typeof bridge.auditSecurity).toBe('function');
+      expect(typeof bridge.isAvailable).toBe('function');
+      expect(typeof bridge.getVersion).toBe('function');
+    });
+  });
+});

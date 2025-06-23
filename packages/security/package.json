@@ -20,10 +20,9 @@
   "author": "DSW Team",
   "license": "MIT",
   "devDependencies": {
-    "@stryker-mutator/core": "^8.0.0",
-    "@stryker-mutator/jest-runner": "^8.0.0",
-    "@stryker-mutator/typescript-checker": "^8.0.0",
-    "@stryker-mutator/html-reporter": "^8.0.0",
+    "@stryker-mutator/core": "^6.0.0",
+    "@stryker-mutator/jest-runner": "^6.0.0",
+    "@stryker-mutator/typescript-checker": "^6.0.0",
     "@types/jest": "^29.5.0",
     "@types/node": "^20.0.0",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
@@ -33,7 +32,9 @@
     "ts-jest": "^29.1.0",
     "typescript": "^5.0.0"
   },
-  "dependencies": {},
+  "dependencies": {
+    "koffi": "^2.8.0"
+  },
   "files": [
     "dist",
     "README.md"

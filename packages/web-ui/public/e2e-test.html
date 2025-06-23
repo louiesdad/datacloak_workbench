@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>E2E Visual Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+        .success { color: green; }
+        .error { color: red; }
+        .warning { color: orange; }
+        iframe { width: 100%; height: 600px; border: 2px solid #333; }
+        .step { margin: 10px 0; padding: 10px; background: #f5f5f5; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>E2E Visual Test: Frontend to Logs Navigation</h1>
+    
+    <div class="test-section">
+        <h2>Test Controls</h2>
+        <button onclick="runTests()">Run All Tests</button>
+        <button onclick="clearResults()">Clear Results</button>
+    </div>
+    
+    <div id="results" class="test-section">
+        <h2>Test Results</h2>
+        <div id="test-output"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Live App View</h2>
+        <iframe id="app-frame" src="/" onload="checkAppLoaded()"></iframe>
+    </div>
+
+    <script>
+        const output = document.getElementById('test-output');
+        let appFrame = document.getElementById('app-frame');
+        let testResults = [];
+        
+        function log(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = type;
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            output.appendChild(div);
+            console.log(message);
+        }
+        
+        function clearResults() {
+            output.innerHTML = '';
+            testResults = [];
+        }
+        
+        async function checkAppLoaded() {
+            log('App iframe loaded');
+            
+            try {
+                const frameDoc = appFrame.contentDocument || appFrame.contentWindow.document;
+                const root = frameDoc.getElementById('root');
+                
+                if (root && root.children.length > 0) {
+                    log('✅ React app is rendering', 'success');
+                    log(`Root element has ${root.children.length} children`);
+                } else {
+                    log('⚠️ React app may not be rendering', 'warning');
+                }
+            } catch (e) {
+                log(`Cannot access iframe content: ${e.message}`, 'error');
+            }
+        }
+        
+        async function runTests() {
+            clearResults();
+            log('Starting E2E Visual Tests...', 'info');
+            
+            // Test 1: Check if app loads
+            await testStep('1. App Loading', async () => {
+                const frameDoc = appFrame.contentDocument;
+                const root = frameDoc.getElementById('root');
+                if (!root) throw new Error('Root element not found');
+                if (root.children.length === 0) throw new Error('App not rendered');
+                
+                // Check for navigation
+                const navSteps = frameDoc.querySelectorAll('.nav-step');
+                if (navSteps.length === 0) throw new Error('Navigation not found');
+                
+                log(`Found ${navSteps.length} navigation steps`);
+                return true;
+            });
+            
+            // Test 2: Find Logs button
+            await testStep('2. Find Logs Navigation', async () => {
+                const frameDoc = appFrame.contentDocument;
+                const navSteps = frameDoc.querySelectorAll('.nav-step');
+                
+                let logsButton = null;
+                navSteps.forEach(step => {
+                    if (step.textContent.includes('Logs')) {
+                        logsButton = step;
+                    }
+                });
+                
+                if (!logsButton) throw new Error('Logs button not found');
+                log('Found Logs button');
+                
+                // Store for next test
+                window.logsButton = logsButton;
+                return true;
+            });
+            
+            // Test 3: Click Logs button
+            await testStep('3. Navigate to Logs', async () => {
+                if (!window.logsButton) throw new Error('Logs button not available');
+                
+                // Click the button
+                window.logsButton.click();
+                log('Clicked Logs button');
+                
+                // Wait for navigation
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Check if we're on the logs page
+                const frameDoc = appFrame.contentDocument;
+                const pageTitle = frameDoc.querySelector('h2');
+                
+                if (!pageTitle || !pageTitle.textContent.includes('Logs')) {
+                    throw new Error('Navigation to Logs page failed');
+                }
+                
+                log('Successfully navigated to Logs page');
+                return true;
+            });
+            
+            // Test 4: Check Logs content
+            await testStep('4. Verify Logs Content', async () => {
+                const frameDoc = appFrame.contentDocument;
+                
+                // Check for expected elements
+                const checks = [
+                    { selector: 'h2', text: 'Analysis Logs' },
+                    { selector: 'h3', text: 'Analysis Decision Audit Trail' },
+                    { selector: '.simple-logs-view', text: null },
+                    { selector: 'h3', text: 'OpenAI Usage Statistics' }
+                ];
+                
+                for (const check of checks) {
+                    const element = frameDoc.querySelector(check.selector);
+                    if (!element) {
+                        throw new Error(`${check.selector} not found`);
+                    }
+                    
+                    if (check.text && !element.textContent.includes(check.text)) {
+                        throw new Error(`${check.selector} doesn't contain "${check.text}"`);
+                    }
+                    
+                    log(`✓ Found ${check.selector}${check.text ? ` with text "${check.text}"` : ''}`);
+                }
+                
+                return true;
+            });
+            
+            // Test 5: Check API calls
+            await testStep('5. Verify API Calls', async () => {
+                // Check if stats are loaded
+                const frameDoc = appFrame.contentDocument;
+                const statsGrid = frameDoc.querySelector('.stats-grid');
+                
+                if (statsGrid) {
+                    const statCards = statsGrid.querySelectorAll('.stat-card');
+                    log(`Found ${statCards.length} stat cards`);
+                    
+                    statCards.forEach(card => {
+                        const label = card.querySelector('.stat-label')?.textContent;
+                        const value = card.querySelector('.stat-value')?.textContent;
+                        log(`  ${label}: ${value}`);
+                    });
+                } else {
+                    log('Stats grid not found - API might not have returned data', 'warning');
+                }
+                
+                return true;
+            });
+            
+            log('\n✅ All tests completed!', 'success');
+        }
+        
+        async function testStep(name, testFn) {
+            const step = document.createElement('div');
+            step.className = 'step';
+            step.innerHTML = `<strong>${name}</strong>: <span id="status-${name}">Running...</span>`;
+            output.appendChild(step);
+            
+            try {
+                await testFn();
+                step.querySelector(`#status-${name}`).innerHTML = '<span class="success">✅ PASSED</span>';
+                testResults.push({ name, passed: true });
+            } catch (error) {
+                step.querySelector(`#status-${name}`).innerHTML = `<span class="error">❌ FAILED: ${error.message}</span>`;
+                testResults.push({ name, passed: false, error: error.message });
+                log(`${name} failed: ${error.message}`, 'error');
+            }
+        }
+        
+        // Auto-run tests after page loads
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                log('Page loaded, ready to run tests');
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

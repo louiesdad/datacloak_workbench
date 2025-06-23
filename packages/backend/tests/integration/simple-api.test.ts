@@ -15,7 +15,7 @@ describe('Simple API Integration Tests', () => {
     await initializeDatabases();
     
     // Create app
-    app = createApp();
+    app = await createApp();
   });
 
   describe('Basic Health Checks', () => {

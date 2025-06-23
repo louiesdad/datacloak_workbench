@@ -3,6 +3,27 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
 
+// Helper function to generate large test datasets
+function generateLargeDataset(size: number): string[] {
+  const sampleTexts = [
+    'John Doe lives at 123 Main St, email: john.doe@example.com, SSN: 123-45-6789',
+    'Jane Smith can be reached at jane.smith@company.com or 555-123-4567',
+    'Patient record: DOB 01/15/1980, Insurance ID: INS-456789, Dr. Johnson',
+    'Credit card 4532-1234-5678-9012 expires 12/25, CVV 123',
+    'Employee ID: EMP001, Phone: (555) 987-6543, Address: 456 Oak Ave',
+    'Regular text without any sensitive information for testing purposes',
+    'Medical record: Patient has diabetes, prescribed insulin, visit date 2024-03-15',
+    'Financial data: Account balance $15,432.50, routing number 021000021'
+  ];
+  
+  const dataset: string[] = [];
+  for (let i = 0; i < size; i++) {
+    const baseText = sampleTexts[i % sampleTexts.length];
+    dataset.push(`Record ${i + 1}: ${baseText}`);
+  }
+  return dataset;
+}
+
 describe('Large Dataset Risk Assessment Performance Tests', () => {
   let tempDir: string;
   

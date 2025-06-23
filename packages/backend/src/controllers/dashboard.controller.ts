@@ -285,6 +285,272 @@ export class DashboardController {
     }
   }
 
+  public async getRecentActivity(req: Request, res: Response): Promise<void> {
+    try {
+      const { limit = 20 } = req.query;
+      const jobQueue = await getJobQueueService();
+      const jobs = await jobQueue.getJobs();
+      
+      const recentActivity = jobs
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, Number(limit))
+        .map(job => ({
+          id: job.id,
+          type: job.type,
+          status: job.status,
+          timestamp: job.createdAt,
+          description: `${job.type} job ${job.status}`
+        }));
+
+      res.json(recentActivity);
+    } catch (error) {
+      throw new AppError(`Failed to get recent activity: ${error}`, 500);
+    }
+  }
+
+  public async getAnalyticsSummary(req: Request, res: Response): Promise<void> {
+    try {
+      const jobQueue = await getJobQueueService();
+      const jobs = await jobQueue.getJobs();
+      
+      const sentimentJobs = jobs.filter(job => job.type === 'sentiment');
+      const completedSentimentJobs = sentimentJobs.filter(job => job.status === 'completed');
+
+      const summary = {
+        totalTexts: completedSentimentJobs.reduce((acc, job) => acc + (job.processedCount || 0), 0),
+        sentimentDistribution: {
+          positive: Math.floor(Math.random() * 60) + 40, // Mock data
+          neutral: Math.floor(Math.random() * 30) + 20,
+          negative: Math.floor(Math.random() * 20) + 10
+        },
+        averageConfidence: 0.89,
+        totalJobs: sentimentJobs.length,
+        completedJobs: completedSentimentJobs.length
+      };
+
+      res.json(summary);
+    } catch (error) {
+      throw new AppError(`Failed to get analytics summary: ${error}`, 500);
+    }
+  }
+
+  public async getDatasets(req: Request, res: Response): Promise<void> {
+    try {
+      const { page = 1, limit = 10 } = req.query;
+      
+      // Mock datasets data - in real implementation would query database
+      const mockDatasets = [
+        { id: 'ds1', name: 'Customer Reviews', rowCount: 1500, createdAt: '2024-01-01T00:00:00Z' },
+        { id: 'ds2', name: 'Product Feedback', rowCount: 850, createdAt: '2024-01-02T00:00:00Z' },
+        { id: 'ds3', name: 'Survey Responses', rowCount: 2200, createdAt: '2024-01-03T00:00:00Z' }
+      ];
+
+      const startIndex = (Number(page) - 1) * Number(limit);
+      const endIndex = startIndex + Number(limit);
+      const paginatedData = mockDatasets.slice(startIndex, endIndex);
+
+      res.json({
+        data: paginatedData,
+        pagination: {
+          page: Number(page),
+          limit: Number(limit),
+          total: mockDatasets.length,
+          totalPages: Math.ceil(mockDatasets.length / Number(limit))
+        }
+      });
+    } catch (error) {
+      throw new AppError(`Failed to get datasets: ${error}`, 500);
+    }
+  }
+
+  public async getSentimentAnalyses(req: Request, res: Response): Promise<void> {
+    try {
+      const { page = 1, limit = 10 } = req.query;
+      
+      // Mock sentiment analyses data
+      const mockAnalyses = [
+        { id: 'sa1', text: 'Great product, highly recommended!', sentiment: 'positive', confidence: 0.95, timestamp: '2024-01-01T10:00:00Z' },
+        { id: 'sa2', text: 'Could be better', sentiment: 'neutral', confidence: 0.78, timestamp: '2024-01-01T11:00:00Z' },
+        { id: 'sa3', text: 'Disappointed with the quality', sentiment: 'negative', confidence: 0.87, timestamp: '2024-01-01T12:00:00Z' }
+      ];
+
+      const startIndex = (Number(page) - 1) * Number(limit);
+      const endIndex = startIndex + Number(limit);
+      const paginatedData = mockAnalyses.slice(startIndex, endIndex);
+
+      res.json({
+        data: paginatedData,
+        pagination: {
+          page: Number(page),
+          limit: Number(limit),
+          total: mockAnalyses.length,
+          totalPages: Math.ceil(mockAnalyses.length / Number(limit))
+        }
+      });
+    } catch (error) {
+      throw new AppError(`Failed to get sentiment analyses: ${error}`, 500);
+    }
+  }
+
+  public async getDataExports(req: Request, res: Response): Promise<void> {
+    try {
+      const mockExports = [
+        { id: 'exp1', format: 'csv', status: 'ready', downloadUrl: '/api/download/exp1.csv', createdAt: '2024-01-01T00:00:00Z' },
+        { id: 'exp2', format: 'json', status: 'processing', progress: 75, createdAt: '2024-01-01T01:00:00Z' }
+      ];
+
+      res.json({ data: mockExports });
+    } catch (error) {
+      throw new AppError(`Failed to get data exports: ${error}`, 500);
+    }
+  }
+
+  public async getActiveJobs(req: Request, res: Response): Promise<void> {
+    try {
+      const jobQueue = await getJobQueueService();
+      const jobs = await jobQueue.getJobs();
+      const activeJobs = jobs.filter(job => job.status === 'running' || job.status === 'pending');
+
+      res.json({ data: activeJobs });
+    } catch (error) {
+      throw new AppError(`Failed to get active jobs: ${error}`, 500);
+    }
+  }
+
+  public async getJobStats(req: Request, res: Response): Promise<void> {
+    try {
+      const jobQueue = await getJobQueueService();
+      const stats = await jobQueue.getStats();
+      res.json(stats);
+    } catch (error) {
+      throw new AppError(`Failed to get job stats: ${error}`, 500);
+    }
+  }
+
+  public async getJobTypes(req: Request, res: Response): Promise<void> {
+    try {
+      const types = ['sentiment', 'export', 'import', 'cleanup', 'processing'];
+      res.json(types);
+    } catch (error) {
+      throw new AppError(`Failed to get job types: ${error}`, 500);
+    }
+  }
+
+  public async getJobDetails(req: Request, res: Response): Promise<void> {
+    try {
+      const { jobId } = req.params;
+      const jobQueue = await getJobQueueService();
+      const job = await jobQueue.getJob(jobId);
+      
+      if (!job) {
+        res.status(404).json({ success: false, error: 'Job not found' });
+        return;
+      }
+
+      res.json(job);
+    } catch (error) {
+      throw new AppError(`Failed to get job details: ${error}`, 500);
+    }
+  }
+
+  public async retryJob(req: Request, res: Response): Promise<void> {
+    try {
+      const { jobId } = req.params;
+      const jobQueue = await getJobQueueService();
+      
+      // Mock retry implementation
+      const result = await jobQueue.addJob('retry', { originalJobId: jobId });
+      
+      res.json({
+        success: true,
+        message: 'Job retry initiated',
+        jobId,
+        newJobId: typeof result === 'string' ? result : (result as any)?.id || 'unknown'
+      });
+    } catch (error) {
+      throw new AppError(`Failed to retry job: ${error}`, 500);
+    }
+  }
+
+  public async cancelJob(req: Request, res: Response): Promise<void> {
+    try {
+      const { jobId } = req.params;
+      const jobQueue = await getJobQueueService();
+      
+      const success = await jobQueue.cancelJob(jobId);
+      
+      res.json({
+        success,
+        message: success ? 'Job cancelled successfully' : 'Job not found or already completed',
+        jobId
+      });
+    } catch (error) {
+      throw new AppError(`Failed to cancel job: ${error}`, 500);
+    }
+  }
+
+  public async getJobProgress(req: Request, res: Response): Promise<void> {
+    try {
+      const { jobId } = req.params;
+      const jobQueue = await getJobQueueService();
+      const job = await jobQueue.getJob(jobId);
+      
+      if (!job) {
+        res.status(404).json({ success: false, error: 'Job not found' });
+        return;
+      }
+
+      res.json({
+        jobId,
+        progress: job.progress || 0,
+        status: job.status,
+        estimatedTimeRemaining: job.estimatedTimeRemaining || null
+      });
+    } catch (error) {
+      throw new AppError(`Failed to get job progress: ${error}`, 500);
+    }
+  }
+
+  public async getJobsByType(req: Request, res: Response): Promise<void> {
+    try {
+      const { type } = req.params;
+      const { limit = 50 } = req.query;
+      const jobQueue = await getJobQueueService();
+      const jobs = await jobQueue.getJobs();
+      
+      const filteredJobs = jobs
+        .filter(job => job.type === type)
+        .slice(0, Number(limit));
+
+      res.json({ data: filteredJobs });
+    } catch (error) {
+      throw new AppError(`Failed to get jobs by type: ${error}`, 500);
+    }
+  }
+
+  public async getJobsTimeline(req: Request, res: Response): Promise<void> {
+    try {
+      const jobQueue = await getJobQueueService();
+      const jobs = await jobQueue.getJobs();
+      
+      // Group jobs by date
+      const timeline = jobs.reduce((acc, job) => {
+        const date = new Date(job.createdAt).toISOString().split('T')[0];
+        if (!acc[date]) {
+          acc[date] = { date, completed: 0, failed: 0, total: 0 };
+        }
+        acc[date].total++;
+        if (job.status === 'completed') acc[date].completed++;
+        if (job.status === 'failed') acc[date].failed++;
+        return acc;
+      }, {} as any);
+
+      res.json({ timeline: Object.values(timeline) });
+    } catch (error) {
+      throw new AppError(`Failed to get jobs timeline: ${error}`, 500);
+    }
+  }
+
   private calculatePercentile(jobs: any[], percentile: number): number {
     if (jobs.length === 0) return 0;
 

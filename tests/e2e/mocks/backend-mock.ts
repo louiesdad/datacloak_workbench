@@ -43,7 +43,7 @@ export const backendHandlers = [
     });
   }),
 
-  // File upload
+  // File upload - handle both old and new endpoints
   http.post('http://localhost:3001/api/upload', async ({ request }) => {
     const formData = await request.formData();
     const file = formData.get('file') as File;
@@ -70,6 +70,64 @@ export const backendHandlers = [
         fileSize,
         uploadedAt: new Date().toISOString(),
         status: 'uploaded'
+      }
+    });
+  }),
+  
+  // New file upload endpoint that the app actually uses
+  http.post('http://localhost:3001/api/v1/data/upload', async ({ request }) => {
+    const formData = await request.formData();
+    const file = formData.get('file') as File;
+    
+    if (!file) {
+      return HttpResponse.json(
+        { error: { message: 'No file provided', code: 'MISSING_FILE' } },
+        { status: 400 }
+      );
+    }
+
+    const fileId = `ds_${Date.now()}`;
+    const fileName = file.name;
+    const fileSize = file.size;
+
+    // Simulate processing delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Generate mock field info
+    const mockFields = ['id', 'name', 'email', 'phone', 'comment', 'rating'];
+    const fieldInfo = mockFields.map(field => ({
+      name: field,
+      type: field.includes('email') ? 'email' : 
+            field.includes('phone') ? 'phone' :
+            field.includes('id') || field.includes('rating') ? 'integer' :
+            'text',
+      piiDetected: field.includes('email') || field.includes('phone') || field.includes('name'),
+      piiType: field.includes('email') ? 'EMAIL' : 
+               field.includes('phone') ? 'PHONE' :
+               field.includes('name') ? 'NAME' : null
+    }));
+
+    return HttpResponse.json({
+      success: true,
+      data: {
+        dataset: {
+          datasetId: fileId,
+          originalFilename: fileName,
+          recordCount: 100,
+          size: fileSize,
+          uploadedAt: new Date().toISOString(),
+          status: 'ready'
+        },
+        fieldInfo,
+        previewData: [
+          { id: 1, name: 'John Doe', email: 'john@example.com', phone: '555-0123', comment: 'Great product!', rating: 5 },
+          { id: 2, name: 'Jane Smith', email: 'jane@example.com', phone: '555-0124', comment: 'Could be better', rating: 3 }
+        ],
+        securityScan: {
+          piiItemsDetected: 3,
+          complianceScore: 85,
+          riskLevel: 'medium'
+        }
       }
     });
   }),

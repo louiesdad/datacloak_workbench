@@ -1,8 +1,8 @@
 import { WebSocket, WebSocketServer } from 'ws';
 import { Server } from 'http';
 import { v4 as uuidv4 } from 'uuid';
-import { logger } from '../config/logger';
-import { eventEmitter } from './event.service';
+import logger from '../config/logger';
+import { eventEmitter, EventTypes } from './event.service';
 
 interface WebSocketClient {
   id: string;
@@ -24,13 +24,14 @@ interface BroadcastOptions {
   userId?: string;
   excludeClient?: string;
   topic?: string;
+  filter?: (client: WebSocketClient, subscription: any) => boolean;
 }
 
 export class WebSocketService {
   private wss?: WebSocketServer;
   private clients = new Map<string, WebSocketClient>();
-  private heartbeatInterval?: NodeJS.Timer;
-  private cleanupInterval?: NodeJS.Timer;
+  private heartbeatInterval?: NodeJS.Timeout;
+  private cleanupInterval?: NodeJS.Timeout;
 
   initialize(server: Server): void {
     this.wss = new WebSocketServer({ 
@@ -74,6 +75,9 @@ export class WebSocketService {
 
     this.clients.set(clientId, client);
     logger.info(`WebSocket client connected: ${clientId}`);
+    
+    // Emit connection event
+    eventEmitter.emit(EventTypes.WS_CLIENT_CONNECTED, { clientId });
 
     // Send welcome message
     this.sendToClient(clientId, {
@@ -173,6 +177,9 @@ export class WebSocketService {
   private handleDisconnect(clientId: string): void {
     this.clients.delete(clientId);
     logger.info(`WebSocket client disconnected: ${clientId}`);
+    
+    // Emit disconnection event
+    eventEmitter.emit(EventTypes.WS_CLIENT_DISCONNECTED, { clientId });
     
     this.broadcast({
       type: 'client_count',
@@ -328,7 +335,14 @@ export class WebSocketService {
       if (options.userId && client.userId !== options.userId) return;
       
       // Skip if filtering by topic
-      if (options.topic && !client.subscriptions.has(options.topic) && !client.subscriptions.has('global')) return;
+      if (options.topic && !client.subscriptions.has(options.topic)) return;
+
+      // Apply custom filter if provided
+      if (options.filter) {
+        const subscriptionData = (client as any).subscriptionData?.[options.topic || ''] || {};
+        const subscription = { data: subscriptionData };
+        if (!options.filter(client, subscription)) return;
+      }
 
       if (this.sendToClient(clientId, message)) {
         sentCount++;
@@ -366,6 +380,37 @@ export class WebSocketService {
     return true;
   }
 
+  subscribeToTopic(clientId: string, topic: string, metadata?: any): boolean {
+    const client = this.clients.get(clientId);
+    if (!client) return false;
+
+    client.subscriptions.add(topic);
+    
+    // Store subscription metadata if provided
+    if (metadata && !(client as any).subscriptionData) {
+      (client as any).subscriptionData = {};
+    }
+    if (metadata) {
+      (client as any).subscriptionData[topic] = metadata;
+    }
+
+    return true;
+  }
+
+  unsubscribeFromTopic(clientId: string, topic: string): boolean {
+    const client = this.clients.get(clientId);
+    if (!client) return false;
+
+    const removed = client.subscriptions.delete(topic);
+    
+    // Clean up subscription metadata
+    if ((client as any).subscriptionData && (client as any).subscriptionData[topic]) {
+      delete (client as any).subscriptionData[topic];
+    }
+
+    return removed;
+  }
+
   shutdown(): void {
     logger.info('Shutting down WebSocket server...');
 
@@ -376,6 +421,18 @@ export class WebSocketService {
     if (this.cleanupInterval) {
       clearInterval(this.cleanupInterval);
     }
+
+    // Clean up event listeners to prevent memory leaks
+    eventEmitter.removeAllListeners('sentiment:progress');
+    eventEmitter.removeAllListeners('sentiment:complete');
+    eventEmitter.removeAllListeners('file:progress');
+    eventEmitter.removeAllListeners('file:complete');
+    eventEmitter.removeAllListeners('pii:detected');
+    eventEmitter.removeAllListeners('job:created');
+    eventEmitter.removeAllListeners('job:progress');
+    eventEmitter.removeAllListeners('job:complete');
+    eventEmitter.removeAllListeners('job:failed');
+    eventEmitter.removeAllListeners('metrics:update');
 
     // Disconnect all clients
     this.broadcast({

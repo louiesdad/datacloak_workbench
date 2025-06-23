@@ -1,0 +1,279 @@
+.enhanced-admin-dashboard {
+  @apply min-h-screen bg-gray-50 dark:bg-gray-900 flex;
+}
+
+/* Mobile Header */
+.mobile-header {
+  @apply md:hidden fixed top-0 left-0 right-0 z-30 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700;
+  @apply flex items-center justify-between px-4 h-16;
+}
+
+.mobile-actions {
+  @apply flex items-center space-x-2;
+}
+
+/* Sidebar */
+.sidebar {
+  @apply fixed md:relative inset-y-0 left-0 z-40 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700;
+  @apply transform -translate-x-full md:translate-x-0 transition-transform duration-200 ease-in-out;
+  @apply flex flex-col;
+}
+
+.sidebar-open {
+  @apply translate-x-0;
+}
+
+.sidebar-header {
+  @apply p-6 border-b border-gray-200 dark:border-gray-700;
+}
+
+.logo {
+  @apply flex items-center space-x-3 mb-4;
+}
+
+.logo-text {
+  @apply text-xl font-bold text-gray-900 dark:text-white;
+}
+
+.desktop-actions {
+  @apply hidden md:flex items-center space-x-2;
+}
+
+/* Sidebar Navigation */
+.sidebar-nav {
+  @apply flex-1 px-4 py-6 space-y-2;
+}
+
+.nav-item {
+  @apply w-full flex items-center space-x-3 px-3 py-2 text-sm font-medium rounded-md transition-colors;
+  @apply text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white;
+}
+
+.nav-item-active {
+  @apply bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200;
+}
+
+.sidebar-footer {
+  @apply p-4 border-t border-gray-200 dark:border-gray-700;
+}
+
+.logout-button {
+  @apply w-full flex items-center space-x-3 px-3 py-2 text-sm font-medium rounded-md;
+  @apply text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700;
+}
+
+/* Main Content */
+.main-content {
+  @apply flex-1 md:ml-0 pt-16 md:pt-0;
+}
+
+.content-container {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8;
+}
+
+/* Sidebar Overlay */
+.sidebar-overlay {
+  @apply md:hidden fixed inset-0 z-30 bg-black bg-opacity-50;
+}
+
+/* Dashboard Overview */
+.dashboard-overview {
+  @apply space-y-6;
+}
+
+.overview-header {
+  @apply space-y-2;
+}
+
+.stats-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6;
+}
+
+.stat-display {
+  @apply flex items-center justify-between;
+}
+
+.status-display {
+  @apply flex items-center justify-between;
+}
+
+.alert-summary {
+  @apply flex items-center space-x-2 text-red-600 dark:text-red-400;
+}
+
+/* Dashboard Settings */
+.dashboard-settings {
+  @apply space-y-6;
+}
+
+.settings-header {
+  @apply space-y-2;
+}
+
+.setting-group {
+  @apply space-y-3;
+}
+
+.setting-label {
+  @apply block text-sm font-medium text-gray-700 dark:text-gray-300;
+}
+
+.theme-options {
+  @apply flex space-x-2;
+}
+
+/* Loading State */
+.admin-dashboard-loading {
+  @apply min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900;
+}
+
+.spinner {
+  @apply animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mr-4;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .enhanced-admin-dashboard {
+    @apply block;
+  }
+  
+  .main-content {
+    @apply ml-0;
+  }
+  
+  .content-container {
+    @apply px-4;
+  }
+  
+  .stats-grid {
+    @apply grid-cols-1;
+  }
+  
+  .desktop-actions {
+    @apply hidden;
+  }
+}
+
+@media (max-width: 640px) {
+  .mobile-header {
+    @apply px-2;
+  }
+  
+  .sidebar {
+    @apply w-full;
+  }
+  
+  .content-container {
+    @apply px-2 py-4;
+  }
+  
+  .stats-grid {
+    @apply gap-4;
+  }
+}
+
+/* Dark Mode Transitions */
+.enhanced-admin-dashboard * {
+  @apply transition-colors duration-200;
+}
+
+/* Focus Styles for Accessibility */
+.nav-item:focus-visible,
+.logout-button:focus-visible {
+  @apply outline-none ring-2 ring-blue-500 ring-offset-2 ring-offset-white dark:ring-offset-gray-800;
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .nav-item,
+  .logout-button {
+    @apply border border-transparent;
+  }
+  
+  .nav-item:hover,
+  .logout-button:hover {
+    @apply border-gray-300 dark:border-gray-600;
+  }
+  
+  .nav-item-active {
+    @apply border-blue-500;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .sidebar {
+    @apply transition-none;
+  }
+  
+  .enhanced-admin-dashboard * {
+    @apply transition-none;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .enhanced-admin-dashboard {
+    @apply block bg-white text-black;
+  }
+  
+  .sidebar,
+  .mobile-header {
+    @apply hidden;
+  }
+  
+  .main-content {
+    @apply ml-0 pt-0;
+  }
+  
+  .content-container {
+    @apply max-w-none px-0;
+  }
+}
+
+/* Custom Scrollbar */
+.sidebar::-webkit-scrollbar {
+  @apply w-2;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  @apply bg-gray-100 dark:bg-gray-800;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 dark:bg-gray-600 rounded;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400 dark:bg-gray-500;
+}
+
+/* Animation for alerts */
+@keyframes alert-bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-3px);
+  }
+  60% {
+    transform: translateY(-1px);
+  }
+}
+
+.alert-summary {
+  animation: alert-bounce 1s ease-in-out;
+}
+
+/* Status indicators */
+.status-healthy {
+  @apply text-green-600 dark:text-green-400;
+}
+
+.status-warning {
+  @apply text-yellow-600 dark:text-yellow-400;
+}
+
+.status-critical {
+  @apply text-red-600 dark:text-red-400;
+}

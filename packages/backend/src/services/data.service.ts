@@ -1,4 +1,4 @@
-import { getSQLiteConnection } from '../database/sqlite';
+import { withSQLiteConnection } from '../database/sqlite-refactored';
 import { v4 as uuidv4 } from 'uuid';
 import { AppError } from '../middleware/error.middleware';
 import * as fs from 'fs';
@@ -8,17 +8,9 @@ import * as XLSX from 'xlsx';
 import { SecurityService } from './security.service';
 import { FileStreamService } from './file-stream.service';
 import { DataCloakStreamService, DataCloakStreamOptions } from './datacloak-stream.service';
-
-export interface Dataset {
-  id: string;
-  filename: string;
-  originalFilename: string;
-  size: number;
-  recordCount: number;
-  mimeType?: string;
-  createdAt: string;
-  updatedAt: string;
-}
+import { detectDelimiter, createFlexibleCsvParser } from './csv-parser-fix';
+import { PapaParseAdapter } from './papaparse-adapter';
+import { Dataset, DatabaseDataset, ExportResult } from '../types/api-types';
 
 export interface AnalysisBatch {
   id: string;
@@ -145,31 +137,28 @@ export class DataService {
         const enhancedFieldInfo = await this.enhanceFieldInfoWithPII(fieldInfo, previewData);
         
         // Store dataset metadata in SQLite with security information
-        const db = getSQLiteConnection();
-        if (!db) {
-          throw new AppError('Database connection not available', 500, 'DB_ERROR');
-        }
+        await withSQLiteConnection(async (db) => {
+          const stmt = db.prepare(`
+            INSERT INTO datasets (id, filename, original_filename, size, record_count, mime_type, 
+                                 pii_detected, compliance_score, risk_level)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `);
 
-        const stmt = db.prepare(`
-          INSERT INTO datasets (id, filename, original_filename, size, record_count, mime_type, 
-                               pii_detected, compliance_score, risk_level)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `);
-
-        stmt.run(
-          datasetId,
-          filename,
-          file.originalname,
-          file.size,
-          recordCount,
-          file.mimetype,
-          scanResult.piiItemsDetected > 0 ? 1 : 0,
-          scanResult.complianceScore,
-          this.getRiskLevel(scanResult.complianceScore)
-        );
+          stmt.run(
+            datasetId,
+            filename,
+            file.originalname,
+            file.size,
+            recordCount,
+            file.mimetype,
+            scanResult.piiItemsDetected > 0 ? 1 : 0,
+            scanResult.complianceScore,
+            this.getRiskLevel(scanResult.complianceScore)
+          );
+        });
 
         // Get the created dataset
-        const dataset = this.getDatasetById(datasetId);
+        const dataset = await this.getDatasetById(datasetId);
 
         return {
           dataset,
@@ -182,27 +171,24 @@ export class DataService {
         console.warn('Security scan failed, proceeding without security information:', securityError);
         
         // Store dataset metadata in SQLite without security information
-        const db = getSQLiteConnection();
-        if (!db) {
-          throw new AppError('Database connection not available', 500, 'DB_ERROR');
-        }
+        await withSQLiteConnection(async (db) => {
+          const stmt = db.prepare(`
+            INSERT INTO datasets (id, filename, original_filename, size, record_count, mime_type)
+            VALUES (?, ?, ?, ?, ?, ?)
+          `);
 
-        const stmt = db.prepare(`
-          INSERT INTO datasets (id, filename, original_filename, size, record_count, mime_type)
-          VALUES (?, ?, ?, ?, ?, ?)
-        `);
-
-        stmt.run(
-          datasetId,
-          filename,
-          file.originalname,
-          file.size,
-          recordCount,
-          file.mimetype
-        );
+          stmt.run(
+            datasetId,
+            filename,
+            file.originalname,
+            file.size,
+            recordCount,
+            file.mimetype
+          );
+        });
 
         // Get the created dataset
-        const dataset = this.getDatasetById(datasetId);
+        const dataset = await this.getDatasetById(datasetId);
 
         return {
           dataset,
@@ -418,21 +404,58 @@ export class DataService {
     fieldInfo: FieldStatistics[];
     recordCount: number;
   }> {
+    try {
+      console.log('Using PapaParse for robust CSV parsing...');
+      
+      // Parse with PapaParse
+      const parseResult = await PapaParseAdapter.parseFile(filePath, { previewSize });
+      
+      console.log(`PapaParse results: ${parseResult.lineCount} rows, delimiter: "${parseResult.delimiter}"`);
+      if (parseResult.errors.length > 0) {
+        console.log(`Handled ${parseResult.errors.length} parsing errors gracefully`);
+      }
+      
+      // Analyze fields using PapaParse's clean data
+      const fieldInfo = this.analyzeFields(parseResult.data);
+      
+      return {
+        previewData: parseResult.data,
+        fieldInfo,
+        recordCount: parseResult.lineCount,
+      };
+    } catch (error) {
+      console.error('PapaParse failed, falling back to legacy parser:', error);
+      
+      // Fallback to old parser if needed
+      return this.parseCsvFileLegacy(filePath, previewSize);
+    }
+  }
+
+  // Keep the old parser as a fallback
+  private async parseCsvFileLegacy(filePath: string, previewSize: number): Promise<{
+    previewData: any[];
+    fieldInfo: FieldStatistics[];
+    recordCount: number;
+  }> {
     return new Promise(async (resolve, reject) => {
       const results: any[] = [];
       let lineCount = 0;
       let headerCount = 0;
       
+      // Detect delimiter
+      const delimiter = await detectDelimiter(filePath);
+      console.log(`Detected delimiter: ${delimiter === '\t' ? 'tab' : delimiter}`);
+      
       // First, validate the CSV structure
       try {
         await this.validateCsvStructure(filePath);
       } catch (error) {
-        reject(error);
-        return;
+        // For now, log but don't reject - we'll handle with flexible parser
+        console.warn('CSV validation warning:', error);
       }
       
       fs.createReadStream(filePath)
-        .pipe(csv())
+        .pipe(createFlexibleCsvParser(delimiter))
         .on('headers', (headers: string[]) => {
           headerCount = headers.length;
           
@@ -459,14 +482,14 @@ export class DataService {
         .on('data', (data: any) => {
           lineCount++;
           
-          // Validate row structure
-          const columns = Object.keys(data);
-          if (columns.length !== headerCount) {
-            reject(new AppError(`Row ${lineCount} has incorrect number of columns. Expected ${headerCount}, got ${columns.length}`, 400, 'MALFORMED_CSV'));
-            return;
+          // Clean up data - handle missing values
+          const cleanedData: any = {};
+          for (const [key, value] of Object.entries(data)) {
+            // Handle undefined, null, or empty string values
+            cleanedData[key] = value === undefined || value === null || value === '' ? null : value;
           }
           
-          results.push(data);
+          results.push(cleanedData);
         })
         .on('end', () => {
           // Validate we have data
@@ -924,26 +947,23 @@ export class DataService {
     });
   }
 
-  getDatasetById(id: string): Dataset {
-    const db = getSQLiteConnection();
-    if (!db) {
-      throw new AppError('Database connection not available', 500, 'DB_ERROR');
-    }
+  async getDatasetById(id: string): Promise<Dataset> {
+    return await withSQLiteConnection(async (db) => {
+      const stmt = db.prepare(`
+        SELECT id, filename, original_filename as originalFilename, size, record_count as recordCount,
+               mime_type as mimeType, created_at as createdAt, updated_at as updatedAt
+        FROM datasets
+        WHERE id = ?
+      `);
 
-    const stmt = db.prepare(`
-      SELECT id, filename, original_filename as originalFilename, size, record_count as recordCount,
-             mime_type as mimeType, created_at as createdAt, updated_at as updatedAt
-      FROM datasets
-      WHERE id = ?
-    `);
+      const dataset = stmt.get(id) as Dataset;
+      
+      if (!dataset) {
+        throw new AppError('Dataset not found', 404, 'DATASET_NOT_FOUND');
+      }
 
-    const dataset = stmt.get(id) as Dataset;
-    
-    if (!dataset) {
-      throw new AppError('Dataset not found', 404, 'DATASET_NOT_FOUND');
-    }
-
-    return dataset;
+      return dataset;
+    });
   }
 
   async getDatasets(page: number = 1, pageSize: number = 10): Promise<{
@@ -955,127 +975,112 @@ export class DataService {
       totalPages: number;
     };
   }> {
-    const db = getSQLiteConnection();
-    if (!db) {
-      throw new AppError('Database connection not available', 500, 'DB_ERROR');
-    }
-
-    const offset = (page - 1) * pageSize;
-    
-    // Get total count
-    const countStmt = db.prepare('SELECT COUNT(*) as total FROM datasets');
-    const { total } = countStmt.get() as { total: number };
-    
-    // Get paginated results
-    const dataStmt = db.prepare(`
-      SELECT id, filename, original_filename as originalFilename, size, record_count as recordCount,
-             mime_type as mimeType, created_at as createdAt, updated_at as updatedAt
-      FROM datasets
-      ORDER BY created_at DESC
-      LIMIT ? OFFSET ?
-    `);
-    
-    const data = dataStmt.all(pageSize, offset) as Dataset[];
-    
-    return {
-      data,
-      pagination: {
-        page,
-        pageSize,
-        total,
-        totalPages: Math.ceil(total / pageSize),
-      },
-    };
+    return await withSQLiteConnection(async (db) => {
+      const offset = (page - 1) * pageSize;
+      
+      // Get total count
+      const countStmt = db.prepare('SELECT COUNT(*) as total FROM datasets');
+      const { total } = countStmt.get() as { total: number };
+      
+      // Get paginated results
+      const dataStmt = db.prepare(`
+        SELECT id, filename, original_filename as originalFilename, size, record_count as recordCount,
+               mime_type as mimeType, created_at as createdAt, updated_at as updatedAt
+        FROM datasets
+        ORDER BY created_at DESC
+        LIMIT ? OFFSET ?
+      `);
+      
+      const data = dataStmt.all(pageSize, offset) as Dataset[];
+      
+      return {
+        data,
+        pagination: {
+          page,
+          pageSize,
+          total,
+          totalPages: Math.ceil(total / pageSize),
+        },
+      };
+    });
   }
 
   async deleteDataset(id: string): Promise<void> {
-    const db = getSQLiteConnection();
-    if (!db) {
-      throw new AppError('Database connection not available', 500, 'DB_ERROR');
-    }
-
     // Get dataset info first
-    const dataset = this.getDatasetById(id);
+    const dataset = await this.getDatasetById(id);
     
     // Delete file from disk
     const uploadDir = this.getUploadDir();
-    const filePath = path.join(uploadDir, dataset.filename);
+    const filePath = path.join(uploadDir, dataset.filename || '');
     
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
     }
 
     // Delete from database
-    const stmt = db.prepare('DELETE FROM datasets WHERE id = ?');
-    const result = stmt.run(id);
+    await withSQLiteConnection(async (db) => {
+      const stmt = db.prepare('DELETE FROM datasets WHERE id = ?');
+      const result = stmt.run(id);
 
-    if (result.changes === 0) {
-      throw new AppError('Dataset not found', 404, 'DATASET_NOT_FOUND');
-    }
+      if (result.changes === 0) {
+        throw new AppError('Dataset not found', 404, 'DATASET_NOT_FOUND');
+      }
+    });
   }
 
   async createAnalysisBatch(datasetId: string): Promise<AnalysisBatch> {
-    const db = getSQLiteConnection();
-    if (!db) {
-      throw new AppError('Database connection not available', 500, 'DB_ERROR');
-    }
-
     // Verify dataset exists
-    const dataset = this.getDatasetById(datasetId);
+    const dataset = await this.getDatasetById(datasetId);
     
     const batchId = uuidv4();
     
-    const stmt = db.prepare(`
-      INSERT INTO analysis_batches (id, dataset_id, status, progress, total_records, completed_records)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `);
+    await withSQLiteConnection(async (db) => {
+      const stmt = db.prepare(`
+        INSERT INTO analysis_batches (id, dataset_id, status, progress, total_records, completed_records)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `);
 
-    stmt.run(batchId, datasetId, 'pending', 0, dataset.recordCount, 0);
+      stmt.run(batchId, datasetId, 'pending', 0, dataset.recordCount, 0);
+    });
 
-    return this.getAnalysisBatchById(batchId);
+    return await this.getAnalysisBatchById(batchId);
   }
 
-  private getAnalysisBatchById(id: string): AnalysisBatch {
-    const db = getSQLiteConnection();
-    if (!db) {
-      throw new AppError('Database connection not available', 500, 'DB_ERROR');
-    }
+  private async getAnalysisBatchById(id: string): Promise<AnalysisBatch> {
+    return await withSQLiteConnection(async (db) => {
+      const stmt = db.prepare(`
+        SELECT id, dataset_id as datasetId, status, progress, total_records as totalRecords,
+               completed_records as completedRecords, created_at as createdAt, updated_at as updatedAt
+        FROM analysis_batches
+        WHERE id = ?
+      `);
 
-    const stmt = db.prepare(`
-      SELECT id, dataset_id as datasetId, status, progress, total_records as totalRecords,
-             completed_records as completedRecords, created_at as createdAt, updated_at as updatedAt
-      FROM analysis_batches
-      WHERE id = ?
-    `);
+      const batch = stmt.get(id) as AnalysisBatch;
+      
+      if (!batch) {
+        throw new AppError('Analysis batch not found', 404, 'BATCH_NOT_FOUND');
+      }
 
-    const batch = stmt.get(id) as AnalysisBatch;
-    
-    if (!batch) {
-      throw new AppError('Analysis batch not found', 404, 'BATCH_NOT_FOUND');
-    }
-
-    return batch;
+      return batch;
+    });
   }
 
   async updateAnalysisBatchProgress(batchId: string, completedRecords: number, status?: string): Promise<void> {
-    const db = getSQLiteConnection();
-    if (!db) {
-      throw new AppError('Database connection not available', 500, 'DB_ERROR');
-    }
-
-    const batch = this.getAnalysisBatchById(batchId);
+    const batch = await this.getAnalysisBatchById(batchId);
     const progress = Math.floor((completedRecords / batch.totalRecords) * 100);
     
-    const stmt = db.prepare(`
-      UPDATE analysis_batches 
-      SET progress = ?, completed_records = ?, status = ?, updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-    `);
+    await withSQLiteConnection(async (db) => {
+      const stmt = db.prepare(`
+        UPDATE analysis_batches 
+        SET progress = ?, completed_records = ?, status = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `);
 
-    stmt.run(progress, completedRecords, status || batch.status, batchId);
+      stmt.run(progress, completedRecords, status || batch.status, batchId);
+    });
   }
 
-  async exportData(format: 'csv' | 'json' | 'xlsx', _filters?: any): Promise<{ downloadUrl: string; expiresAt: string }> {
+  async exportData(format: 'csv' | 'json' | 'xlsx', _filters?: any): Promise<ExportResult> {
     // This is a mock implementation - in a real app you would:
     // 1. Query data based on filters
     // 2. Generate file in requested format
@@ -1083,11 +1088,12 @@ export class DataService {
     // 4. Return download URL
 
     const exportId = uuidv4();
-    const expiresAt = new Date(Date.now() + 3600000); // 1 hour from now
 
     return {
+      exportId,
       downloadUrl: `/api/v1/downloads/export-${exportId}.${format}`,
-      expiresAt: expiresAt.toISOString(),
+      format,
+      estimatedSize: '1.2MB',
     };
   }
 
@@ -1100,18 +1106,38 @@ export class DataService {
     try {
       const enhancedFieldInfo: FieldStatistics[] = [];
       
+      // Batch process fields to reduce database connections
+      const fieldBatches: { field: FieldStatistics; sampleText: string }[] = [];
+      
       for (const field of fieldInfo) {
+        // Skip fields that are unlikely to contain PII based on type
+        if (field.type === 'number' || field.type === 'boolean') {
+          enhancedFieldInfo.push({ ...field, piiDetected: false });
+          continue;
+        }
+        
         // Create sample text from field values for PII detection
         const sampleText = field.sampleValues
           .filter((val: any) => val != null && val !== '')
-          .slice(0, 20) // Take more samples for better detection
+          .slice(0, 5) // Reduce samples to minimize processing
           .join(' ');
-
-        let piiDetected = false;
-        let piiType: string | undefined = undefined;
-        let piiConfidence = 0;
-
+          
         if (sampleText.length > 0) {
+          fieldBatches.push({ field, sampleText });
+        } else {
+          enhancedFieldInfo.push({ ...field, piiDetected: false });
+        }
+      }
+      
+      // Process PII detection in parallel batches
+      const batchSize = 5; // Process 5 fields at a time
+      for (let i = 0; i < fieldBatches.length; i += batchSize) {
+        const batch = fieldBatches.slice(i, i + batchSize);
+        const piiPromises = batch.map(async ({ field, sampleText }) => {
+          let piiDetected = false;
+          let piiType: string | undefined = undefined;
+          let piiConfidence = 0;
+          
           try {
             const piiResults = await this.securityService.detectPII(sampleText);
             if (piiResults.length > 0) {
@@ -1126,53 +1152,61 @@ export class DataService {
           } catch (error) {
             console.warn(`PII detection failed for field ${field.name}:`, error);
           }
-        }
-
-        // Enhanced PII detection based on field name and type
-        if (!piiDetected) {
-          const fieldNameLower = field.name.toLowerCase();
-          if (fieldNameLower.includes('email') || field.type === 'email') {
-            piiDetected = true;
-            piiType = 'EMAIL';
-            piiConfidence = 0.8;
-          } else if (fieldNameLower.includes('phone') || fieldNameLower.includes('tel')) {
-            piiDetected = true;
-            piiType = 'PHONE';
-            piiConfidence = 0.7;
-          } else if (fieldNameLower.includes('ssn') || fieldNameLower.includes('social')) {
-            piiDetected = true;
-            piiType = 'SSN';
-            piiConfidence = 0.9;
-          } else if (fieldNameLower.includes('name') && fieldNameLower !== 'filename') {
-            piiDetected = true;
-            piiType = 'NAME';
-            piiConfidence = 0.6;
-          } else if (fieldNameLower.includes('address') || fieldNameLower.includes('street')) {
-            piiDetected = true;
-            piiType = 'ADDRESS';
-            piiConfidence = 0.7;
-          } else if (fieldNameLower.includes('birth') || fieldNameLower.includes('dob')) {
-            piiDetected = true;
-            piiType = 'DATE_OF_BIRTH';
-            piiConfidence = 0.8;
-          }
-        }
-
-        // Add PII warnings to existing warnings
-        const warnings = [...(field.warnings || [])];
-        if (piiDetected) {
-          warnings.push(`Contains PII: ${piiType} (confidence: ${Math.round(piiConfidence * 100)}%)`);
-          if (piiConfidence > 0.8) {
-            warnings.push('High-risk PII detected - consider masking or encryption');
-          }
-        }
-
-        enhancedFieldInfo.push({
-          ...field,
-          piiDetected,
-          piiType,
-          warnings: warnings.length > 0 ? warnings : undefined,
+          
+          return { field, piiDetected, piiType, piiConfidence };
         });
+        
+        const batchResults = await Promise.all(piiPromises);
+        
+        for (const result of batchResults) {
+          let { field, piiDetected, piiType, piiConfidence } = result;
+
+          // Enhanced PII detection based on field name and type
+          if (!piiDetected) {
+            const fieldNameLower = field.name.toLowerCase();
+            if (fieldNameLower.includes('email') || field.type === 'email') {
+              piiDetected = true;
+              piiType = 'EMAIL';
+              piiConfidence = 0.8;
+            } else if (fieldNameLower.includes('phone') || fieldNameLower.includes('tel')) {
+              piiDetected = true;
+              piiType = 'PHONE';
+              piiConfidence = 0.7;
+            } else if (fieldNameLower.includes('ssn') || fieldNameLower.includes('social')) {
+              piiDetected = true;
+              piiType = 'SSN';
+              piiConfidence = 0.9;
+            } else if (fieldNameLower.includes('name') && fieldNameLower !== 'filename') {
+              piiDetected = true;
+              piiType = 'NAME';
+              piiConfidence = 0.6;
+            } else if (fieldNameLower.includes('address') || fieldNameLower.includes('street')) {
+              piiDetected = true;
+              piiType = 'ADDRESS';
+              piiConfidence = 0.7;
+            } else if (fieldNameLower.includes('birth') || fieldNameLower.includes('dob')) {
+              piiDetected = true;
+              piiType = 'DATE_OF_BIRTH';
+              piiConfidence = 0.8;
+            }
+          }
+
+          // Add PII warnings to existing warnings
+          const warnings = [...(field.warnings || [])];
+          if (piiDetected) {
+            warnings.push(`Contains PII: ${piiType} (confidence: ${Math.round(piiConfidence * 100)}%)`);
+            if (piiConfidence > 0.8) {
+              warnings.push('High-risk PII detected - consider masking or encryption');
+            }
+          }
+
+          enhancedFieldInfo.push({
+            ...field,
+            piiDetected,
+            piiType,
+            warnings: warnings.length > 0 ? warnings : undefined,
+          });
+        }
       }
 
       return enhancedFieldInfo;

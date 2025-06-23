@@ -1,1243 +1,813 @@
-import { Readable, Transform } from 'stream';
+import { Readable } from 'stream';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as crypto from 'crypto';
-import * as zlib from 'zlib';
+import * as PDFDocument from 'pdfkit';
+import * as ExcelJS from 'exceljs';
+import archiver from 'archiver';
+import { v4 as uuidv4 } from 'uuid';
+import { eventEmitter } from './event.service';
 import { AppError } from '../middleware/error.middleware';
-import { ExportService, ExportOptions, ExportProgress, ChunkedExportResult } from './export.service';
-// Optional cloud storage imports - will be undefined if packages not installed
-let S3Client: any, PutObjectCommand: any, CreateMultipartUploadCommand: any, UploadPartCommand: any, CompleteMultipartUploadCommand: any;
-let BlobServiceClient: any;
-let parquet: any;
+import { getSQLiteConnection } from '../database/sqlite-refactored';
+import logger from '../config/logger';
+import { ExportService, ExportOptions, ExportProgress } from './export.service';
 
-try {
-  const aws = require('@aws-sdk/client-s3');
-  S3Client = aws.S3Client;
-  PutObjectCommand = aws.PutObjectCommand;
-  CreateMultipartUploadCommand = aws.CreateMultipartUploadCommand;
-  UploadPartCommand = aws.UploadPartCommand;
-  CompleteMultipartUploadCommand = aws.CompleteMultipartUploadCommand;
-} catch (e) {
-  // AWS SDK not installed
-}
-
-try {
-  const azure = require('@azure/storage-blob');
-  BlobServiceClient = azure.BlobServiceClient;
-} catch (e) {
-  // Azure SDK not installed
-}
-
-try {
-  parquet = require('parquetjs-lite');
-} catch (e) {
-  // Parquet library not installed
-}
-
-export interface EnhancedExportOptions extends Omit<ExportOptions, 'format'> {
-  format: 'csv' | 'json' | 'excel' | 'parquet';
-  encryption?: {
-    enabled: boolean;
-    algorithm?: string;
-    password?: string;
+export interface EnhancedExportOptions extends ExportOptions {
+  format: 'pdf' | 'csv' | 'excel' | 'json' | 'html' | 'zip';
+  reportType?: 'audit' | 'sentiment' | 'compliance' | 'decisions' | 'methodology';
+  includeMetadata?: boolean;
+  includeCharts?: boolean;
+  includeAttachments?: boolean;
+  dateRange?: {
+    start: Date;
+    end: Date;
   };
-  compression?: {
-    enabled: boolean;
-    type?: 'gzip' | 'zip';
+  customSections?: string[];
+}
+
+export interface AuditReportData {
+  title: string;
+  generatedDate: Date;
+  author: string;
+  organization?: string;
+  summary: {
+    totalRecords: number;
+    processedRecords: number;
+    sensitiveDataFound: number;
+    complianceScore: number;
+    riskLevel: 'low' | 'medium' | 'high';
   };
-  cloudStorage?: {
-    provider: 's3' | 'azure' | 'gcs';
-    bucket?: string;
-    path?: string;
-    credentials?: any;
+  timeline: Array<{
+    date: Date;
+    event: string;
+    severity: string;
+    details: string;
+  }>;
+  findings: Array<{
+    category: string;
+    severity: 'info' | 'warning' | 'critical';
+    description: string;
+    recommendations: string[];
+    evidence?: any[];
+  }>;
+  compliance: {
+    frameworks: string[];
+    status: { [framework: string]: 'compliant' | 'non-compliant' | 'partial' };
+    details: { [framework: string]: string[] };
   };
-  resumable?: boolean;
-  notificationWebhook?: string;
-}
-
-export interface ExportMetadata {
-  exportId: string;
-  format: string;
-  rowCount: number;
-  fileSize: number;
-  checksum: string;
-  encrypted: boolean;
-  compressed: boolean;
-  cloudUrl?: string;
-  created: Date;
-  expires?: Date;
-  memoryStats?: MemoryStats;
-}
-
-export interface MemoryStats {
-  heapUsed: number;
-  heapTotal: number;
-  external: number;
-  rss: number;
-  peakMemoryUsage: number;
-  gcCollections: number;
-  averageMemoryUsage: number;
-}
-
-export interface MemoryThresholds {
-  warningThreshold: number;  // MB
-  criticalThreshold: number; // MB
-  gcThreshold: number;       // MB
-}
-
-class MemoryMonitor {
-  private memoryHistory: number[] = [];
-  private gcCollections = 0;
-  private peakMemoryUsage = 0;
-  private startTime = Date.now();
-  private thresholds: MemoryThresholds;
-
-  constructor(thresholds?: Partial<MemoryThresholds>) {
-    this.thresholds = {
-      warningThreshold: thresholds?.warningThreshold || 512, // 512MB
-      criticalThreshold: thresholds?.criticalThreshold || 1024, // 1GB
-      gcThreshold: thresholds?.gcThreshold || 256 // 256MB
-    };
-
-    // Monitor GC events if available
-    if (global.gc) {
-      const originalGc = global.gc;
-      (global as any).gc = () => {
-        this.gcCollections++;
-        return originalGc();
-      };
-    }
-  }
-
-  getCurrentMemoryUsage(): MemoryStats {
-    const memUsage = process.memoryUsage();
-    const heapUsedMB = memUsage.heapUsed / 1024 / 1024;
-    
-    // Track peak memory usage
-    if (heapUsedMB > this.peakMemoryUsage) {
-      this.peakMemoryUsage = heapUsedMB;
-    }
-
-    // Add to history for average calculation
-    this.memoryHistory.push(heapUsedMB);
-    if (this.memoryHistory.length > 100) {
-      this.memoryHistory.shift(); // Keep only last 100 measurements
-    }
-
-    const averageMemoryUsage = this.memoryHistory.reduce((a, b) => a + b, 0) / this.memoryHistory.length;
-
-    return {
-      heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024), // MB
-      heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024), // MB
-      external: Math.round(memUsage.external / 1024 / 1024), // MB
-      rss: Math.round(memUsage.rss / 1024 / 1024), // MB
-      peakMemoryUsage: Math.round(this.peakMemoryUsage),
-      gcCollections: this.gcCollections,
-      averageMemoryUsage: Math.round(averageMemoryUsage)
-    };
-  }
-
-  checkMemoryThresholds(): 'normal' | 'warning' | 'critical' {
-    const memStats = this.getCurrentMemoryUsage();
-    
-    if (memStats.heapUsed > this.thresholds.criticalThreshold) {
-      return 'critical';
-    } else if (memStats.heapUsed > this.thresholds.warningThreshold) {
-      return 'warning';
-    }
-    return 'normal';
-  }
-
-  shouldForceGC(): boolean {
-    const memStats = this.getCurrentMemoryUsage();
-    return memStats.heapUsed > this.thresholds.gcThreshold;
-  }
-
-  forceGarbageCollection(): void {
-    if (global.gc) {
-      console.log('Forcing garbage collection due to high memory usage');
-      (global as any).gc();
-      this.gcCollections++;
-    }
-  }
-
-  logMemoryStats(context: string): void {
-    const memStats = this.getCurrentMemoryUsage();
-    const threshold = this.checkMemoryThresholds();
-    
-    if (threshold !== 'normal') {
-      console.warn(`[${context}] Memory ${threshold}: ${JSON.stringify(memStats)}`);
-    } else {
-      console.log(`[${context}] Memory usage: Heap ${memStats.heapUsed}MB, RSS ${memStats.rss}MB`);
-    }
-  }
+  dataFlows: Array<{
+    source: string;
+    destination: string;
+    dataType: string;
+    volume: number;
+    protectionMethods: string[];
+  }>;
 }
 
 export class EnhancedExportService extends ExportService {
-  private s3Client?: any;
-  private azureClient?: any;
-  private resumableExports: Map<string, ResumableExportState> = new Map();
-  private memoryMonitor: MemoryMonitor;
+  private static readonly ENHANCED_EXPORT_DIR = 'exports/enhanced';
+  private activeEnhancedExports: Map<string, ExportProgress> = new Map();
 
   constructor() {
     super();
-    this.memoryMonitor = new MemoryMonitor({
-      warningThreshold: parseInt(process.env.MEMORY_WARNING_THRESHOLD || '512'),
-      criticalThreshold: parseInt(process.env.MEMORY_CRITICAL_THRESHOLD || '1024'),
-      gcThreshold: parseInt(process.env.MEMORY_GC_THRESHOLD || '256')
-    });
-    this.initializeCloudClients();
-  }
-
-  private initializeCloudClients() {
-    // Initialize S3 client if AWS credentials are available and SDK is installed
-    if (S3Client && process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {
-      this.s3Client = new S3Client({
-        region: process.env.AWS_REGION || 'us-east-1',
-        credentials: {
-          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
-        }
-      });
-    }
-
-    // Initialize Azure client if credentials are available and SDK is installed
-    if (BlobServiceClient && process.env.AZURE_STORAGE_CONNECTION_STRING) {
-      this.azureClient = BlobServiceClient.fromConnectionString(
-        process.env.AZURE_STORAGE_CONNECTION_STRING
-      );
+    // Ensure enhanced export directory exists
+    const exportPath = path.join(process.cwd(), EnhancedExportService.ENHANCED_EXPORT_DIR);
+    if (!fs.existsSync(exportPath)) {
+      fs.mkdirSync(exportPath, { recursive: true });
     }
   }
 
   /**
-   * Enhanced export with additional formats and features
+   * Generate PDF audit report
    */
-  async exportEnhanced(
-    tableName: string,
-    options: EnhancedExportOptions,
-    onProgress?: (progress: ExportProgress) => void
-  ): Promise<ExportMetadata> {
-    const exportId = crypto.randomUUID();
-    const startTime = new Date();
-
-    // Initialize memory monitoring for this export
-    this.memoryMonitor.logMemoryStats(`Export Start: ${exportId}`);
-
-    try {
-      // Check if this is a resume request
-      if (options.resumable && this.resumableExports.has(exportId)) {
-        return this.resumeExport(exportId, options, onProgress);
-      }
-
-      // Memory check before starting export
-      const memoryStatus = this.memoryMonitor.checkMemoryThresholds();
-      if (memoryStatus === 'critical') {
-        this.memoryMonitor.forceGarbageCollection();
-        
-        // Re-check after GC
-        const postGcStatus = this.memoryMonitor.checkMemoryThresholds();
-        if (postGcStatus === 'critical') {
-          throw new AppError('Insufficient memory to start export', 503, 'MEMORY_CRITICAL');
-        }
-      }
-
-      // Export data based on format
-      let result: ChunkedExportResult;
-      
-      if (options.format === 'parquet') {
-        if (!parquet) {
-          throw new AppError('Parquet export requires parquetjs-lite package to be installed', 400, 'PARQUET_NOT_AVAILABLE');
-        }
-        result = await this.exportToParquet(tableName, options, exportId, onProgress);
-      } else {
-        result = await this.exportLargeDataset(tableName, options as ExportOptions, onProgress);
-      }
-
-      // Memory monitoring after data export
-      this.memoryMonitor.logMemoryStats(`Data Export Complete: ${exportId}`);
-      
-      // Force GC if memory usage is high before post-processing
-      if (this.memoryMonitor.shouldForceGC()) {
-        this.memoryMonitor.forceGarbageCollection();
-      }
-
-      // Apply encryption if requested
-      if (options.encryption?.enabled) {
-        this.memoryMonitor.logMemoryStats(`Encryption Start: ${exportId}`);
-        await this.encryptExportFiles(result, options.encryption);
-        this.memoryMonitor.logMemoryStats(`Encryption Complete: ${exportId}`);
-      }
-
-      // Apply compression if requested
-      if (options.compression?.enabled) {
-        this.memoryMonitor.logMemoryStats(`Compression Start: ${exportId}`);
-        await this.compressExportFiles(result, options.compression);
-        this.memoryMonitor.logMemoryStats(`Compression Complete: ${exportId}`);
-      }
-
-      // Upload to cloud storage if configured
-      let cloudUrl: string | undefined;
-      if (options.cloudStorage) {
-        this.memoryMonitor.logMemoryStats(`Cloud Upload Start: ${exportId}`);
-        cloudUrl = await this.uploadToCloud(result, options.cloudStorage);
-        this.memoryMonitor.logMemoryStats(`Cloud Upload Complete: ${exportId}`);
-      }
-
-      // Calculate checksum
-      const checksum = await this.calculateChecksum(result);
-
-      // Final memory stats for metadata
-      const finalMemoryStats = this.memoryMonitor.getCurrentMemoryUsage();
-      this.memoryMonitor.logMemoryStats(`Export Finalization: ${exportId}`);
-
-      // Create metadata with memory statistics
-      const metadata: ExportMetadata = {
-        exportId,
-        format: options.format,
-        rowCount: result.totalRows,
-        fileSize: result.totalSize,
-        checksum,
-        encrypted: options.encryption?.enabled || false,
-        compressed: options.compression?.enabled || false,
-        cloudUrl,
-        created: startTime,
-        expires: this.calculateExpiration(),
-        memoryStats: finalMemoryStats
-      };
-
-      // Send notification if webhook provided
-      if (options.notificationWebhook) {
-        await this.sendExportNotification(metadata, options.notificationWebhook);
-      }
-
-      return metadata;
-
-    } catch (error) {
-      // Save state for resumable exports
-      if (options.resumable) {
-        this.saveResumableState(exportId, tableName, options);
-      }
-      
-      throw error;
-    }
-  }
-
-  /**
-   * Export to Parquet format
-   */
-  private async exportToParquet(
-    tableName: string,
-    options: EnhancedExportOptions,
-    exportId: string,
-    onProgress?: (progress: ExportProgress) => void
-  ): Promise<ChunkedExportResult> {
-    const schema = await this.inferParquetSchema(tableName);
-    const writer = await parquet.ParquetWriter.openFile(schema, 
-      path.join(process.cwd(), 'exports', `export_${exportId}.parquet`)
+  async generatePDFAuditReport(
+    data: AuditReportData,
+    options: EnhancedExportOptions = { format: 'pdf', reportType: 'audit' }
+  ): Promise<string> {
+    const exportId = uuidv4();
+    const fileName = `audit-report-${exportId}.pdf`;
+    const filePath = path.join(
+      process.cwd(),
+      EnhancedExportService.ENHANCED_EXPORT_DIR,
+      fileName
     );
 
-    const chunkSize = options.chunkSize || 10000;
-    let offset = 0;
-    let totalRows = 0;
-    const chunks: any[] = [];
+    return new Promise((resolve, reject) => {
+      try {
+        const doc = new PDFDocument({
+          size: 'A4',
+          margins: { top: 50, left: 50, bottom: 50, right: 50 },
+          info: {
+            Title: data.title,
+            Author: data.author,
+            Subject: 'Security Audit Report',
+            CreationDate: new Date()
+          }
+        });
 
-    try {
-      while (true) {
-        const data = await super.getDataChunk(tableName, options as ExportOptions, offset, chunkSize);
-        if (data.length === 0) break;
+        const stream = fs.createWriteStream(filePath);
+        doc.pipe(stream);
 
-        for (const row of data) {
-          await writer.appendRow(row);
+        // Cover Page
+        this.addCoverPage(doc, data);
+        doc.addPage();
+
+        // Table of Contents
+        this.addTableOfContents(doc);
+        doc.addPage();
+
+        // Executive Summary
+        this.addExecutiveSummary(doc, data);
+        doc.addPage();
+
+        // Timeline
+        this.addTimeline(doc, data.timeline);
+        doc.addPage();
+
+        // Findings
+        this.addFindings(doc, data.findings);
+        doc.addPage();
+
+        // Compliance Section
+        this.addComplianceSection(doc, data.compliance);
+        doc.addPage();
+
+        // Data Flow Diagrams
+        this.addDataFlowSection(doc, data.dataFlows);
+
+        // Appendices
+        if (options.includeAttachments) {
+          doc.addPage();
+          this.addAppendices(doc, data);
         }
 
-        totalRows += data.length;
-        offset += data.length;
+        doc.end();
 
-        if (onProgress) {
-          onProgress({
-            exportId,
-            totalRows,
-            processedRows: totalRows,
-            percentComplete: 100, // We don't know total in advance
-            status: 'processing',
-            startTime: new Date()
+        stream.on('finish', () => {
+          logger.info(`PDF audit report generated: ${fileName}`);
+          resolve(filePath);
+        });
+
+        stream.on('error', (error) => {
+          logger.error('Error generating PDF:', error);
+          reject(error);
+        });
+
+      } catch (error) {
+        logger.error('Error creating PDF document:', error);
+        reject(error);
+      }
+    });
+  }
+
+  private addCoverPage(doc: PDFKit.PDFDocument, data: AuditReportData): void {
+    // Title
+    doc.fontSize(28)
+      .font('Helvetica-Bold')
+      .text(data.title, { align: 'center' });
+
+    doc.moveDown(2);
+
+    // Organization
+    if (data.organization) {
+      doc.fontSize(18)
+        .font('Helvetica')
+        .text(data.organization, { align: 'center' });
+    }
+
+    doc.moveDown(4);
+
+    // Risk Level Badge
+    const riskColor = {
+      low: '#4CAF50',
+      medium: '#FF9800',
+      high: '#F44336'
+    }[data.summary.riskLevel];
+
+    doc.rect(200, doc.y, 200, 60)
+      .fillAndStroke(riskColor, riskColor);
+
+    doc.fillColor('white')
+      .fontSize(24)
+      .text(`Risk Level: ${data.summary.riskLevel.toUpperCase()}`, 
+        200, doc.y - 40, { width: 200, align: 'center' });
+
+    doc.fillColor('black');
+    doc.moveDown(6);
+
+    // Summary Stats
+    doc.fontSize(14)
+      .font('Helvetica')
+      .text(`Total Records: ${data.summary.totalRecords}`, { align: 'center' })
+      .text(`Processed: ${data.summary.processedRecords}`, { align: 'center' })
+      .text(`Sensitive Data Found: ${data.summary.sensitiveDataFound}`, { align: 'center' })
+      .text(`Compliance Score: ${data.summary.complianceScore}%`, { align: 'center' });
+
+    doc.moveDown(4);
+
+    // Generated info
+    doc.fontSize(10)
+      .fillColor('#666666')
+      .text(`Generated: ${data.generatedDate.toLocaleString()}`, { align: 'center' })
+      .text(`Author: ${data.author}`, { align: 'center' });
+  }
+
+  private addTableOfContents(doc: PDFKit.PDFDocument): void {
+    doc.fontSize(20)
+      .font('Helvetica-Bold')
+      .text('Table of Contents');
+
+    doc.moveDown();
+
+    const sections = [
+      { title: 'Executive Summary', page: 3 },
+      { title: 'Timeline', page: 4 },
+      { title: 'Findings', page: 5 },
+      { title: 'Compliance Status', page: 6 },
+      { title: 'Data Flow Analysis', page: 7 },
+      { title: 'Appendices', page: 8 }
+    ];
+
+    doc.fontSize(12).font('Helvetica');
+    sections.forEach(section => {
+      doc.text(`${section.title}`, 50, doc.y, { continued: true })
+        .text(`.`.repeat(50), { continued: true })
+        .text(`${section.page}`, { align: 'right' });
+      doc.moveDown(0.5);
+    });
+  }
+
+  private addExecutiveSummary(doc: PDFKit.PDFDocument, data: AuditReportData): void {
+    doc.fontSize(20)
+      .font('Helvetica-Bold')
+      .text('Executive Summary');
+
+    doc.moveDown();
+    doc.fontSize(11).font('Helvetica');
+
+    const summaryText = `This audit report presents a comprehensive analysis of data security and compliance status. 
+    A total of ${data.summary.totalRecords} records were analyzed, with ${data.summary.processedRecords} successfully processed. 
+    The analysis identified ${data.summary.sensitiveDataFound} instances of sensitive data requiring protection. 
+    The overall compliance score is ${data.summary.complianceScore}%, indicating a ${data.summary.riskLevel} risk level.`;
+
+    doc.text(summaryText, { align: 'justify' });
+
+    doc.moveDown();
+
+    // Key Findings Summary
+    doc.fontSize(14).font('Helvetica-Bold').text('Key Findings:');
+    doc.fontSize(11).font('Helvetica');
+
+    const criticalFindings = data.findings.filter(f => f.severity === 'critical');
+    if (criticalFindings.length > 0) {
+      doc.text(`• ${criticalFindings.length} critical issues requiring immediate attention`);
+    }
+
+    const warningFindings = data.findings.filter(f => f.severity === 'warning');
+    if (warningFindings.length > 0) {
+      doc.text(`• ${warningFindings.length} warnings that should be addressed`);
+    }
+
+    doc.text(`• ${data.compliance.frameworks.length} compliance frameworks evaluated`);
+  }
+
+  private addTimeline(doc: PDFKit.PDFDocument, timeline: AuditReportData['timeline']): void {
+    doc.fontSize(20)
+      .font('Helvetica-Bold')
+      .text('Audit Timeline');
+
+    doc.moveDown();
+
+    timeline.forEach(event => {
+      const severityColor = {
+        'info': '#2196F3',
+        'warning': '#FF9800',
+        'critical': '#F44336'
+      }[event.severity] || '#000000';
+
+      doc.fontSize(10)
+        .fillColor(severityColor)
+        .text(`${event.date.toLocaleDateString()} - ${event.event}`, { underline: true });
+
+      doc.fontSize(9)
+        .fillColor('black')
+        .text(event.details, { indent: 20 });
+
+      doc.moveDown(0.5);
+    });
+  }
+
+  private addFindings(doc: PDFKit.PDFDocument, findings: AuditReportData['findings']): void {
+    doc.fontSize(20)
+      .font('Helvetica-Bold')
+      .text('Detailed Findings');
+
+    doc.moveDown();
+
+    findings.forEach((finding, index) => {
+      const severityColor = {
+        'info': '#2196F3',
+        'warning': '#FF9800',
+        'critical': '#F44336'
+      }[finding.severity];
+
+      // Finding header
+      doc.fontSize(14)
+        .font('Helvetica-Bold')
+        .fillColor(severityColor)
+        .text(`${index + 1}. ${finding.category} (${finding.severity.toUpperCase()})`);
+
+      doc.fontSize(11)
+        .font('Helvetica')
+        .fillColor('black')
+        .text(finding.description, { indent: 20 });
+
+      // Recommendations
+      if (finding.recommendations.length > 0) {
+        doc.fontSize(12)
+          .font('Helvetica-Bold')
+          .text('Recommendations:', { indent: 20 });
+
+        doc.fontSize(10).font('Helvetica');
+        finding.recommendations.forEach(rec => {
+          doc.text(`• ${rec}`, { indent: 40 });
+        });
+      }
+
+      doc.moveDown();
+    });
+  }
+
+  private addComplianceSection(doc: PDFKit.PDFDocument, compliance: AuditReportData['compliance']): void {
+    doc.fontSize(20)
+      .font('Helvetica-Bold')
+      .text('Compliance Status');
+
+    doc.moveDown();
+
+    compliance.frameworks.forEach(framework => {
+      const status = compliance.status[framework];
+      const statusColor = {
+        'compliant': '#4CAF50',
+        'non-compliant': '#F44336',
+        'partial': '#FF9800'
+      }[status];
+
+      doc.fontSize(14)
+        .font('Helvetica-Bold')
+        .fillColor(statusColor)
+        .text(`${framework}: ${status.toUpperCase()}`);
+
+      doc.fontSize(10)
+        .font('Helvetica')
+        .fillColor('black');
+
+      const details = compliance.details[framework] || [];
+      details.forEach(detail => {
+        doc.text(`• ${detail}`, { indent: 20 });
+      });
+
+      doc.moveDown();
+    });
+  }
+
+  private addDataFlowSection(doc: PDFKit.PDFDocument, dataFlows: AuditReportData['dataFlows']): void {
+    doc.fontSize(20)
+      .font('Helvetica-Bold')
+      .text('Data Flow Analysis');
+
+    doc.moveDown();
+
+    // Create a simple table
+    const tableTop = doc.y;
+    const col1 = 50;
+    const col2 = 150;
+    const col3 = 250;
+    const col4 = 350;
+    const col5 = 450;
+
+    // Table headers
+    doc.fontSize(10).font('Helvetica-Bold');
+    doc.text('Source', col1, tableTop);
+    doc.text('Destination', col2, tableTop);
+    doc.text('Data Type', col3, tableTop);
+    doc.text('Volume', col4, tableTop);
+    doc.text('Protection', col5, tableTop);
+
+    // Draw header line
+    doc.moveTo(col1, doc.y)
+      .lineTo(550, doc.y)
+      .stroke();
+
+    doc.moveDown(0.5);
+
+    // Table rows
+    doc.fontSize(9).font('Helvetica');
+    dataFlows.forEach(flow => {
+      const rowY = doc.y;
+      doc.text(flow.source, col1, rowY, { width: 90 });
+      doc.text(flow.destination, col2, rowY, { width: 90 });
+      doc.text(flow.dataType, col3, rowY, { width: 90 });
+      doc.text(flow.volume.toString(), col4, rowY, { width: 90 });
+      doc.text(flow.protectionMethods.join(', '), col5, rowY, { width: 90 });
+      doc.moveDown();
+    });
+  }
+
+  private addAppendices(doc: PDFKit.PDFDocument, data: AuditReportData): void {
+    doc.fontSize(20)
+      .font('Helvetica-Bold')
+      .text('Appendices');
+
+    doc.moveDown();
+    doc.fontSize(11).font('Helvetica');
+
+    doc.text('A. Methodology', { underline: true });
+    doc.text('This audit was conducted using industry-standard security assessment methodologies...');
+
+    doc.moveDown();
+
+    doc.text('B. Glossary', { underline: true });
+    doc.text('PII - Personally Identifiable Information');
+    doc.text('GDPR - General Data Protection Regulation');
+    doc.text('CCPA - California Consumer Privacy Act');
+  }
+
+  /**
+   * Generate CSV decision export
+   */
+  async generateDecisionExport(
+    decisions: Array<{
+      id: string;
+      timestamp: Date;
+      decision: string;
+      confidence: number;
+      factors: { [key: string]: any };
+      outcome?: string;
+    }>,
+    options: EnhancedExportOptions = { format: 'csv' }
+  ): Promise<string> {
+    const exportId = uuidv4();
+    const fileName = `decisions-export-${exportId}.csv`;
+    const filePath = path.join(
+      process.cwd(),
+      EnhancedExportService.ENHANCED_EXPORT_DIR,
+      fileName
+    );
+
+    const headers = ['ID', 'Timestamp', 'Decision', 'Confidence', 'Key Factors', 'Outcome'];
+    const rows = [headers];
+
+    decisions.forEach(decision => {
+      const keyFactors = Object.entries(decision.factors)
+        .map(([key, value]) => `${key}: ${value}`)
+        .join('; ');
+
+      rows.push([
+        decision.id,
+        decision.timestamp.toISOString(),
+        decision.decision,
+        decision.confidence.toString(),
+        keyFactors,
+        decision.outcome || 'N/A'
+      ]);
+    });
+
+    const csvContent = rows.map(row => 
+      row.map(cell => `"${cell.toString().replace(/"/g, '""')}"`).join(',')
+    ).join('\n');
+
+    fs.writeFileSync(filePath, csvContent, 'utf-8');
+    logger.info(`Decision export CSV generated: ${fileName}`);
+
+    return filePath;
+  }
+
+  /**
+   * Generate methodology documentation
+   */
+  async generateMethodologyDoc(
+    methodology: {
+      title: string;
+      version: string;
+      sections: Array<{
+        heading: string;
+        content: string;
+        subsections?: Array<{
+          heading: string;
+          content: string;
+        }>;
+      }>;
+    },
+    format: 'pdf' | 'html' = 'pdf'
+  ): Promise<string> {
+    const exportId = uuidv4();
+    const fileName = `methodology-${exportId}.${format}`;
+    const filePath = path.join(
+      process.cwd(),
+      EnhancedExportService.ENHANCED_EXPORT_DIR,
+      fileName
+    );
+
+    if (format === 'html') {
+      const html = this.generateMethodologyHTML(methodology);
+      fs.writeFileSync(filePath, html, 'utf-8');
+    } else {
+      await this.generateMethodologyPDF(methodology, filePath);
+    }
+
+    logger.info(`Methodology documentation generated: ${fileName}`);
+    return filePath;
+  }
+
+  private generateMethodologyHTML(methodology: any): string {
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+  <title>${methodology.title}</title>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; margin: 40px; }
+    h1 { color: #333; border-bottom: 2px solid #333; padding-bottom: 10px; }
+    h2 { color: #666; margin-top: 30px; }
+    h3 { color: #999; margin-top: 20px; }
+    .version { color: #666; font-style: italic; }
+    .section { margin-bottom: 30px; }
+    .content { text-align: justify; }
+  </style>
+</head>
+<body>
+  <h1>${methodology.title}</h1>
+  <p class="version">Version: ${methodology.version}</p>
+  
+  ${methodology.sections.map(section => `
+    <div class="section">
+      <h2>${section.heading}</h2>
+      <div class="content">${section.content}</div>
+      ${section.subsections ? section.subsections.map(sub => `
+        <h3>${sub.heading}</h3>
+        <div class="content">${sub.content}</div>
+      `).join('') : ''}
+    </div>
+  `).join('')}
+</body>
+</html>`;
+  }
+
+  private async generateMethodologyPDF(methodology: any, filePath: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const doc = new PDFDocument({
+        size: 'A4',
+        margins: { top: 50, left: 50, bottom: 50, right: 50 }
+      });
+
+      const stream = fs.createWriteStream(filePath);
+      doc.pipe(stream);
+
+      // Title page
+      doc.fontSize(24)
+        .font('Helvetica-Bold')
+        .text(methodology.title, { align: 'center' });
+
+      doc.fontSize(12)
+        .font('Helvetica')
+        .fillColor('#666666')
+        .text(`Version: ${methodology.version}`, { align: 'center' });
+
+      doc.moveDown(2);
+
+      // Sections
+      methodology.sections.forEach((section: any) => {
+        doc.addPage();
+        
+        doc.fontSize(18)
+          .font('Helvetica-Bold')
+          .fillColor('black')
+          .text(section.heading);
+
+        doc.moveDown();
+        
+        doc.fontSize(11)
+          .font('Helvetica')
+          .text(section.content, { align: 'justify' });
+
+        if (section.subsections) {
+          section.subsections.forEach((sub: any) => {
+            doc.moveDown();
+            doc.fontSize(14)
+              .font('Helvetica-Bold')
+              .text(sub.heading);
+            
+            doc.fontSize(11)
+              .font('Helvetica')
+              .text(sub.content, { align: 'justify' });
           });
         }
-
-        if (data.length < chunkSize) break;
-      }
-
-      await writer.close();
-
-      const stats = fs.statSync(writer.path);
-      
-      return {
-        exportId,
-        chunks: [{
-          chunkIndex: 0,
-          startRow: 0,
-          endRow: totalRows - 1,
-          rowCount: totalRows,
-          size: stats.size,
-          path: writer.path,
-          created: new Date()
-        }],
-        totalRows,
-        totalSize: stats.size,
-        format: 'parquet',
-        completed: true
-      };
-    } catch (error) {
-      await writer.close();
-      throw error;
-    }
-  }
-
-  /**
-   * Infer Parquet schema from table
-   */
-  private async inferParquetSchema(tableName: string): Promise<any> {
-    // Get sample data to infer schema
-    const sampleData = await super.getDataChunk(tableName, { format: 'csv' } as ExportOptions, 0, 100);
-    if (sampleData.length === 0) {
-      throw new AppError('No data available to infer schema', 400, 'NO_DATA');
-    }
-
-    const fields: any = {};
-    const firstRow = sampleData[0];
-
-    for (const [key, value] of Object.entries(firstRow)) {
-      if (typeof value === 'string') {
-        fields[key] = { type: 'UTF8', optional: true };
-      } else if (typeof value === 'number') {
-        if (Number.isInteger(value)) {
-          fields[key] = { type: 'INT64', optional: true };
-        } else {
-          fields[key] = { type: 'DOUBLE', optional: true };
-        }
-      } else if (typeof value === 'boolean') {
-        fields[key] = { type: 'BOOLEAN', optional: true };
-      } else if (value instanceof Date) {
-        fields[key] = { type: 'TIMESTAMP_MILLIS', optional: true };
-      } else {
-        fields[key] = { type: 'UTF8', optional: true }; // Default to string
-      }
-    }
-
-    return new parquet.ParquetSchema(fields);
-  }
-
-  /**
-   * Encrypt export files with enhanced security
-   */
-  private async encryptExportFiles(
-    result: ChunkedExportResult,
-    encryptionConfig: any
-  ): Promise<void> {
-    const algorithm = encryptionConfig.algorithm || 'aes-256-gcm'; // Use GCM for authenticated encryption
-    const password = encryptionConfig.password || process.env.EXPORT_ENCRYPTION_KEY;
-    
-    if (!password) {
-      throw new AppError('Encryption password not provided', 400, 'NO_ENCRYPTION_KEY');
-    }
-
-    // Generate a random salt for each export
-    const salt = crypto.randomBytes(32);
-    const key = crypto.scryptSync(password, salt, 32);
-
-    for (const chunk of result.chunks) {
-      const inputPath = chunk.path;
-      const outputPath = `${inputPath}.enc`;
-      
-      // Generate a random IV for each file
-      const iv = crypto.randomBytes(16);
-      const cipher = crypto.createCipheriv(algorithm, key, iv);
-      
-      const input = fs.createReadStream(inputPath);
-      const output = fs.createWriteStream(outputPath);
-      
-      // Write salt and IV at the beginning of the file
-      output.write(salt);
-      output.write(iv);
-      
-      await new Promise<void>((resolve, reject) => {
-        input
-          .pipe(cipher)
-          .pipe(output, { end: false })
-          .on('finish', () => {
-            // For GCM mode, append the auth tag
-            if (algorithm.includes('gcm')) {
-              output.write(cipher.getAuthTag());
-            }
-            output.end();
-            resolve();
-          })
-          .on('error', reject);
       });
 
-      // Verify encryption was successful
-      const stats = fs.statSync(outputPath);
-      if (stats.size === 0) {
-        throw new AppError('Encryption failed - output file is empty', 500, 'ENCRYPTION_FAILED');
-      }
+      doc.end();
 
-      // Replace original with encrypted file
-      fs.unlinkSync(inputPath);
-      fs.renameSync(outputPath, inputPath);
-      
-      // Update chunk size to reflect encrypted file size
-      chunk.size = stats.size;
-      
-      // Log encryption success (without sensitive data)
-      console.log(`File encrypted successfully: ${path.basename(inputPath)}, size: ${stats.size} bytes`);
-    }
-  }
-
-  /**
-   * Compress export files
-   */
-  private async compressExportFiles(
-    result: ChunkedExportResult,
-    compressionConfig: any
-  ): Promise<void> {
-    const type = compressionConfig.type || 'gzip';
-
-    for (const chunk of result.chunks) {
-      const inputPath = chunk.path;
-      const outputPath = type === 'gzip' ? `${inputPath}.gz` : `${inputPath}.zip`;
-      
-      if (type === 'gzip') {
-        const gzip = zlib.createGzip({ level: 9 });
-        const input = fs.createReadStream(inputPath);
-        const output = fs.createWriteStream(outputPath);
-        
-        await new Promise<void>((resolve, reject) => {
-          input
-            .pipe(gzip)
-            .pipe(output)
-            .on('finish', () => resolve())
-            .on('error', reject);
-        });
-      } else {
-        // ZIP compression would require additional library like archiver
-        throw new AppError('ZIP compression not yet implemented', 501, 'NOT_IMPLEMENTED');
-      }
-
-      // Update file info
-      const stats = fs.statSync(outputPath);
-      chunk.size = stats.size;
-      
-      // Replace original with compressed file
-      fs.unlinkSync(inputPath);
-      fs.renameSync(outputPath, inputPath);
-    }
-  }
-
-  /**
-   * Upload to cloud storage
-   */
-  private async uploadToCloud(
-    result: ChunkedExportResult,
-    cloudConfig: any
-  ): Promise<string> {
-    switch (cloudConfig.provider) {
-      case 's3':
-        return this.uploadToS3(result, cloudConfig);
-      case 'azure':
-        return this.uploadToAzure(result, cloudConfig);
-      default:
-        throw new AppError('Unsupported cloud provider', 400, 'UNSUPPORTED_PROVIDER');
-    }
-  }
-
-  /**
-   * Upload to S3 with enhanced features
-   */
-  private async uploadToS3(
-    result: ChunkedExportResult,
-    cloudConfig: any
-  ): Promise<string> {
-    if (!S3Client) {
-      throw new AppError('S3 export requires @aws-sdk/client-s3 package to be installed', 400, 'S3_SDK_NOT_AVAILABLE');
-    }
-    if (!this.s3Client) {
-      throw new AppError('S3 client not configured', 500, 'S3_NOT_CONFIGURED');
-    }
-
-    const bucket = cloudConfig.bucket || process.env.S3_EXPORT_BUCKET;
-    if (!bucket) {
-      throw new AppError('S3 bucket not specified', 400, 'NO_BUCKET');
-    }
-
-    // Enhanced path generation with timestamp and export metadata
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const defaultPath = `exports/${timestamp}/${result.exportId}/${result.exportId}.${result.format}`;
-    const key = cloudConfig.path || defaultPath;
-
-    // Enhanced metadata for S3 objects
-    const metadata = {
-      'export-id': result.exportId,
-      'export-format': result.format,
-      'total-rows': result.totalRows.toString(),
-      'file-count': result.chunks.length.toString(),
-      'created-at': new Date().toISOString(),
-      'datacloak-version': process.env.npm_package_version || 'unknown'
-    };
-
-    // Enhanced tags for S3 objects (for cost tracking and governance)
-    const tagging = [
-      'project=datacloak-sentiment-workbench',
-      'type=export',
-      `format=${result.format}`,
-      `export-id=${result.exportId}`,
-      `created=${new Date().toISOString().split('T')[0]}`
-    ].join('&');
-
-    try {
-      if (result.chunks.length === 1) {
-        // Single file upload with enhanced options
-        const fileContent = fs.readFileSync(result.chunks[0].path);
-        
-        await this.s3Client.send(new PutObjectCommand({
-          Bucket: bucket,
-          Key: key,
-          Body: fileContent,
-          ContentType: this.getContentType(result.format),
-          ServerSideEncryption: 'AES256',
-          Metadata: metadata,
-          Tagging: tagging,
-          StorageClass: cloudConfig.storageClass || 'STANDARD', // Allow configurable storage class
-          CacheControl: 'max-age=31536000', // 1 year cache for exports
-          ContentDisposition: `attachment; filename="${result.exportId}.${result.format}"`
-        }));
-
-        console.log(`S3 upload completed: s3://${bucket}/${key}`);
-        return `s3://${bucket}/${key}`;
-      } else {
-        // Multipart upload for large files with progress tracking
-        console.log(`Starting multipart upload for ${result.chunks.length} chunks`);
-        
-        const multipartUpload = await this.s3Client.send(new CreateMultipartUploadCommand({
-          Bucket: bucket,
-          Key: key,
-          ContentType: this.getContentType(result.format),
-          ServerSideEncryption: 'AES256',
-          Metadata: metadata,
-          Tagging: tagging,
-          StorageClass: cloudConfig.storageClass || 'STANDARD',
-          CacheControl: 'max-age=31536000',
-          ContentDisposition: `attachment; filename="${result.exportId}.${result.format}"`
-        }));
-
-        const uploadId = multipartUpload.UploadId!;
-        const parts: any[] = [];
-
-        // Upload parts with retry logic
-        for (let i = 0; i < result.chunks.length; i++) {
-          const chunk = result.chunks[i];
-          const partNumber = i + 1;
-          let retryCount = 0;
-          const maxRetries = 3;
-
-          while (retryCount < maxRetries) {
-            try {
-              const fileContent = fs.readFileSync(chunk.path);
-              
-              const uploadPart = await this.s3Client.send(new UploadPartCommand({
-                Bucket: bucket,
-                Key: key,
-                UploadId: uploadId,
-                PartNumber: partNumber,
-                Body: fileContent
-              }));
-
-              parts.push({
-                ETag: uploadPart.ETag,
-                PartNumber: partNumber
-              });
-
-              console.log(`Uploaded part ${partNumber}/${result.chunks.length} (${chunk.size} bytes)`);
-              break;
-            } catch (error) {
-              retryCount++;
-              if (retryCount >= maxRetries) {
-                // Abort multipart upload on failure
-                try {
-                  await this.s3Client.send({
-                    name: 'AbortMultipartUploadCommand',
-                    input: { Bucket: bucket, Key: key, UploadId: uploadId }
-                  });
-                } catch (abortError) {
-                  console.error('Failed to abort multipart upload:', abortError);
-                }
-                throw new AppError(`Failed to upload part ${partNumber} after ${maxRetries} retries: ${error}`, 500, 'S3_UPLOAD_FAILED');
-              }
-              console.warn(`Retrying part ${partNumber} upload (attempt ${retryCount}/${maxRetries})`);
-              await new Promise(resolve => setTimeout(resolve, 1000 * retryCount)); // Exponential backoff
-            }
-          }
-        }
-
-        await this.s3Client.send(new CompleteMultipartUploadCommand({
-          Bucket: bucket,
-          Key: key,
-          UploadId: uploadId,
-          MultipartUpload: { Parts: parts }
-        }));
-
-        console.log(`S3 multipart upload completed: s3://${bucket}/${key}`);
-        return `s3://${bucket}/${key}`;
-      }
-    } catch (error) {
-      console.error('S3 upload failed:', error);
-      throw new AppError(`S3 upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, 'S3_UPLOAD_ERROR');
-    }
-  }
-
-  /**
-   * Upload to Azure Blob Storage with enhanced features
-   */
-  private async uploadToAzure(
-    result: ChunkedExportResult,
-    cloudConfig: any
-  ): Promise<string> {
-    if (!BlobServiceClient) {
-      throw new AppError('Azure export requires @azure/storage-blob package to be installed', 400, 'AZURE_SDK_NOT_AVAILABLE');
-    }
-    if (!this.azureClient) {
-      throw new AppError('Azure client not configured', 500, 'AZURE_NOT_CONFIGURED');
-    }
-
-    const containerName = cloudConfig.bucket || process.env.AZURE_CONTAINER_NAME || 'exports';
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const defaultPath = `exports/${timestamp}/${result.exportId}/${result.exportId}.${result.format}`;
-    const blobName = cloudConfig.path || defaultPath;
-
-    try {
-      const containerClient = this.azureClient.getContainerClient(containerName);
-      
-      // Create container if it doesn't exist with proper access level
-      await containerClient.createIfNotExists({
-        access: 'blob', // Allow anonymous read access to blobs
-        metadata: {
-          'created-by': 'datacloak-sentiment-workbench',
-          'purpose': 'export-storage'
-        }
-      });
-
-      const blockBlobClient = containerClient.getBlockBlobClient(blobName);
-
-      // Enhanced metadata for Azure blobs
-      const metadata = {
-        'exportId': result.exportId,
-        'exportFormat': result.format,
-        'totalRows': result.totalRows.toString(),
-        'fileCount': result.chunks.length.toString(),
-        'createdAt': new Date().toISOString(),
-        'datacloakVersion': process.env.npm_package_version || 'unknown'
-      };
-
-      // Enhanced blob properties
-      const blobHttpHeaders = {
-        blobContentType: this.getContentType(result.format),
-        blobContentDisposition: `attachment; filename="${result.exportId}.${result.format}"`,
-        blobCacheControl: 'max-age=31536000', // 1 year cache
-      };
-
-      // Enhanced tags for Azure blobs (for cost tracking and governance)
-      const tags = {
-        'project': 'datacloak-sentiment-workbench',
-        'type': 'export',
-        'format': result.format,
-        'exportId': result.exportId,
-        'created': new Date().toISOString().split('T')[0]
-      };
-
-      if (result.chunks.length === 1) {
-        // Single file upload with enhanced options
-        await blockBlobClient.uploadFile(result.chunks[0].path, {
-          metadata,
-          blobHTTPHeaders: blobHttpHeaders,
-          tags,
-          tier: cloudConfig.accessTier || 'Hot' // Allow configurable access tier
-        });
-
-        console.log(`Azure upload completed: ${blockBlobClient.url}`);
-      } else {
-        // Block upload for large files with retry logic
-        console.log(`Starting Azure block upload for ${result.chunks.length} chunks`);
-        
-        const blockIds: string[] = [];
-        const maxRetries = 3;
-
-        for (let i = 0; i < result.chunks.length; i++) {
-          const chunk = result.chunks[i];
-          const blockId = Buffer.from(`block-${String(i).padStart(8, '0')}`).toString('base64');
-          blockIds.push(blockId);
-
-          let retryCount = 0;
-          while (retryCount < maxRetries) {
-            try {
-              const fileContent = fs.readFileSync(chunk.path);
-              await blockBlobClient.stageBlock(blockId, fileContent, fileContent.length);
-              
-              console.log(`Uploaded block ${i + 1}/${result.chunks.length} (${chunk.size} bytes)`);
-              break;
-            } catch (error) {
-              retryCount++;
-              if (retryCount >= maxRetries) {
-                throw new AppError(`Failed to upload block ${i + 1} after ${maxRetries} retries: ${error}`, 500, 'AZURE_UPLOAD_FAILED');
-              }
-              console.warn(`Retrying block ${i + 1} upload (attempt ${retryCount}/${maxRetries})`);
-              await new Promise(resolve => setTimeout(resolve, 1000 * retryCount)); // Exponential backoff
-            }
-          }
-        }
-
-        // Commit the block list with metadata and properties
-        await blockBlobClient.commitBlockList(blockIds, {
-          metadata,
-          blobHTTPHeaders: blobHttpHeaders,
-          tags,
-          tier: cloudConfig.accessTier || 'Hot'
-        });
-
-        console.log(`Azure block upload completed: ${blockBlobClient.url}`);
-      }
-
-      return blockBlobClient.url;
-    } catch (error) {
-      console.error('Azure upload failed:', error);
-      throw new AppError(`Azure upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, 'AZURE_UPLOAD_ERROR');
-    }
-  }
-
-  /**
-   * Calculate checksum for exported files
-   */
-  private async calculateChecksum(result: ChunkedExportResult): Promise<string> {
-    const hash = crypto.createHash('sha256');
-
-    for (const chunk of result.chunks) {
-      const fileContent = fs.readFileSync(chunk.path);
-      hash.update(fileContent);
-    }
-
-    return hash.digest('hex');
-  }
-
-  /**
-   * Get content type for file format
-   */
-  private getContentType(format: string): string {
-    const contentTypes: Record<string, string> = {
-      csv: 'text/csv',
-      json: 'application/json',
-      excel: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      parquet: 'application/octet-stream'
-    };
-    return contentTypes[format] || 'application/octet-stream';
-  }
-
-  /**
-   * Calculate expiration date
-   */
-  private calculateExpiration(): Date {
-    const expirationHours = parseInt(process.env.EXPORT_EXPIRATION_HOURS || '24');
-    return new Date(Date.now() + expirationHours * 60 * 60 * 1000);
-  }
-
-  /**
-   * Decrypt export files (utility method for downloading encrypted exports)
-   */
-  async decryptExportFile(
-    encryptedFilePath: string,
-    password: string,
-    outputPath: string
-  ): Promise<void> {
-    if (!password) {
-      throw new AppError('Decryption password not provided', 400, 'NO_DECRYPTION_KEY');
-    }
-
-    const encryptedContent = fs.readFileSync(encryptedFilePath);
-    
-    // Extract salt, IV, and encrypted data
-    const salt = encryptedContent.subarray(0, 32);
-    const iv = encryptedContent.subarray(32, 48);
-    const authTag = encryptedContent.subarray(-16); // Last 16 bytes for GCM auth tag
-    const encrypted = encryptedContent.subarray(48, -16);
-    
-    // Derive key from password and salt
-    const key = crypto.scryptSync(password, salt, 32);
-    
-    // Create decipher with GCM mode
-    const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
-    decipher.setAuthTag(authTag);
-    
-    const output = fs.createWriteStream(outputPath);
-    
-    await new Promise<void>((resolve, reject) => {
-      const input = new Readable({
-        read() {
-          this.push(encrypted);
-          this.push(null);
-        }
-      });
-      
-      input
-        .pipe(decipher)
-        .pipe(output)
-        .on('finish', () => resolve())
-        .on('error', reject);
+      stream.on('finish', resolve);
+      stream.on('error', reject);
     });
-    
-    console.log(`File decrypted successfully: ${outputPath}`);
   }
 
   /**
-   * Send enhanced export notification webhook with retry logic
+   * Generate comprehensive export package
    */
-  private async sendExportNotification(
-    metadata: ExportMetadata,
-    webhookUrl: string
-  ): Promise<void> {
-    const maxRetries = 3;
-    let retryCount = 0;
-    
-    const payload = {
-      event: 'export_completed',
-      metadata: {
-        ...metadata,
-        // Don't include sensitive cloud URLs in webhook
-        cloudUrl: metadata.cloudUrl ? '[REDACTED]' : undefined
-      },
-      timestamp: new Date().toISOString(),
-      version: '1.0'
-    };
-
-    while (retryCount < maxRetries) {
-      try {
-        const response = await fetch(webhookUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'User-Agent': 'DataCloak-Sentiment-Workbench/1.0',
-            'X-DataCloak-Event': 'export_completed',
-            'X-DataCloak-Signature': this.generateWebhookSignature(payload)
-          },
-          body: JSON.stringify(payload),
-          signal: AbortSignal.timeout(10000) // 10 second timeout
-        });
-
-        if (response.ok) {
-          console.log(`Export notification sent successfully to ${webhookUrl}`);
-          return;
-        } else {
-          throw new Error(`Webhook returned status ${response.status}: ${response.statusText}`);
-        }
-      } catch (error) {
-        retryCount++;
-        if (retryCount >= maxRetries) {
-          console.error(`Failed to send export notification after ${maxRetries} retries:`, error);
-          return; // Don't throw error for webhook failures
-        }
-        console.warn(`Retrying webhook notification (attempt ${retryCount}/${maxRetries}):`, error);
-        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount)); // Exponential backoff
-      }
-    }
-  }
-
-  /**
-   * Generate webhook signature for security verification
-   */
-  private generateWebhookSignature(payload: any): string {
-    const secret = process.env.WEBHOOK_SECRET || 'default-secret';
-    const hmac = crypto.createHmac('sha256', secret);
-    hmac.update(JSON.stringify(payload));
-    return `sha256=${hmac.digest('hex')}`;
-  }
-
-  /**
-   * Resume an interrupted export
-   */
-  private async resumeExport(
-    exportId: string,
-    options: EnhancedExportOptions,
-    onProgress?: (progress: ExportProgress) => void
-  ): Promise<ExportMetadata> {
-    const state = this.resumableExports.get(exportId);
-    if (!state) {
-      throw new AppError('No resumable export found', 404, 'EXPORT_NOT_FOUND');
-    }
-
-    // Continue from last checkpoint
-    const result = await this.exportLargeDataset(
-      state.tableName,
-      { ...options, ...state.lastCheckpoint },
-      onProgress
+  async generateExportPackage(
+    packageName: string,
+    exports: Array<{
+      type: 'audit' | 'sentiment' | 'decisions' | 'raw';
+      data: any;
+      format: 'pdf' | 'csv' | 'json' | 'excel';
+    }>,
+    options: EnhancedExportOptions = { format: 'zip' }
+  ): Promise<string> {
+    const exportId = uuidv4();
+    const packageDir = path.join(
+      process.cwd(),
+      EnhancedExportService.ENHANCED_EXPORT_DIR,
+      `package-${exportId}`
     );
 
-    // Continue with encryption, compression, and upload...
-    return this.exportEnhanced(state.tableName, options, onProgress);
+    // Create package directory
+    fs.mkdirSync(packageDir, { recursive: true });
+
+    const exportedFiles: string[] = [];
+
+    // Generate individual exports
+    for (const exportItem of exports) {
+      let filePath: string;
+
+      switch (exportItem.type) {
+        case 'audit':
+          filePath = await this.generatePDFAuditReport(exportItem.data, {
+            format: 'pdf',
+            reportType: 'audit'
+          });
+          break;
+
+        case 'decisions':
+          filePath = await this.generateDecisionExport(exportItem.data, {
+            format: exportItem.format
+          });
+          break;
+
+        case 'sentiment':
+          filePath = await this.exportSentimentResults(exportItem.data, {
+            format: exportItem.format
+          });
+          break;
+
+        case 'raw':
+          filePath = await this.exportRawData(exportItem.data, {
+            format: exportItem.format
+          });
+          break;
+
+        default:
+          continue;
+      }
+
+      // Move file to package directory
+      const destPath = path.join(packageDir, path.basename(filePath));
+      fs.renameSync(filePath, destPath);
+      exportedFiles.push(destPath);
+    }
+
+    // Create README
+    const readmePath = path.join(packageDir, 'README.txt');
+    const readmeContent = `Export Package: ${packageName}
+Generated: ${new Date().toISOString()}
+Files included: ${exportedFiles.length}
+
+Contents:
+${exportedFiles.map(f => `- ${path.basename(f)}`).join('\n')}
+`;
+    fs.writeFileSync(readmePath, readmeContent);
+
+    // Create ZIP archive
+    const zipPath = `${packageDir}.zip`;
+    await this.createZipArchive(packageDir, zipPath);
+
+    // Clean up directory
+    this.cleanupDirectory(packageDir);
+
+    logger.info(`Export package created: ${path.basename(zipPath)}`);
+    return zipPath;
+  }
+
+  private async exportSentimentResults(data: any, options: ExportOptions): Promise<string> {
+    const exportId = uuidv4();
+    const fileName = `sentiment-results-${exportId}.${options.format}`;
+    const filePath = path.join(
+      process.cwd(),
+      EnhancedExportService.ENHANCED_EXPORT_DIR,
+      fileName
+    );
+
+    if (options.format === 'excel') {
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Sentiment Results');
+
+      // Add headers
+      worksheet.columns = [
+        { header: 'ID', key: 'id', width: 15 },
+        { header: 'Text', key: 'text', width: 50 },
+        { header: 'Sentiment', key: 'sentiment', width: 15 },
+        { header: 'Confidence', key: 'confidence', width: 15 },
+        { header: 'Timestamp', key: 'timestamp', width: 20 }
+      ];
+
+      // Add data
+      worksheet.addRows(data);
+
+      // Style headers
+      worksheet.getRow(1).font = { bold: true };
+      worksheet.getRow(1).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFE0E0E0' }
+      };
+
+      await workbook.xlsx.writeFile(filePath);
+    } else {
+      // Use parent class methods for other formats
+      const size = await this.exportToJson(data, filePath);
+    }
+
+    return filePath;
+  }
+
+  private async exportRawData(data: any, options: ExportOptions): Promise<string> {
+    const exportId = uuidv4();
+    const fileName = `raw-data-${exportId}.${options.format}`;
+    const filePath = path.join(
+      process.cwd(),
+      EnhancedExportService.ENHANCED_EXPORT_DIR,
+      fileName
+    );
+
+    if (options.format === 'json') {
+      fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+    } else if (options.format === 'csv') {
+      // Convert to CSV (simple implementation)
+      const rows = data.map((item: any) => Object.values(item).join(','));
+      const headers = Object.keys(data[0]).join(',');
+      fs.writeFileSync(filePath, [headers, ...rows].join('\n'));
+    }
+
+    return filePath;
+  }
+
+  private async createZipArchive(sourceDir: string, destPath: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const output = fs.createWriteStream(destPath);
+      const archive = archiver('zip', { zlib: { level: 9 } });
+
+      output.on('close', () => resolve());
+      archive.on('error', (err) => reject(err));
+
+      archive.pipe(output);
+      archive.directory(sourceDir, false);
+      archive.finalize();
+    });
+  }
+
+  private cleanupDirectory(dirPath: string): void {
+    if (fs.existsSync(dirPath)) {
+      fs.readdirSync(dirPath).forEach(file => {
+        const filePath = path.join(dirPath, file);
+        if (fs.lstatSync(filePath).isDirectory()) {
+          this.cleanupDirectory(filePath);
+        } else {
+          fs.unlinkSync(filePath);
+        }
+      });
+      fs.rmdirSync(dirPath);
+    }
   }
 
   /**
-   * Save resumable export state
+   * Stream export progress
    */
-  private saveResumableState(
+  streamExportProgress(
     exportId: string,
-    tableName: string,
-    options: EnhancedExportOptions
+    onProgress: (progress: ExportProgress) => void
   ): void {
-    this.resumableExports.set(exportId, {
-      exportId,
-      tableName,
-      options,
-      lastCheckpoint: {
-        offset: 0, // Would be updated during export
-        processedRows: 0
-      },
-      created: new Date()
-    });
-  }
-
-
-  /**
-   * Create a streaming export for very large datasets with enhanced features
-   */
-  createEnhancedExportStream(
-    tableName: string,
-    options: EnhancedExportOptions
-  ): Readable {
-    const chunkSize = options.chunkSize || 10000;
-    let offset = 0;
-    let isFirstChunk = true;
-    let isDone = false;
-    let chunkCount = 0;
-    
-    // Bind methods to avoid 'this' context issues
-    const getDataChunk = super.getDataChunk.bind(this);
-    const dataToEnhancedCSVString = this.dataToEnhancedCSVString.bind(this);
-    const dataToParquetBuffer = this.dataToParquetBuffer.bind(this);
-    const memoryMonitor = this.memoryMonitor;
-    
-    // Log initial memory state
-    memoryMonitor.logMemoryStats(`Stream Export Start: ${tableName}`);
-    
-    return new Readable({
-      objectMode: false,
-      async read() {
-        if (isDone) {
-          memoryMonitor.logMemoryStats(`Stream Export Complete: ${tableName}`);
-          this.push(null);
-          return;
-        }
-
-        try {
-          // Check memory before processing each chunk
-          if (chunkCount % 10 === 0) { // Check every 10 chunks
-            const memoryStatus = memoryMonitor.checkMemoryThresholds();
-            if (memoryStatus === 'critical') {
-              memoryMonitor.forceGarbageCollection();
-              memoryMonitor.logMemoryStats(`Stream GC Triggered: chunk ${chunkCount}`);
-            } else if (memoryStatus === 'warning') {
-              memoryMonitor.logMemoryStats(`Stream Memory Warning: chunk ${chunkCount}`);
-            }
-          }
-
-          const data = await getDataChunk(tableName, options as ExportOptions, offset, chunkSize);
-          
-          if (data.length === 0) {
-            isDone = true;
-            this.push(null);
-            return;
-          }
-
-          let chunk: string | Buffer;
-          
-          switch (options.format) {
-            case 'csv':
-              chunk = dataToEnhancedCSVString(data, isFirstChunk && options.includeHeaders !== false);
-              break;
-            case 'json':
-              if (isFirstChunk) {
-                chunk = '[\n' + data.map(row => JSON.stringify(row)).join(',\n');
-              } else {
-                chunk = ',\n' + data.map(row => JSON.stringify(row)).join(',\n');
-              }
-              if (data.length < chunkSize) {
-                chunk += '\n]';
-              }
-              break;
-            case 'excel':
-              // For streaming Excel, we'll use a simplified CSV-like format
-              chunk = dataToEnhancedCSVString(data, isFirstChunk && options.includeHeaders !== false);
-              break;
-            case 'parquet':
-              // For Parquet streaming, we'll need to buffer and write in larger chunks
-              chunk = await dataToParquetBuffer(data, isFirstChunk);
-              break;
-            default:
-              throw new Error(`Streaming not supported for ${options.format} format`);
-          }
-
-          this.push(chunk);
-          offset += data.length;
-          isFirstChunk = false;
-          chunkCount++;
-          
-          if (data.length < chunkSize) {
-            isDone = true;
-          }
-        } catch (error) {
-          memoryMonitor.logMemoryStats(`Stream Export Error: ${tableName}`);
-          this.destroy(error as Error);
+    const checkProgress = setInterval(() => {
+      const progress = this.getExportProgress(exportId) || 
+                      this.activeEnhancedExports.get(exportId);
+      
+      if (progress) {
+        onProgress(progress);
+        
+        if (progress.status === 'completed' || progress.status === 'failed') {
+          clearInterval(checkProgress);
         }
       }
-    });
-  }
-
-  /**
-   * Get memory statistics for monitoring
-   */
-  getMemoryStats(): MemoryStats {
-    return this.memoryMonitor.getCurrentMemoryUsage();
-  }
-
-  /**
-   * Force garbage collection if available
-   */
-  forceGarbageCollection(): boolean {
-    if (this.memoryMonitor.shouldForceGC()) {
-      this.memoryMonitor.forceGarbageCollection();
-      return true;
-    }
-    return false;
-  }
-
-  /**
-   * Get memory thresholds configuration
-   */
-  getMemoryThresholds(): MemoryThresholds {
-    return this.memoryMonitor['thresholds'];
-  }
-
-  /**
-   * Check if memory usage is within safe limits
-   */
-  isMemoryUsageSafe(): boolean {
-    return this.memoryMonitor.checkMemoryThresholds() === 'normal';
-  }
-
-  /**
-   * Create a transform stream for format conversion
-   */
-  createFormatTransformStream(
-    fromFormat: string,
-    toFormat: string
-  ): Transform {
-    return new Transform({
-      objectMode: true,
-      transform(chunk, encoding, callback) {
-        try {
-          // Parse input format
-          let data: any;
-          if (fromFormat === 'csv') {
-            // CSV parsing logic
-            data = (this as any).parseCSVChunk(chunk);
-          } else if (fromFormat === 'json') {
-            data = JSON.parse(chunk);
-          }
-
-          // Convert to output format
-          let output: any;
-          if (toFormat === 'parquet') {
-            // Parquet conversion would be handled differently
-            output = data;
-          } else if (toFormat === 'json' && fromFormat === 'csv') {
-            output = JSON.stringify(data);
-          } else if (toFormat === 'avro' && fromFormat === 'json') {
-            // Avro conversion (simplified - would need proper Avro schema)
-            output = JSON.stringify(data);
-          }
-
-          callback(null, output);
-        } catch (error) {
-          callback(error as Error);
-        }
-      }
-    });
-  }
-
-  /**
-   * Convert data to Parquet buffer format (simplified implementation)
-   */
-  private async dataToParquetBuffer(data: any[], isFirstChunk: boolean): Promise<Buffer> {
-    // This is a simplified implementation. In production, use a proper Parquet library
-    const jsonString = JSON.stringify(data);
-    return Buffer.from(jsonString, 'utf-8');
-  }
-
-  /**
-   * Create data to CSV string for streaming
-   */
-  private dataToEnhancedCSVString(data: any[], includeHeaders: boolean): string {
-    if (data.length === 0) return '';
-    
-    const headers = Object.keys(data[0]);
-    const rows: string[] = [];
-    
-    if (includeHeaders) {
-      rows.push(headers.map(h => `"${h}"`).join(','));
-    }
-    
-    for (const row of data) {
-      const values = headers.map(header => {
-        const value = row[header];
-        if (value === null || value === undefined) return '';
-        if (typeof value === 'string' && (value.includes(',') || value.includes('"') || value.includes('\n'))) {
-          return `"${value.replace(/"/g, '""')}"`;
-        }
-        return value.toString();
-      });
-      rows.push(values.join(','));
-    }
-    
-    return rows.join('\n') + '\n';
-  }
-
-  /**
-   * Parse CSV chunk
-   */
-  private parseCSVChunk(chunk: any): any[] {
-    // Simple CSV parsing - in production use a proper CSV parser
-    const lines = chunk.toString().split('\n');
-    if (lines.length === 0) return [];
-    
-    const headers = lines[0].split(',').map((h: string) => h.trim().replace(/^"|"$/g, ''));
-    const data: any[] = [];
-    
-    for (let i = 1; i < lines.length; i++) {
-      if (!lines[i].trim()) continue;
-      
-      const values = lines[i].split(',').map((v: string) => v.trim().replace(/^"|"$/g, ''));
-      const row: any = {};
-      
-      headers.forEach((header: string, index: number) => {
-        row[header] = values[index] || '';
-      });
-      
-      data.push(row);
-    }
-    
-    return data;
+    }, 500);
   }
 }
 
-interface ResumableExportState {
-  exportId: string;
-  tableName: string;
-  options: EnhancedExportOptions;
-  lastCheckpoint: any;
-  created: Date;
-}
+export const enhancedExportService = new EnhancedExportService();

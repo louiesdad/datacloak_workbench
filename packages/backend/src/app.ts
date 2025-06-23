@@ -7,12 +7,24 @@ import { config } from './config/env';
 import { errorHandler } from './middleware/error.middleware';
 import { setupRoutes } from './routes';
 import { JobQueueService } from './services/job-queue.service';
+import { initializeDatabases } from './database';
 
 // Export app and job queue for testing
 export let jobQueue: JobQueueService;
 
-export const createApp = (): Application => {
+export const createApp = async (): Promise<Application> => {
   const app = express() as any; // Add index signature to allow property assignment
+  
+  // Skip database initialization here - it's done in server.ts
+  // Only initialize if not already initialized (for tests)
+  if (process.env.NODE_ENV === 'test') {
+    try {
+      await initializeDatabases();
+    } catch (error) {
+      console.error('Failed to initialize databases:', error);
+      // For tests, continue without throwing to avoid breaking the app creation
+    }
+  }
   
   // Initialize job queue
   jobQueue = new JobQueueService({ maxConcurrentJobs: 3 });

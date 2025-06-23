@@ -7,6 +7,7 @@ const sentimentController = new SentimentController();
 
 // Sentiment analysis endpoints
 router.post('/analyze', asyncHandler(sentimentController.analyzeSentiment.bind(sentimentController)));
+router.post('/analyze/preview', asyncHandler(sentimentController.analyzePreview.bind(sentimentController)));
 router.post('/batch', asyncHandler(sentimentController.batchAnalyzeSentiment.bind(sentimentController)));
 router.get('/history', asyncHandler(sentimentController.getAnalysisHistory.bind(sentimentController)));
 router.get('/statistics', asyncHandler(sentimentController.getStatistics.bind(sentimentController)));

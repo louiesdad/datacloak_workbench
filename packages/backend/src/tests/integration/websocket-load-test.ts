@@ -13,7 +13,7 @@ class WebSocketLoadTest {
   private clients: Map<string, TestClient> = new Map();
   private serverUrl: string;
   private testDuration: number;
-  private sentimentInterval?: NodeJS.Timer;
+  private sentimentInterval?: NodeJS.Timeout;
   private startTime: number = 0;
 
   constructor(serverUrl: string = 'ws://localhost:8000/ws', testDuration: number = 60000) {

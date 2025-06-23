@@ -2,7 +2,7 @@ import { Readable } from 'stream';
 import * as fs from 'fs';
 import * as path from 'path';
 import { AppError } from '../middleware/error.middleware';
-import { getSQLiteConnection } from '../database/sqlite';
+import { getSQLiteConnection } from '../database/sqlite-refactored';
 import { runDuckDB } from '../database/duckdb-pool';
 import * as XLSX from 'xlsx';
 import { v4 as uuidv4 } from 'uuid';
@@ -262,7 +262,7 @@ export class ExportService {
     offset: number,
     limit: number
   ): Promise<any[]> {
-    const db = getSQLiteConnection();
+    const db = await getSQLiteConnection();
     if (!db) {
       throw new AppError('Database connection not available', 500, 'DB_ERROR');
     }
@@ -314,7 +314,7 @@ export class ExportService {
    * Get total row count for export
    */
   private async getRowCount(tableName: string, filters?: Record<string, any>): Promise<number> {
-    const db = getSQLiteConnection();
+    const db = await getSQLiteConnection();
     if (!db) {
       throw new AppError('Database connection not available', 500, 'DB_ERROR');
     }

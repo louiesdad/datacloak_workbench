@@ -10,7 +10,7 @@ const testJobQueue = () => {
 
   beforeAll(async () => {
     // Create app and get the job queue instance
-    app = createApp();
+    app = await createApp();
     server = app.listen(0); // Use random port for testing
     
     // Get job queue instance from the app

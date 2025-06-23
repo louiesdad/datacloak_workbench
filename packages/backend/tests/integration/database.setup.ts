@@ -1,6 +1,5 @@
-import { getSQLiteConnection, closeSQLiteConnection } from '../../src/database/sqlite';
+import { getSQLiteConnection, closeSQLiteConnection } from '../../src/database/sqlite-refactored';
 import { initializeDatabases } from '../../src/database';
-import { createTables as createSQLiteTables } from '../../src/database/sqlite';
 
 export let testDb: any = null;
 
@@ -14,7 +13,7 @@ export const setupTestDatabase = async (): Promise<void> => {
     await initializeDatabases();
     
     // Get the database connection
-    testDb = getSQLiteConnection();
+    testDb = await getSQLiteConnection();
     
     if (!testDb) {
       throw new Error('Failed to get SQLite connection');
@@ -23,8 +22,7 @@ export const setupTestDatabase = async (): Promise<void> => {
     // Enable foreign key constraints
     testDb.pragma('foreign_keys = ON');
     
-    // Create test tables
-    await createSQLiteTables();
+    // Tables are created by migrations during initializeDatabases()
     
     console.log('Test database (SQLite) initialized successfully');
   } catch (error) {

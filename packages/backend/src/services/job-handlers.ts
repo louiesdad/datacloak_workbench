@@ -15,8 +15,78 @@ export const createSentimentAnalysisBatchHandler = (
   sentimentService: SentimentService
 ): JobHandler => {
   return async (job: Job, updateProgress: (progress: number) => void) => {
-    const { texts, enablePIIMasking = true } = job.data;
+    const { texts, enablePIIMasking = true, datasetId, filePath, selectedColumns, analysisMode, model = 'basic' } = job.data;
     
+    // Handle full dataset analysis
+    if (filePath && datasetId) {
+      const dataService = new DataService();
+      const fileStreamService = new FileStreamService();
+      
+      // Resolve the file path
+      const uploadDir = path.join(process.cwd(), 'data', 'uploads');
+      const fullPath = filePath.startsWith('/') ? filePath : path.join(uploadDir, path.basename(filePath));
+      
+      if (!fs.existsSync(fullPath)) {
+        throw new Error(`File not found: ${fullPath}`);
+      }
+      
+      const results: any[] = [];
+      let totalProcessed = 0;
+
+      const progressCallback = (progress: StreamProgress) => {
+        updateProgress(progress.percentComplete);
+      };
+
+      const chunkCallback = async (chunkResult: any) => {
+        for (const row of chunkResult.data) {
+          try {
+            // Extract text from selected columns
+            const textsToAnalyze: string[] = [];
+            
+            if (analysisMode === 'existing' && selectedColumns && selectedColumns.length > 0) {
+              selectedColumns.forEach((column: string) => {
+                const text = row[column];
+                if (text && typeof text === 'string' && text.trim()) {
+                  textsToAnalyze.push(text);
+                }
+              });
+            }
+            
+            if (textsToAnalyze.length > 0) {
+              // Analyze each text found
+              for (const text of textsToAnalyze) {
+                const result = await sentimentService.analyzeSentiment(text, enablePIIMasking, model);
+                results.push({
+                  originalRow: row,
+                  ...result
+                });
+              }
+              totalProcessed++;
+            }
+          } catch (error) {
+            // Skip rows that can't be analyzed
+            console.error('Error analyzing row:', error);
+          }
+        }
+      };
+
+      await fileStreamService.streamProcessFile(fullPath, {
+        onProgress: progressCallback,
+        onChunk: chunkCallback,
+        chunkSize: 100 * 1024 * 1024 // 100MB chunks
+      });
+
+      return {
+        totalProcessed,
+        results,
+        summary: {
+          successful: results.filter(r => !r.error).length,
+          failed: results.filter(r => r.error).length
+        }
+      };
+    }
+    
+    // Handle text array analysis (original behavior)
     if (!Array.isArray(texts) || texts.length === 0) {
       throw new Error('Invalid job data: texts array is required');
     }
@@ -33,7 +103,7 @@ export const createSentimentAnalysisBatchHandler = (
 
       for (const text of batch) {
         try {
-          const result = await sentimentService.analyzeSentiment(text, enablePIIMasking);
+          const result = await sentimentService.analyzeSentiment(text, enablePIIMasking, model);
           batchResults.push({
             originalText: text,
             ...result
@@ -206,12 +276,12 @@ export const createDataExportHandler = (
 
     try {
       // Get dataset info
-      const dataset = dataService.getDatasetById(datasetId);
+      const dataset = await dataService.getDatasetById(datasetId);
       updateProgress(20);
 
       // Get upload directory
       const uploadDir = path.join(process.cwd(), 'data', 'uploads');
-      const filePath = path.join(uploadDir, dataset.filename);
+      const filePath = path.join(uploadDir, dataset.filename || '');
 
       if (!fs.existsSync(filePath)) {
         throw new Error(`Dataset file not found: ${filePath}`);

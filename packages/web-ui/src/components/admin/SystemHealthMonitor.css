@@ -1,0 +1,224 @@
+.system-health-monitor {
+  @apply space-y-6;
+}
+
+/* Header */
+.health-monitor-header {
+  @apply flex items-center justify-between bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border;
+}
+
+.header-left {
+  @apply flex flex-col space-y-2;
+}
+
+.uptime-info {
+  @apply flex items-center space-x-2;
+}
+
+.header-controls {
+  @apply flex items-center space-x-2;
+}
+
+/* Alerts Section */
+.alerts-section {
+  @apply w-full;
+}
+
+/* Overview Grid */
+.overview-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4;
+}
+
+.metric-display {
+  @apply flex items-center justify-between mb-3;
+}
+
+/* Queue Metrics */
+.queue-metrics {
+  @apply grid grid-cols-2 md:grid-cols-4 gap-4;
+}
+
+.queue-metric {
+  @apply text-center;
+}
+
+.metric-label {
+  @apply text-sm text-gray-500 dark:text-gray-400 block;
+}
+
+.metric-value {
+  @apply text-lg font-bold text-gray-900 dark:text-white;
+}
+
+/* Charts Section */
+.charts-section {
+  @apply w-full;
+}
+
+.charts-grid {
+  @apply grid grid-cols-1 lg:grid-cols-2 gap-6;
+}
+
+.chart-item {
+  @apply space-y-4;
+}
+
+.chart-title {
+  @apply text-lg font-semibold text-gray-900 dark:text-white;
+}
+
+/* Status Indicators */
+.status-healthy {
+  @apply text-green-600 dark:text-green-400;
+}
+
+.status-warning {
+  @apply text-yellow-600 dark:text-yellow-400;
+}
+
+.status-critical {
+  @apply text-red-600 dark:text-red-400;
+}
+
+/* Animation for real-time updates */
+@keyframes pulse-metric {
+  0% { @apply bg-green-50 dark:bg-green-900/20; }
+  50% { @apply bg-green-100 dark:bg-green-900/40; }
+  100% { @apply bg-green-50 dark:bg-green-900/20; }
+}
+
+.metric-display.updating {
+  animation: pulse-metric 1s ease-in-out;
+}
+
+/* Alert pulse animation */
+@keyframes alert-pulse {
+  0% { @apply bg-red-50 dark:bg-red-900/20; }
+  50% { @apply bg-red-100 dark:bg-red-900/40; }
+  100% { @apply bg-red-50 dark:bg-red-900/20; }
+}
+
+.alerts-section.critical {
+  animation: alert-pulse 2s ease-in-out infinite;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .health-monitor-header {
+    @apply flex-col space-y-4 items-start;
+  }
+  
+  .header-controls {
+    @apply w-full justify-between;
+  }
+  
+  .overview-grid {
+    @apply grid-cols-1;
+  }
+  
+  .queue-metrics {
+    @apply grid-cols-2;
+  }
+  
+  .charts-grid {
+    @apply grid-cols-1;
+  }
+}
+
+@media (max-width: 640px) {
+  .queue-metrics {
+    @apply grid-cols-1 gap-2;
+  }
+  
+  .metric-display {
+    @apply flex-col space-y-1 items-start;
+  }
+  
+  .chart-title {
+    @apply text-base;
+  }
+}
+
+/* Dark mode specific styles */
+@media (prefers-color-scheme: dark) {
+  .system-health-monitor {
+    @apply text-white;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .metric-display,
+  .queue-metric {
+    @apply border border-gray-300 dark:border-gray-600 p-2 rounded;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .metric-display.updating,
+  .alerts-section.critical {
+    animation: none;
+  }
+}
+
+/* Custom progress bar colors for health status */
+.progress-healthy {
+  @apply bg-green-500;
+}
+
+.progress-warning {
+  @apply bg-yellow-500;
+}
+
+.progress-critical {
+  @apply bg-red-500;
+}
+
+/* Loading states */
+.health-monitor-loading {
+  @apply flex items-center justify-center py-8;
+}
+
+.loading-spinner {
+  @apply animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600;
+}
+
+/* Threshold indicators */
+.threshold-normal {
+  @apply text-green-600 dark:text-green-400;
+}
+
+.threshold-warning {
+  @apply text-yellow-600 dark:text-yellow-400;
+}
+
+.threshold-critical {
+  @apply text-red-600 dark:text-red-400;
+}
+
+/* Accessibility improvements */
+.metric-display[aria-live="polite"] {
+  @apply sr-only;
+}
+
+/* Focus indicators for interactive elements */
+.header-controls button:focus-visible {
+  @apply ring-2 ring-blue-500 ring-offset-2;
+}
+
+/* Print styles */
+@media print {
+  .system-health-monitor {
+    @apply text-black;
+  }
+  
+  .header-controls,
+  .charts-section {
+    @apply hidden;
+  }
+  
+  .overview-grid {
+    @apply grid-cols-2;
+  }
+}

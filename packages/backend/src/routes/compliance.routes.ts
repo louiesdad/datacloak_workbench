@@ -4,30 +4,30 @@ import { complianceController } from '../controllers/compliance.controller';
 const router = Router();
 
 // Dashboard and overview
-router.get('/dashboard', complianceController.getDashboard);
-router.get('/health', complianceController.getComplianceHealth);
+router.get('/dashboard', complianceController.getDashboard.bind(complianceController));
+router.get('/health', complianceController.getComplianceHealth.bind(complianceController));
 
 // Compliance audits
-router.post('/audit', complianceController.performAudit);
-router.get('/audit/report', complianceController.generateAuditReport);
-router.get('/audit/download', complianceController.downloadAuditReport);
+router.post('/audit', complianceController.performAudit.bind(complianceController));
+router.get('/audit/report', complianceController.generateAuditReport.bind(complianceController));
+router.get('/audit/download', complianceController.downloadAuditReport.bind(complianceController));
 
 // Framework-specific endpoints
-router.get('/framework/:framework', complianceController.getFrameworkDetails);
-router.get('/rules', complianceController.getComplianceRules);
+router.get('/framework/:framework', complianceController.getFrameworkDetails.bind(complianceController));
+router.get('/rules', complianceController.getComplianceRules.bind(complianceController));
 
 // Enhanced API Endpoints - TASK-201
 // Framework management endpoints
-router.get('/frameworks', complianceController.getFrameworks);
-router.post('/frameworks', complianceController.createFramework);
-router.put('/frameworks/:id', complianceController.updateFramework);
-router.delete('/frameworks/:id', complianceController.deleteFramework);
-router.get('/frameworks/:id/config', complianceController.getFrameworkConfig);
-router.put('/frameworks/:id/config', complianceController.updateFrameworkConfig);
+router.get('/frameworks', complianceController.getFrameworks.bind(complianceController));
+router.post('/frameworks', complianceController.createFramework.bind(complianceController));
+router.put('/frameworks/:id', complianceController.updateFramework.bind(complianceController));
+router.delete('/frameworks/:id', complianceController.deleteFramework.bind(complianceController));
+router.get('/frameworks/:id/config', complianceController.getFrameworkConfig.bind(complianceController));
+router.put('/frameworks/:id/config', complianceController.updateFrameworkConfig.bind(complianceController));
 
 // Report generation endpoint
-router.post('/report', complianceController.generateComplianceReport);
-router.get('/reports', complianceController.getReports);
-router.get('/reports/:id', complianceController.getReport);
+router.post('/report', complianceController.generateComplianceReport.bind(complianceController));
+router.get('/reports', complianceController.getReports.bind(complianceController));
+router.get('/reports/:id', complianceController.getReport.bind(complianceController));
 
 export default router;

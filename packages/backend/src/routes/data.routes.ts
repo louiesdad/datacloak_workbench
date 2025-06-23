@@ -15,6 +15,9 @@ const upload = multer({
     fieldSize: 100 * 1024 * 1024, // 100MB field size
   },
   fileFilter: (_req, file, cb) => {
+    console.log('Upload file filter - filename:', file.originalname);
+    console.log('Upload file filter - mimetype:', file.mimetype);
+    
     const allowedMimeTypes = [
       'text/csv',
       'application/vnd.ms-excel',
@@ -25,6 +28,7 @@ const upload = multer({
     if (allowedMimeTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
+      console.error('Rejected file type:', file.mimetype, 'allowed:', allowedMimeTypes);
       cb(new Error('INVALID_FILE_TYPE'));
     }
   },

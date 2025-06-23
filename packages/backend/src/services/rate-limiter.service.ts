@@ -17,69 +17,109 @@ export interface RateLimitResult {
 }
 
 export class RateLimiterService {
-  private tokens: number;
-  private lastRefill: number;
-  private readonly maxTokens: number;
-  private readonly refillRate: number;
-  private readonly intervalMs: number;
-  // private requestQueue: Array<{
-  //   resolve: (value: boolean) => void;
-  //   timestamp: number;
-  // }> = [];
+  private buckets = new Map<string, {
+    tokens: number;
+    lastRefill: number;
+    maxTokens: number;
+    refillRate: number;
+    intervalMs: number;
+  }>();
+  
+  private defaultOptions: RateLimiterOptions;
 
-  constructor(options: RateLimiterOptions) {
-    this.maxTokens = options.maxBurst || options.maxRequests;
-    this.tokens = this.maxTokens;
-    this.refillRate = options.maxRequests / (options.intervalMs / 1000);
-    this.intervalMs = options.intervalMs;
-    this.lastRefill = Date.now();
+  constructor(config?: any, cache?: any, logger?: any) {
+    this.defaultOptions = {
+      maxRequests: config?.get('RATE_LIMIT_MAX_REQUESTS') || 100,
+      intervalMs: config?.get('RATE_LIMIT_WINDOW_MS') || 60000
+    };
+  }
+
+  private getBucket(key: string, options?: RateLimiterOptions) {
+    const opts = options || this.defaultOptions;
+    
+    if (!this.buckets.has(key)) {
+      this.buckets.set(key, {
+        tokens: opts.maxBurst || opts.maxRequests,
+        lastRefill: Date.now(),
+        maxTokens: opts.maxBurst || opts.maxRequests,
+        refillRate: opts.maxRequests / (opts.intervalMs / 1000),
+        intervalMs: opts.intervalMs
+      });
+    }
+    
+    return this.buckets.get(key)!;
+  }
+
+  /**
+   * Consume points from the rate limiter
+   */
+  async consume(key: string, points: number = 1): Promise<boolean> {
+    const result = await this.checkLimit(key, points);
+    return result.allowed;
+  }
+
+  /**
+   * Reset the rate limiter for a specific key
+   */
+  async reset(key: string): Promise<void> {
+    this.buckets.delete(key);
+  }
+
+  /**
+   * Get remaining points for a key
+   */
+  async getRemaining(key: string): Promise<number> {
+    const bucket = this.getBucket(key);
+    this.refillTokens(bucket);
+    return Math.max(0, Math.floor(bucket.tokens));
   }
 
   /**
    * Check if a request can be made
    */
-  async checkLimit(): Promise<RateLimitResult> {
-    this.refillTokens();
+  async checkLimit(key: string = 'default', points: number = 1): Promise<RateLimitResult> {
+    const bucket = this.getBucket(key);
+    this.refillTokens(bucket);
 
-    if (this.tokens >= 1) {
-      this.tokens -= 1;
+    if (bucket.tokens >= points) {
+      bucket.tokens -= points;
       return {
         allowed: true,
-        tokensRemaining: Math.floor(this.tokens),
-        resetsAt: new Date(this.lastRefill + this.intervalMs)
+        tokensRemaining: Math.floor(bucket.tokens),
+        resetsAt: new Date(bucket.lastRefill + bucket.intervalMs)
       };
     }
 
     // Calculate retry after
-    const tokensNeeded = 1 - this.tokens;
-    const retryAfter = Math.ceil((tokensNeeded / this.refillRate) * 1000);
+    const tokensNeeded = points - bucket.tokens;
+    const retryAfter = Math.ceil((tokensNeeded / bucket.refillRate) * 1000);
 
     return {
       allowed: false,
       retryAfter,
       tokensRemaining: 0,
-      resetsAt: new Date(this.lastRefill + this.intervalMs)
+      resetsAt: new Date(bucket.lastRefill + bucket.intervalMs)
     };
   }
 
   /**
    * Wait for rate limit if necessary
    */
-  async waitForLimit(): Promise<void> {
-    const result = await this.checkLimit();
+  async waitForLimit(key: string = 'default'): Promise<void> {
+    const result = await this.checkLimit(key);
     
     if (!result.allowed && result.retryAfter) {
       await this.sleep(result.retryAfter);
       // Recursive call to check again after waiting
-      await this.waitForLimit();
+      await this.waitForLimit(key);
     }
   }
 
   /**
    * Execute a function with rate limiting
    */
-  async execute<T>(fn: () => Promise<T>): Promise<T> {
-    await this.waitForLimit();
+  async execute<T>(fn: () => Promise<T>, key: string = 'default'): Promise<T> {
+    await this.waitForLimit(key);
     return fn();
   }
 
@@ -88,12 +128,13 @@ export class RateLimiterService {
    */
   async executeBatch<T>(
     requests: Array<() => Promise<T>>,
+    key: string = 'default',
     onProgress?: (completed: number, total: number) => void
   ): Promise<T[]> {
     const results: T[] = [];
     
     for (let i = 0; i < requests.length; i++) {
-      const result = await this.execute(requests[i]);
+      const result = await this.execute(requests[i], key);
       results.push(result);
       
       if (onProgress) {
@@ -107,42 +148,41 @@ export class RateLimiterService {
   /**
    * Get current rate limit status
    */
-  getStatus(): {
+  getStatus(key: string = 'default'): {
     tokensRemaining: number;
     maxTokens: number;
     refillRate: number;
     nextRefillIn: number;
   } {
-    this.refillTokens();
+    const bucket = this.getBucket(key);
+    this.refillTokens(bucket);
     
     return {
-      tokensRemaining: Math.floor(this.tokens),
-      maxTokens: this.maxTokens,
-      refillRate: this.refillRate,
-      nextRefillIn: Math.max(0, this.intervalMs - (Date.now() - this.lastRefill))
+      tokensRemaining: Math.floor(bucket.tokens),
+      maxTokens: bucket.maxTokens,
+      refillRate: bucket.refillRate,
+      nextRefillIn: Math.max(0, bucket.intervalMs - (Date.now() - bucket.lastRefill))
     };
   }
 
   /**
-   * Reset the rate limiter
+   * Reset all rate limiters
    */
-  reset(): void {
-    this.tokens = this.maxTokens;
-    this.lastRefill = Date.now();
-    // this.requestQueue = [];
+  resetAll(): void {
+    this.buckets.clear();
   }
 
   /**
    * Refill tokens based on elapsed time
    */
-  private refillTokens(): void {
+  private refillTokens(bucket: any): void {
     const now = Date.now();
-    const elapsed = now - this.lastRefill;
+    const elapsed = now - bucket.lastRefill;
     
     if (elapsed > 0) {
-      const tokensToAdd = (elapsed / 1000) * this.refillRate;
-      this.tokens = Math.min(this.maxTokens, this.tokens + tokensToAdd);
-      this.lastRefill = now;
+      const tokensToAdd = (elapsed / 1000) * bucket.refillRate;
+      bucket.tokens = Math.min(bucket.maxTokens, bucket.tokens + tokensToAdd);
+      bucket.lastRefill = now;
     }
   }
 
@@ -155,11 +195,13 @@ export class RateLimiterService {
  * Create a rate limiter for OpenAI API (3 requests per second)
  */
 export function createOpenAIRateLimiter(): RateLimiterService {
-  return new RateLimiterService({
+  const service = new RateLimiterService();
+  (service as any).defaultOptions = {
     maxRequests: 3,
     intervalMs: 1000,
     maxBurst: 5 // Allow small burst
-  });
+  };
+  return service;
 }
 
 /**
@@ -168,9 +210,11 @@ export function createOpenAIRateLimiter(): RateLimiterService {
 export function createBatchRateLimiter(
   requestsPerMinute: number = 60
 ): RateLimiterService {
-  return new RateLimiterService({
+  const service = new RateLimiterService();
+  (service as any).defaultOptions = {
     maxRequests: requestsPerMinute,
     intervalMs: 60000,
     maxBurst: Math.min(requestsPerMinute * 2, 100)
-  });
+  };
+  return service;
 }

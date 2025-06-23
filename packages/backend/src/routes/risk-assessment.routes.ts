@@ -4,25 +4,25 @@ import { riskAssessmentController } from '../controllers/risk-assessment.control
 const router = Router();
 
 // Risk assessment endpoints
-router.post('/analyze', riskAssessmentController.analyzeRisk);
-router.get('/analyze/:assessmentId', riskAssessmentController.getAssessment);
-router.post('/batch-analyze', riskAssessmentController.batchAnalyzeRisk);
-router.get('/history', riskAssessmentController.getAssessmentHistory);
-router.delete('/history/:assessmentId', riskAssessmentController.deleteAssessment);
+router.post('/analyze', riskAssessmentController.analyzeRisk.bind(riskAssessmentController));
+router.get('/analyze/:assessmentId', riskAssessmentController.getAssessment.bind(riskAssessmentController));
+router.post('/batch-analyze', riskAssessmentController.batchAnalyzeRisk.bind(riskAssessmentController));
+router.get('/history', riskAssessmentController.getAssessmentHistory.bind(riskAssessmentController));
+router.delete('/history/:assessmentId', riskAssessmentController.deleteAssessment.bind(riskAssessmentController));
 
 // Risk scoring and configuration
-router.get('/scoring-rules', riskAssessmentController.getScoringRules);
-router.put('/scoring-rules', riskAssessmentController.updateScoringRules);
-router.get('/thresholds', riskAssessmentController.getRiskThresholds);
-router.put('/thresholds', riskAssessmentController.updateRiskThresholds);
+router.get('/scoring-rules', riskAssessmentController.getScoringRules.bind(riskAssessmentController));
+router.put('/scoring-rules', riskAssessmentController.updateScoringRules.bind(riskAssessmentController));
+router.get('/thresholds', riskAssessmentController.getRiskThresholds.bind(riskAssessmentController));
+router.put('/thresholds', riskAssessmentController.updateRiskThresholds.bind(riskAssessmentController));
 
 // Geographic risk analysis
-router.get('/geographic-rules', riskAssessmentController.getGeographicRules);
-router.put('/geographic-rules', riskAssessmentController.updateGeographicRules);
-router.post('/geographic-analyze', riskAssessmentController.analyzeGeographicRisk);
+router.get('/geographic-rules', riskAssessmentController.getGeographicRules.bind(riskAssessmentController));
+router.put('/geographic-rules', riskAssessmentController.updateGeographicRules.bind(riskAssessmentController));
+router.post('/geographic-analyze', riskAssessmentController.analyzeGeographicRisk.bind(riskAssessmentController));
 
 // Risk mitigation recommendations
-router.get('/recommendations/:assessmentId', riskAssessmentController.getRecommendations);
-router.post('/recommendations/generate', riskAssessmentController.generateRecommendations);
+router.get('/recommendations/:assessmentId', riskAssessmentController.getRecommendations.bind(riskAssessmentController));
+router.post('/recommendations/generate', riskAssessmentController.generateRecommendations.bind(riskAssessmentController));
 
 export default router;

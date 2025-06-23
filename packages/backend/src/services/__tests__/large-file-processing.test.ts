@@ -1,13 +1,28 @@
-// Mock problematic dependencies before importing DataService
+// Mock ioredis with proper EventEmitter interface
 jest.mock('ioredis', () => {
-  return jest.fn().mockImplementation(() => ({
-    connect: jest.fn().mockResolvedValue('OK' as any),
-    get: jest.fn(),
-    set: jest.fn(),
-    del: jest.fn(),
-    on: jest.fn(),
-    ping: jest.fn().mockResolvedValue('PONG' as any)
-  }));
+  const { EventEmitter } = require('events');
+  
+  class MockRedisInstance extends EventEmitter {
+    constructor() {
+      super();
+      setImmediate(() => {
+        this.emit('connect');
+        this.emit('ready');
+        this.emit('connected');
+      });
+    }
+    
+    connect = jest.fn().mockResolvedValue('OK');
+    get = jest.fn();
+    set = jest.fn();
+    del = jest.fn();
+    ping = jest.fn().mockResolvedValue('PONG');
+    on(event: string, listener: (...args: any[]) => void) {
+      return super.on(event, listener);
+    }
+  }
+  
+  return jest.fn().mockImplementation(() => new MockRedisInstance());
 });
 
 // Mock other problematic services

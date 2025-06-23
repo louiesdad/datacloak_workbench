@@ -1,7 +1,66 @@
 import { test, expect, expectWorkflowStep, waitForFileProcessing, uploadFile } from '../fixtures/test-fixtures';
 
 test.describe('Data Transform Operations', () => {
-  test.beforeEach(async ({ page, mockBackend, mockOpenAI, platformBridge }) => {
+  test.beforeEach(async ({ page }) => {
+    // Set up Playwright route mocking for file upload
+    await page.route('**/api/v1/data/upload', async (route) => {
+      if (route.request().method() === 'POST') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            data: {
+              dataset: {
+                datasetId: `ds_${Date.now()}`,
+                originalFilename: 'test.csv',
+                recordCount: 100,
+                size: 1024,
+                status: 'ready'
+              },
+              fieldInfo: [
+                { name: 'id', type: 'string', confidence: 0.9 },
+                { name: 'name', type: 'string', confidence: 0.95 },
+                { name: 'age', type: 'number', confidence: 0.99 },
+                { name: 'email', type: 'string', confidence: 0.95 },
+                { name: 'score', type: 'number', confidence: 0.98 }
+              ],
+              securityScan: {
+                piiDetected: false,
+                sensitiveFields: [],
+                riskLevel: 'low'
+              }
+            }
+          })
+        });
+      }
+    });
+
+    // Mock data profiling endpoint
+    await page.route('**/api/v1/data/profile/**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: {
+            summary: {
+              totalRecords: 100,
+              totalFields: 5,
+              dataQuality: 0.95
+            },
+            fields: [
+              { name: 'id', type: 'string', nullCount: 0, uniqueCount: 100 },
+              { name: 'name', type: 'string', nullCount: 2, uniqueCount: 98 },
+              { name: 'age', type: 'number', nullCount: 0, min: 18, max: 65 },
+              { name: 'email', type: 'string', nullCount: 5, uniqueCount: 95 },
+              { name: 'score', type: 'number', nullCount: 0, min: 0, max: 100 }
+            ]
+          }
+        })
+      });
+    });
+
     // Navigate and complete initial file upload and profiling
     await page.goto('/');
     await page.waitForLoadState('networkidle');
@@ -278,19 +337,22 @@ test.describe('Data Transform Operations', () => {
     });
   });
 
-  test('should handle transform validation and errors', async ({ page, testFiles, browserMode, mockBackend }) => {
+  test('should handle transform validation and errors', async ({ page, testFiles, browserMode }) => {
     await navigateToTransformStep(page, testFiles, browserMode);
 
     await test.step('Simulate transform error', async () => {
-      // Mock transform API error
-      mockBackend.use(
-        require('msw').http.post('http://localhost:3001/api/transform', () => {
-          return require('msw').HttpResponse.json(
-            { error: { message: 'Transform validation failed', code: 'VALIDATION_ERROR' } },
-            { status: 400 }
-          );
-        })
-      );
+      // Mock transform API error with Playwright
+      await page.route('**/api/transform', async (route) => {
+        if (route.request().method() === 'POST') {
+          await route.fulfill({
+            status: 400,
+            contentType: 'application/json',
+            body: JSON.stringify({
+              error: { message: 'Transform validation failed', code: 'VALIDATION_ERROR' }
+            })
+          });
+        }
+      });
     });
 
     await test.step('Attempt to apply transform and check error handling', async () => {

@@ -30,6 +30,7 @@ export { WebSocketStatus } from './WebSocketStatus';
 export { RealTimeDashboard } from './RealTimeDashboard';
 export { JobQueueManager } from './JobQueueManager';
 export { StreamingProgress } from './StreamingProgress';
+export { PDFAuditExporter } from './PDFAuditExporter';
 
 export type { FieldProfile, FileProfile } from './ProfilerUI';
 export type { StreamingStats } from './StreamingProgress';

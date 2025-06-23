@@ -15,15 +15,20 @@ test.describe('Field Detection and PII Identification', () => {
     });
 
     await test.step('Navigate to field detection/profiling step', async () => {
-      // Look for profile/review step activation
-      const profileStep = page.locator('.workflow-step').filter({ hasText: /review|profile|field/i });
+      // Wait for navigation to profile step after upload
+      await page.waitForTimeout(3000);
       
-      // If not automatically advanced, try clicking the step
-      if (await profileStep.isVisible() && !(await profileStep.locator('.active').isVisible().catch(() => false))) {
-        await profileStep.click();
+      // Check if we're on the profile step
+      const profileHeading = page.locator('.step-header h1').filter({ hasText: /data profile/i });
+      if (!(await profileHeading.isVisible({ timeout: 5000 }).catch(() => false))) {
+        // Try clicking profile step in navigation
+        const profileNavStep = page.locator('.workflow-step').filter({ hasText: /data profile/i });
+        if (await profileNavStep.isVisible()) {
+          await profileNavStep.click();
+          await page.waitForTimeout(2000);
+        }
       }
       
-      await page.waitForTimeout(2000);
       await page.screenshot({ path: 'test-results/11-field-detection-start.png', fullPage: true });
     });
 
@@ -43,17 +48,19 @@ test.describe('Field Detection and PII Identification', () => {
         { name: 'comment', type: 'text' }
       ];
       
-      // Look for field list or table
-      const fieldContainer = page.locator('.field-list, .fields-table, [data-testid="field-list"], .profiler-fields');
-      await expect(fieldContainer.first()).toBeVisible({ timeout: 10000 });
+      // Look for field rows in profiler
+      const fieldRows = page.locator('.field-row');
+      await expect(fieldRows.first()).toBeVisible({ timeout: 10000 });
       
       // Check for individual fields
       for (const field of expectedFields) {
-        try {
-          await expectFieldDetected(page, field.name, field.type);
-          console.log(`✓ Detected field: ${field.name} (${field.type})`);
-        } catch (error) {
-          console.log(`? Field detection uncertain: ${field.name} - ${error}`);
+        const fieldRow = page.locator(`[data-testid="field-row-${field.name}"]`);
+        if (await fieldRow.isVisible({ timeout: 2000 }).catch(() => false)) {
+          // Check field type is shown
+          const fieldType = await fieldRow.locator('.field-type').textContent();
+          console.log(`✓ Detected field: ${field.name} (type: ${fieldType})`);
+        } else {
+          console.log(`? Field not found: ${field.name}`);
         }
       }
       
@@ -90,12 +97,12 @@ test.describe('Field Detection and PII Identification', () => {
     });
 
     await test.step('Navigate to field detection', async () => {
-      // Advance to profiling/review step
-      const reviewStep = page.locator('.workflow-step').filter({ hasText: /review|profile/i });
-      if (await reviewStep.isVisible({ timeout: 5000 }).catch(() => false)) {
-        await reviewStep.click();
-        await page.waitForTimeout(2000);
-      }
+      // Wait for navigation to profile step
+      await page.waitForTimeout(3000);
+      
+      // Verify we're on profile step
+      const profileHeading = page.locator('.step-header h1').filter({ hasText: /data profile/i });
+      await expect(profileHeading).toBeVisible({ timeout: 10000 });
       
       await page.screenshot({ path: 'test-results/13-pii-detection-start.png', fullPage: true });
     });

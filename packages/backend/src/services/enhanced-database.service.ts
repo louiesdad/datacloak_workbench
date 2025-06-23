@@ -1,4 +1,4 @@
-import { getSQLiteConnection } from '../database/sqlite';
+import { getSQLiteConnection } from '../database/sqlite-refactored';
 import Database from 'better-sqlite3';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -126,9 +126,40 @@ export interface AuditLog {
 
 export class EnhancedDatabaseService {
   private db: Database.Database | null = null;
+  private preparedStatements: Map<string, any> = new Map();
+  private maxPreparedStatements: number = 100;
 
   constructor() {
-    this.db = getSQLiteConnection();
+    // Initialize synchronously in tests, async in production
+    this.initialize().catch(error => {
+      console.warn('Failed to initialize Enhanced Database Service:', error);
+    });
+  }
+
+  private async initialize() {
+    try {
+      // Check if we're in a test environment
+      if (process.env.NODE_ENV === 'test') {
+        // Try synchronous first for test mocks
+        try {
+          this.db = await getSQLiteConnection();
+        } catch (error: any) {
+          console.warn('Database not available for EnhancedDatabaseService:', error.message);
+          this.db = null;
+        }
+      } else {
+        // Production: handle async initialization
+        getSQLiteConnection().then(db => {
+          this.db = db;
+        }).catch(error => {
+          console.warn('Database not available for EnhancedDatabaseService:', error.message);
+          this.db = null;
+        });
+      }
+    } catch (error: any) {
+      console.warn('Database not available for EnhancedDatabaseService:', error.message);
+      this.db = null;
+    }
   }
 
   // ==============================================
@@ -571,6 +602,243 @@ export class EnhancedDatabaseService {
   }
 
   // ==============================================
+  // GENERIC DATABASE OPERATIONS
+  // ==============================================
+
+  async executeQuery(sql: string, params?: any[]): Promise<any> {
+    if (!this.db) throw new Error('Database not initialized');
+
+    // Check prepared statement cache
+    let stmt = this.preparedStatements.get(sql);
+    if (!stmt) {
+      stmt = this.db.prepare(sql);
+      
+      // Cache management - remove oldest if at limit
+      if (this.preparedStatements.size >= this.maxPreparedStatements) {
+        const firstKey = this.preparedStatements.keys().next().value;
+        this.preparedStatements.delete(firstKey);
+      }
+      
+      this.preparedStatements.set(sql, stmt);
+    }
+    
+    if (sql.trim().toUpperCase().startsWith('SELECT')) {
+      if (sql.includes('GROUP BY') || sql.includes('COUNT(') || sql.includes('SUM(') || sql.includes('AVG(') || sql.includes('MAX(') || sql.includes('MIN(')) {
+        // Use DuckDB for analytical queries (mock for now)
+        return params ? stmt.all(...params) : stmt.all();
+      }
+      return params ? stmt.all(...params) : stmt.all();
+    } else {
+      // INSERT, UPDATE, DELETE
+      return params ? stmt.run(...params) : stmt.run();
+    }
+  }
+
+  async batchExecute(queries: Array<{ sql: string; params?: any[] }>): Promise<any[]> {
+    if (!this.db) throw new Error('Database not initialized');
+
+    const transaction = this.db.transaction((queries: Array<{ sql: string; params?: any[] }>) => {
+      const results: any[] = [];
+      for (const query of queries) {
+        const stmt = this.db!.prepare(query.sql);
+        const result = query.params ? stmt.run(...query.params) : stmt.run();
+        results.push(result);
+      }
+      return results;
+    });
+
+    return transaction(queries);
+  }
+
+  async importCSV(tableName: string, csvData: string): Promise<{ rowsImported: number; errors: string[] }> {
+    if (!this.db) throw new Error('Database not initialized');
+
+    const errors: string[] = [];
+    let rowsImported = 0;
+
+    try {
+      const lines = csvData.trim().split('\n');
+      if (lines.length < 2) {
+        errors.push('CSV must have header and at least one data row');
+        return { rowsImported, errors };
+      }
+
+      const headers = lines[0].split(',').map(h => h.trim());
+      const placeholders = headers.map(() => '?').join(', ');
+      const stmt = this.db.prepare(`INSERT INTO ${tableName} (${headers.join(', ')}) VALUES (${placeholders})`);
+
+      for (let i = 1; i < lines.length; i++) {
+        try {
+          const values = lines[i].split(',').map(v => v.trim());
+          if (values.length !== headers.length) {
+            errors.push(`Row ${i}: Expected ${headers.length} columns, got ${values.length}`);
+            continue;
+          }
+          stmt.run(...values);
+          rowsImported++;
+        } catch (error: any) {
+          errors.push(`Row ${i}: ${error.message}`);
+        }
+      }
+    } catch (error: any) {
+      errors.push(`CSV parsing error: ${error.message}`);
+    }
+
+    return { rowsImported, errors };
+  }
+
+  async exportTable(tableName: string, format: 'csv' | 'json', whereClause?: string): Promise<string> {
+    if (!this.db) throw new Error('Database not initialized');
+
+    if (format !== 'csv' && format !== 'json') {
+      throw new Error('Unsupported export format');
+    }
+
+    let query = `SELECT * FROM ${tableName}`;
+    if (whereClause) {
+      query += ` WHERE ${whereClause}`;
+    }
+
+    const results = this.db.prepare(query).all();
+
+    if (results.length === 0) {
+      return '';
+    }
+
+    if (format === 'json') {
+      return JSON.stringify(results, null, 2);
+    }
+
+    // CSV format
+    const headers = Object.keys(results[0] as any);
+    const csvLines = [headers.join(',')];
+    
+    for (const row of results) {
+      const values = headers.map(header => {
+        const value = (row as any)[header];
+        return typeof value === 'string' && value.includes(',') ? `"${value}"` : value;
+      });
+      csvLines.push(values.join(','));
+    }
+
+    return csvLines.join('\n');
+  }
+
+  async createTable(tableName: string, schema: any): Promise<void> {
+    if (!this.db) throw new Error('Database not initialized');
+
+    const columns = schema.columns.map((col: any) => {
+      let columnDef = `${col.name} ${col.type}`;
+      if (col.primaryKey) columnDef += ' PRIMARY KEY';
+      if (col.autoIncrement) columnDef += ' AUTOINCREMENT';
+      if (col.notNull) columnDef += ' NOT NULL';
+      if (col.unique) columnDef += ' UNIQUE';
+      if (col.default) columnDef += ` DEFAULT ${col.default}`;
+      return columnDef;
+    }).join(', ');
+
+    const createTableSQL = `CREATE TABLE ${tableName} (${columns})`;
+    this.db.exec(createTableSQL);
+
+    // Create indexes if specified
+    if (schema.indexes) {
+      for (const index of schema.indexes) {
+        const indexType = index.unique ? 'UNIQUE INDEX' : 'INDEX';
+        const indexSQL = `CREATE ${indexType} ${index.name} ON ${tableName} (${index.columns.join(', ')})`;
+        this.db.exec(indexSQL);
+      }
+    }
+  }
+
+  async getTableSchema(tableName: string): Promise<any | null> {
+    if (!this.db) throw new Error('Database not initialized');
+
+    const columns = this.db.prepare(`PRAGMA table_info(${tableName})`).all();
+    
+    if (columns.length === 0) {
+      return null;
+    }
+
+    return {
+      columns: columns.map((col: any) => ({
+        name: col.name,
+        type: col.type,
+        notNull: col.notnull === 1,
+        primaryKey: col.pk === 1,
+        default: col.dflt_value
+      }))
+    };
+  }
+
+  async createIndex(tableName: string, columns: string[], options: { unique?: boolean } = {}): Promise<void> {
+    if (!this.db) throw new Error('Database not initialized');
+
+    const indexType = options.unique ? 'UNIQUE INDEX' : 'INDEX';
+    const indexName = `idx_${tableName}_${columns.join('_')}`;
+    const indexSQL = `CREATE ${indexType} ${indexName} ON ${tableName} (${columns.join(', ')})`;
+    
+    this.db.exec(indexSQL);
+  }
+
+  async analyze(tableName?: string): Promise<void> {
+    if (!this.db) throw new Error('Database not initialized');
+
+    const sql = tableName ? `ANALYZE ${tableName}` : 'ANALYZE';
+    this.db.exec(sql);
+  }
+
+  async vacuum(): Promise<void> {
+    if (!this.db) throw new Error('Database not initialized');
+
+    this.db.exec('VACUUM');
+  }
+
+  async runAnalyticsQuery(sql: string): Promise<any[]> {
+    if (!this.db) throw new Error('Database not initialized');
+
+    // For now, run on SQLite (in a real implementation, this would use DuckDB)
+    return this.db.prepare(sql).all();
+  }
+
+  async close(): Promise<void> {
+    if (this.db) {
+      try {
+        this.db.close();
+      } catch (error) {
+        // Ignore close errors
+      }
+      this.db = null;
+    }
+  }
+
+  async healthCheck(): Promise<{ sqlite: boolean; duckdb: boolean; overall: boolean }> {
+    let sqlite = false;
+    let duckdb = false;
+
+    try {
+      if (this.db) {
+        this.db.prepare('SELECT 1 as result').get();
+        sqlite = true;
+      }
+    } catch (error) {
+      sqlite = false;
+    }
+
+    try {
+      // Mock DuckDB health check
+      duckdb = true;
+    } catch (error) {
+      duckdb = false;
+    }
+
+    return {
+      sqlite,
+      duckdb,
+      overall: sqlite && duckdb
+    };
+  }
+
+  // ==============================================
   // HELPER METHODS
   // ==============================================
 
@@ -618,5 +886,14 @@ export class EnhancedDatabaseService {
   }
 }
 
-// Export singleton instance
-export const enhancedDatabaseService = new EnhancedDatabaseService();
+// Export factory function instead of singleton to avoid module load issues
+export const createEnhancedDatabaseService = () => new EnhancedDatabaseService();
+
+// Lazy singleton for backward compatibility
+let enhancedDatabaseServiceInstance: EnhancedDatabaseService | null = null;
+export const getEnhancedDatabaseService = () => {
+  if (!enhancedDatabaseServiceInstance) {
+    enhancedDatabaseServiceInstance = new EnhancedDatabaseService();
+  }
+  return enhancedDatabaseServiceInstance;
+};

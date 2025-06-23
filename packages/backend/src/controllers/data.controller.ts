@@ -1,13 +1,18 @@
 import { Request, Response } from 'express';
-import { SuccessResponse } from '../types';
+import { SuccessResponse, PaginatedResponse } from '../types';
+import { Dataset, ExportResult } from '../types/api-types';
 import { DataService } from '../services/data.service';
 import { paginationSchema, exportDataSchema, datasetIdSchema } from '../validation/schemas';
 import { AppError } from '../middleware/error.middleware';
 
+interface RequestWithFile extends Request {
+  file?: Express.Multer.File;
+}
+
 export class DataController {
   private dataService = new DataService();
 
-  async uploadData(req: Request, res: Response): Promise<void> {
+  async uploadData(req: RequestWithFile, res: Response): Promise<void> {
     console.log('Upload request received. Files:', req.files);
     console.log('Request headers:', req.headers);
     
@@ -45,7 +50,7 @@ export class DataController {
     }
 
     const { page, pageSize } = value;
-    const result = await this.dataService.getDatasets(page, pageSize);
+    const result: PaginatedResponse<Dataset> = await this.dataService.getDatasets(page, pageSize);
     
     res.json(result);
   }
@@ -57,9 +62,9 @@ export class DataController {
     }
 
     const { id } = value;
-    const dataset = this.dataService.getDatasetById(id);
+    const dataset: Dataset = await this.dataService.getDatasetById(id);
     
-    const result: SuccessResponse = {
+    const result: SuccessResponse<Dataset> = {
       data: dataset,
     };
     
@@ -90,13 +95,13 @@ export class DataController {
     }
 
     const { format, datasetId, dateRange, sentimentFilter } = value;
-    const exportResult = await this.dataService.exportData(format, {
+    const exportResult: ExportResult = await this.dataService.exportData(format, {
       datasetId,
       dateRange,
       sentimentFilter,
     });
     
-    const result: SuccessResponse = {
+    const result: SuccessResponse<ExportResult> = {
       data: exportResult,
       message: 'Export initiated successfully',
     };

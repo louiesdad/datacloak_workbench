@@ -1,0 +1,66 @@
+name: Regression Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  regression-tests:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [20.x]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run TypeScript compilation check
+      run: npm run build --workspace=backend
+      continue-on-error: false
+    
+    - name: Run regression prevention tests
+      run: npm run test:regression --workspace=backend
+      env:
+        NODE_ENV: test
+    
+    - name: Run console.log checks
+      run: |
+        # Check for undefined console.log statements
+        if grep -r "console\.log($" packages/backend/src --include="*.ts" | grep -v "console\.log('" | grep -v 'console\.log("' | grep -v 'console\.log(`'; then
+          echo "Found potential undefined console.log statements"
+          exit 1
+        fi
+    
+    - name: Check service initialization patterns
+      run: |
+        # Verify transform routes use lazy loading
+        if grep -q "new TransformController()" packages/backend/src/routes/transform.routes.ts; then
+          echo "Transform routes should use lazy loading pattern"
+          exit 1
+        fi
+        
+        # Verify connection status service import
+        if grep -q "ConnectionStatusService.getInstance()" packages/backend/src/controllers/system-health.controller.ts; then
+          echo "Should import connectionStatusService singleton"
+          exit 1
+        fi
+    
+    - name: Verify connection pool configuration
+      run: |
+        # Check for proper timeout configuration
+        if ! grep -q "isTestEnvironment ? 5000 : 30000" packages/backend/src/database/sqlite-pool.ts; then
+          echo "Connection pool should have environment-specific timeouts"
+          exit 1
+        fi

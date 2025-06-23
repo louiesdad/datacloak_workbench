@@ -9,7 +9,7 @@ describe('API Integration Tests', () => {
 
   beforeAll(async () => {
     await setupTestDatabase();
-    app = createApp();
+    app = await createApp();
   });
 
   afterAll(async () => {

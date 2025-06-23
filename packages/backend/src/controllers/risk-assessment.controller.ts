@@ -28,7 +28,7 @@ export class RiskAssessmentController {
 
       const riskScore = this.calculateRiskScore(piiDetections, frameworkIds);
       const complianceStatus = this.assessCompliance(piiDetections, frameworkIds);
-      const geographicRisk = includeGeographic ? this.analyzeGeographicRisk(data) : null;
+      const geographicRisk = includeGeographic ? this.analyzeGeographicRiskPrivate(data) : null;
       const recommendations = generateRecommendations ? this.generateRiskRecommendations(riskScore, piiDetections) : [];
 
       const assessment = {
@@ -579,7 +579,7 @@ export class RiskAssessmentController {
     }, {});
   }
 
-  private analyzeGeographicRisk(data: any): any {
+  private analyzeGeographicRiskPrivate(data: any): any {
     return {
       crossBorderTransfers: Math.random() > 0.7,
       riskMultiplier: 1.2,
@@ -598,7 +598,7 @@ export class RiskAssessmentController {
   }
 
   private detectViolations(piiDetections: any[], frameworkIds: string[]): any[] {
-    const violations = [];
+    const violations: any[] = [];
     
     // Simulate violation detection
     if (piiDetections.some(d => d.type === 'ssn')) {
@@ -614,7 +614,7 @@ export class RiskAssessmentController {
   }
 
   private generateRiskRecommendations(riskScore: number, piiDetections?: any[], frameworks?: string[], context?: any): any[] {
-    const recommendations = [];
+    const recommendations: any[] = [];
 
     if (riskScore >= 80) {
       recommendations.push({
@@ -670,7 +670,7 @@ export class RiskAssessmentController {
   }
 
   private getGeographicRecommendations(sourceCountry: string, targetCountry: string): string[] {
-    const recommendations = [];
+    const recommendations: string[] = [];
     
     if (sourceCountry === 'EU' && targetCountry === 'US') {
       recommendations.push('Implement Standard Contractual Clauses (SCCs)');

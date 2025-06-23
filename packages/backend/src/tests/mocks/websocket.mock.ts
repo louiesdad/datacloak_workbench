@@ -11,25 +11,30 @@ export class MockWebSocket extends EventEmitter {
   protocols?: string | string[];
   
   private _isAlive = true;
-  private _messages: any[] = [];
+  private _sentMessages: any[] = [];
+  private _receivedMessages: any[] = [];
 
   constructor(url: string, protocols?: string | string[]) {
     super();
     this.url = url;
     this.protocols = protocols;
     
-    // Simulate connection
-    setTimeout(() => {
+    // Start in connecting state
+    this.readyState = MockWebSocket.CONNECTING;
+    
+    // Simulate connection after a brief delay
+    process.nextTick(() => {
       this.readyState = MockWebSocket.OPEN;
       this.emit('open');
-    }, 10);
+    });
   }
 
   send(data: any): void {
     if (this.readyState !== MockWebSocket.OPEN) {
       throw new Error('WebSocket is not open');
     }
-    this._messages.push(data);
+    // When server sends to client, it's received by client
+    this._receivedMessages.push(data);
     this.emit('message-sent', data);
   }
 
@@ -58,12 +63,15 @@ export class MockWebSocket extends EventEmitter {
 
   // Test helpers
   simulateMessage(data: any): void {
-    const event = {
-      data: typeof data === 'string' ? data : JSON.stringify(data),
-      type: 'message',
-      target: this
+    // Client sends message to server
+    this._sentMessages.push(data);
+    const messageData = typeof data === 'string' ? data : JSON.stringify(data);
+    // Pass the message data directly, with a toString() method
+    const messageBuffer = {
+      toString: () => messageData,
+      data: messageData
     };
-    this.emit('message', event);
+    this.emit('message', messageBuffer);
   }
 
   simulateError(error: Error): void {
@@ -76,11 +84,18 @@ export class MockWebSocket extends EventEmitter {
   }
 
   getMessages(): any[] {
-    return this._messages;
+    // Return messages received by this client
+    return this._receivedMessages;
+  }
+
+  getSentMessages(): any[] {
+    // Return messages sent by this client
+    return this._sentMessages;
   }
 
   clearMessages(): void {
-    this._messages = [];
+    this._receivedMessages = [];
+    this._sentMessages = [];
   }
 
   setAlive(alive: boolean): void {
@@ -115,6 +130,8 @@ export class MockWebSocketServer extends EventEmitter {
   // Test helper to simulate a new connection
   simulateConnection(request?: any): MockWebSocket {
     const ws = new MockWebSocket(this.options.path || '/ws');
+    // Ensure the connection is open before emitting
+    ws.readyState = MockWebSocket.OPEN;
     this.clients.add(ws);
     ws.on('close', () => {
       this.clients.delete(ws);

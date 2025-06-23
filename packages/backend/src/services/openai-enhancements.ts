@@ -71,9 +71,9 @@ export class TextOptimizer {
    */
   static compress(text: string): string {
     return text
-      .replace(/\s+/g, ' ')           // Multiple spaces to single
-      .replace(/\n+/g, '\n')          // Multiple newlines to single
-      .replace(/\t+/g, ' ')           // Tabs to spaces
+      .replace(/[ \t]+/g, ' ')        // Multiple spaces/tabs to single space
+      .replace(/\n{2,}/g, '\n')       // Multiple newlines (2 or more) to single
+      .replace(/^ +| +$/gm, '')       // Trim spaces at line start/end
       .trim();
   }
 

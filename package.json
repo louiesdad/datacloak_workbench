@@ -11,7 +11,7 @@
     "packages/*"
   ],
   "scripts": {
-    "postinstall": "npm run build:all",
+    "postinstall": "echo 'Skipping build on install'",
     "clean": "npm run clean:all && npm run clean:reports",
     "clean:all": "npm run clean --workspaces --if-present",
     "clean:reports": "rimraf coverage reports test-results",
@@ -93,11 +93,11 @@
     "nyc": "^15.1.0",
     "prettier": "^3.0.0",
     "rimraf": "^5.0.0",
-    "typedoc": "^0.25.0",
+    "typedoc": "^0.28.5",
     "typescript": "^5.0.0",
-    "@stryker-mutator/core": "^7.0.0",
-    "@stryker-mutator/typescript-checker": "^7.0.0",
-    "@stryker-mutator/jest-runner": "^7.0.0"
+    "@stryker-mutator/core": "^6.0.0",
+    "@stryker-mutator/typescript-checker": "^6.0.0",
+    "@stryker-mutator/jest-runner": "^6.0.0"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [

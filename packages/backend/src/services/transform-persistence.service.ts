@@ -1,4 +1,4 @@
-import { getSQLiteConnection } from '../database/sqlite';
+import { getSQLiteConnection, withSQLiteConnection } from '../database/sqlite-refactored';
 import { AppError } from '../middleware/error.middleware';
 import { v4 as uuidv4 } from 'uuid';
 import { TransformValidationService, TransformOperation } from './transform-validation.service';
@@ -44,28 +44,45 @@ export interface TransformHistory {
 
 export class TransformPersistenceService {
   private validationService: TransformValidationService;
+  private initialized = false;
+  private initPromise: Promise<void> | null = null;
 
   constructor() {
     this.validationService = new TransformValidationService();
-    // Defer database initialization to avoid blocking constructor
-    this.initializeDatabase().catch(error => {
-      console.warn('Failed to initialize transform persistence database:', error);
-    });
+    // Don't initialize database in constructor
+  }
+
+  /**
+   * Ensure database is initialized before operations
+   */
+  private async ensureInitialized(): Promise<void> {
+    if (this.initialized) return;
+    
+    if (!this.initPromise) {
+      this.initPromise = this.initializeDatabase();
+    }
+    
+    await this.initPromise;
   }
 
   /**
    * Initialize database tables for transform persistence
    */
   private async initializeDatabase(): Promise<void> {
-    const db = getSQLiteConnection();
-    if (!db) {
-      console.warn('Database connection not available for transform persistence');
+    // Skip if already initialized or initializing
+    if (this.initialized || this.initPromise) {
       return;
     }
-
+    
+    this.initPromise = this.doInitialize();
+    await this.initPromise;
+  }
+  
+  private async doInitialize(): Promise<void> {
     try {
-      // Create saved transforms table
-      db.exec(`
+      await withSQLiteConnection(async (db) => {
+        // Create saved transforms table
+        db.exec(`
         CREATE TABLE IF NOT EXISTS saved_transforms (
           id TEXT PRIMARY KEY,
           name TEXT NOT NULL,
@@ -119,10 +136,12 @@ export class TransformPersistenceService {
         CREATE INDEX IF NOT EXISTS idx_history_transform ON transform_history(transform_id);
         CREATE INDEX IF NOT EXISTS idx_history_executed ON transform_history(executed_at);
       `);
-
+        
+        this.initialized = true;
+      });
     } catch (error) {
       console.error('Failed to initialize transform persistence database:', error);
-      throw new AppError('Failed to initialize database', 500, 'DB_INIT_ERROR');
+      // Don't throw in initialization - just log the error
     }
   }
 
@@ -139,27 +158,27 @@ export class TransformPersistenceService {
       userId?: string;
     }
   ): Promise<SavedTransform> {
-    const db = getSQLiteConnection();
-    if (!db) {
-      throw new AppError('Database connection not available', 500, 'DB_ERROR');
-    }
-
-    // Validate all operations
-    for (const operation of operations) {
-      const validation = this.validationService.validateTransform(operation, []);
-      if (!validation.valid) {
-        throw new AppError(
-          `Invalid transform operation: ${validation.errors.join(', ')}`,
-          400,
-          'INVALID_TRANSFORM'
-        );
-      }
-    }
-
-    const id = uuidv4();
-    const now = new Date();
-
     try {
+      const db = await getSQLiteConnection();
+      if (!db) {
+        throw new AppError('Database connection not available', 500, 'DB_ERROR');
+      }
+
+      // Validate all operations
+      for (const operation of operations) {
+        const validation = this.validationService.validateTransform(operation, []);
+        if (!validation.valid) {
+          throw new AppError(
+            `Invalid transform operation: ${validation.errors.join(', ')}`,
+            400,
+            'INVALID_TRANSFORM'
+          );
+        }
+      }
+
+      const id = uuidv4();
+      const now = new Date();
+
       const stmt = db.prepare(`
         INSERT INTO saved_transforms (
           id, name, description, operations, created_at, updated_at,
@@ -205,12 +224,12 @@ export class TransformPersistenceService {
    * Get a saved transform by ID
    */
   async getTransform(id: string): Promise<SavedTransform | null> {
-    const db = getSQLiteConnection();
-    if (!db) {
-      throw new AppError('Database connection not available', 500, 'DB_ERROR');
-    }
-
     try {
+      const db = await getSQLiteConnection();
+      if (!db) {
+        throw new AppError('Database connection not available', 500, 'DB_ERROR');
+      }
+
       const stmt = db.prepare(`
         SELECT * FROM saved_transforms WHERE id = ?
       `);
@@ -246,12 +265,11 @@ export class TransformPersistenceService {
     transforms: SavedTransform[];
     total: number;
   }> {
-    const db = getSQLiteConnection();
-    if (!db) {
-      throw new AppError('Database connection not available', 500, 'DB_ERROR');
-    }
-
     try {
+      const db = await getSQLiteConnection();
+      if (!db) {
+        throw new AppError('Database connection not available', 500, 'DB_ERROR');
+      }
       let query = 'SELECT * FROM saved_transforms WHERE 1=1';
       let countQuery = 'SELECT COUNT(*) as total FROM saved_transforms WHERE 1=1';
       const params: any[] = [];
@@ -333,26 +351,25 @@ export class TransformPersistenceService {
       isPublic?: boolean;
     }
   ): Promise<SavedTransform | null> {
-    const db = getSQLiteConnection();
-    if (!db) {
-      throw new AppError('Database connection not available', 500, 'DB_ERROR');
-    }
+    try {
+      const db = await getSQLiteConnection();
+      if (!db) {
+        throw new AppError('Database connection not available', 500, 'DB_ERROR');
+      }
 
-    // Validate operations if provided
-    if (updates.operations) {
-      for (const operation of updates.operations) {
-        const validation = this.validationService.validateTransform(operation, []);
-        if (!validation.valid) {
-          throw new AppError(
-            `Invalid transform operation: ${validation.errors.join(', ')}`,
-            400,
-            'INVALID_TRANSFORM'
-          );
+      // Validate operations if provided
+      if (updates.operations) {
+        for (const operation of updates.operations) {
+          const validation = this.validationService.validateTransform(operation, []);
+          if (!validation.valid) {
+            throw new AppError(
+              `Invalid transform operation: ${validation.errors.join(', ')}`,
+              400,
+              'INVALID_TRANSFORM'
+            );
+          }
         }
       }
-    }
-
-    try {
       const existingTransform = await this.getTransform(id);
       if (!existingTransform) {
         return null;
@@ -411,12 +428,11 @@ export class TransformPersistenceService {
    * Delete a saved transform
    */
   async deleteTransform(id: string): Promise<boolean> {
-    const db = getSQLiteConnection();
-    if (!db) {
-      throw new AppError('Database connection not available', 500, 'DB_ERROR');
-    }
-
     try {
+      const db = await getSQLiteConnection();
+      if (!db) {
+        throw new AppError('Database connection not available', 500, 'DB_ERROR');
+      }
       // Delete history first due to foreign key constraint
       const historyStmt = db.prepare('DELETE FROM transform_history WHERE transform_id = ?');
       historyStmt.run(id);
@@ -450,12 +466,11 @@ export class TransformPersistenceService {
       outputSummary?: Record<string, any>;
     }
   ): Promise<void> {
-    const db = getSQLiteConnection();
-    if (!db) {
-      throw new AppError('Database connection not available', 500, 'DB_ERROR');
-    }
-
     try {
+      const db = await getSQLiteConnection();
+      if (!db) {
+        throw new AppError('Database connection not available', 500, 'DB_ERROR');
+      }
       // Record in history
       const historyStmt = db.prepare(`
         INSERT INTO transform_history (
@@ -498,12 +513,11 @@ export class TransformPersistenceService {
     transformId: string,
     limit: number = 10
   ): Promise<TransformHistory[]> {
-    const db = getSQLiteConnection();
-    if (!db) {
-      throw new AppError('Database connection not available', 500, 'DB_ERROR');
-    }
-
     try {
+      const db = await getSQLiteConnection();
+      if (!db) {
+        throw new AppError('Database connection not available', 500, 'DB_ERROR');
+      }
       const stmt = db.prepare(`
         SELECT * FROM transform_history
         WHERE transform_id = ?
@@ -538,14 +552,13 @@ export class TransformPersistenceService {
    * Create a transform template
    */
   async createTemplate(template: Omit<TransformTemplate, 'id'>): Promise<TransformTemplate> {
-    const db = getSQLiteConnection();
-    if (!db) {
-      throw new AppError('Database connection not available', 500, 'DB_ERROR');
-    }
-
-    const id = uuidv4();
-
     try {
+      const db = await getSQLiteConnection();
+      if (!db) {
+        throw new AppError('Database connection not available', 500, 'DB_ERROR');
+      }
+
+      const id = uuidv4();
       const stmt = db.prepare(`
         INSERT INTO transform_templates (
           id, name, description, category, operations, parameters, example
@@ -580,12 +593,11 @@ export class TransformPersistenceService {
    * Get available templates
    */
   async getTemplates(category?: string): Promise<TransformTemplate[]> {
-    const db = getSQLiteConnection();
-    if (!db) {
-      throw new AppError('Database connection not available', 500, 'DB_ERROR');
-    }
-
     try {
+      const db = await getSQLiteConnection();
+      if (!db) {
+        throw new AppError('Database connection not available', 500, 'DB_ERROR');
+      }
       let query = 'SELECT * FROM transform_templates';
       const params: any[] = [];
 

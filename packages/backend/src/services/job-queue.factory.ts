@@ -62,7 +62,7 @@ export async function createJobQueueService(): Promise<IJobQueueService> {
   } else {
     console.log('Creating in-memory job queue...');
     return new JobQueueService({
-      maxConcurrentJobs: configService.get('JOB_QUEUE_MAX_CONCURRENT'),
+      maxConcurrentJobs: configService.get('JOB_QUEUE_MAX_CONCURRENT') || 10,
     });
   }
 }

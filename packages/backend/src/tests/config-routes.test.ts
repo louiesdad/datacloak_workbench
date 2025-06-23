@@ -4,7 +4,7 @@ import configRoutes from '../routes/config.routes';
 import { adminAuthMiddleware } from '../middleware/admin-auth.middleware';
 import { ConfigService } from '../services/config.service';
 
-// Mock dependencies
+// Mock dependencies before imports
 jest.mock('../services/config.service');
 jest.mock('../middleware/admin-auth.middleware', () => ({
   adminAuthMiddleware: jest.fn((req, res, next) => {
@@ -13,6 +13,9 @@ jest.mock('../middleware/admin-auth.middleware', () => ({
     next();
   }),
 }));
+
+// Add timeout for all tests in this suite
+jest.setTimeout(10000);
 
 describe('Config Routes', () => {
   let app: express.Application;
@@ -25,30 +28,37 @@ describe('Config Routes', () => {
 
     // Setup mock ConfigService
     mockConfigService = {
-      getSanitizedConfig: jest.fn(() => ({
+      getSanitizedConfig: jest.fn().mockReturnValue({
         PORT: 3000,
         NODE_ENV: 'development',
         OPENAI_API_KEY: 'sk-***1234',
         OPENAI_MODEL: 'gpt-3.5-turbo',
-      })),
-      update: jest.fn(),
-      updateMultiple: jest.fn(),
-      isOpenAIConfigured: jest.fn(() => true),
-      getOpenAIConfig: jest.fn(() => ({
+      }),
+      update: jest.fn().mockResolvedValue(undefined),
+      updateMultiple: jest.fn().mockResolvedValue(undefined),
+      isOpenAIConfigured: jest.fn().mockReturnValue(true),
+      getOpenAIConfig: jest.fn().mockReturnValue({
         apiKey: 'sk-***1234',
         model: 'gpt-3.5-turbo',
         maxTokens: 150,
         temperature: 0.1,
         timeout: 30000,
-      })),
-      getAll: jest.fn(() => ({
+      }),
+      getAll: jest.fn().mockReturnValue({
         PORT: 3000,
         NODE_ENV: 'development',
         OPENAI_API_KEY: 'sk-test12345678901234567890123456789012345678901234',
-      })),
+      }),
+      getInstance: jest.fn().mockReturnThis(),
     };
 
     (ConfigService.getInstance as jest.Mock).mockReturnValue(mockConfigService);
+  });
+
+  afterEach(() => {
+    // Clear all mocks and timers
+    jest.clearAllMocks();
+    jest.clearAllTimers();
   });
 
   describe('GET /api/config', () => {

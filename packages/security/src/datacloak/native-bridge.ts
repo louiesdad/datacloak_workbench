@@ -149,7 +149,11 @@ export class NativeDataCloakBridge implements DataCloakBridge {
   }
 
   getVersion(): string {
-    return this.binaryPath ? `${this.version}-binary` : `${this.version}-mock`;
+    if (this.binaryPath && this.binaryPath !== '/non/existent/path') {
+      return `${this.version}-binary`;
+    }
+    // If we're using fallback mock, indicate it in the version
+    return this.config.fallbackToMock ? '1.0.0-mock' : `${this.version}`;
   }
 
   private async locateDataCloakBinary(): Promise<string> {

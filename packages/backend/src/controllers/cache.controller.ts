@@ -240,7 +240,7 @@ export class CacheController {
       else if (hitRate < 0.7) performanceGrade = 'C';
       else if (hitRate < 0.85) performanceGrade = 'B';
 
-      const recommendations = [];
+      const recommendations: string[] = [];
       if (hitRate < 0.7) {
         recommendations.push('Consider increasing cache TTL for frequently accessed data');
       }
@@ -359,7 +359,12 @@ export class CacheController {
   async warmupCache(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { queries } = req.body;
-      const results = [];
+      const results: Array<{
+        type: any;
+        status: string;
+        cached?: boolean;
+        error?: string;
+      }> = [];
 
       for (const query of queries) {
         try {

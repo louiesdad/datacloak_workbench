@@ -1,5 +1,6 @@
 import { EventEmitter } from 'events';
 import { websocketService } from './websocket.service';
+import { eventEmitter, EventTypes } from './event.service';
 
 export interface ConnectionStatus {
   isConnected: boolean;
@@ -78,25 +79,31 @@ class ConnectionStatusService extends EventEmitter {
       clearInterval(this.latencyCheckInterval);
     }
     
+    // Remove specific listeners from global eventEmitter to prevent memory leaks
+    eventEmitter.removeAllListeners(EventTypes.WS_CLIENT_CONNECTED);
+    eventEmitter.removeAllListeners(EventTypes.WS_CLIENT_DISCONNECTED);
+    eventEmitter.removeAllListeners('error');
+    
+    // Remove own listeners
     this.removeAllListeners();
   }
 
   private setupWebSocketListeners(): void {
     // Listen for WebSocket connection events
-    websocketService.on('connection', () => {
+    eventEmitter.on(EventTypes.WS_CLIENT_CONNECTED, () => {
       this.updateServiceStatus('websocket', 'connected');
       this.updateConnectionStatus(true);
       this.status.connectionCount++;
       this.emitStatusUpdate();
     });
 
-    websocketService.on('disconnection', () => {
+    eventEmitter.on(EventTypes.WS_CLIENT_DISCONNECTED, () => {
       this.updateServiceStatus('websocket', 'disconnected');
       this.updateConnectionStatus(false);
       this.emitStatusUpdate();
     });
 
-    websocketService.on('error', (error: Error) => {
+    eventEmitter.on('error', (error: Error) => {
       this.updateServiceStatus('websocket', 'error');
       this.addError(`WebSocket error: ${error.message}`);
       this.emitStatusUpdate();
@@ -130,18 +137,11 @@ class ConnectionStatusService extends EventEmitter {
   private async checkDatabaseStatus(): Promise<void> {
     try {
       // Import database here to avoid circular dependencies
-      const { getSQLiteConnection } = await import('../database/sqlite');
-      const db = getSQLiteConnection();
+      const { withSQLiteConnection } = await import('../database/sqlite-refactored');
       
-      // Simple health check query
-      await new Promise<void>((resolve, reject) => {
-        db.get('SELECT 1', (err) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve();
-          }
-        });
+      // Simple health check query using the refactored connection system
+      await withSQLiteConnection(async (db) => {
+        db.prepare('SELECT 1').get(); // better-sqlite3 API is synchronous
       });
 
       this.updateServiceStatus('database', 'connected');
@@ -186,17 +186,10 @@ class ConnectionStatusService extends EventEmitter {
       const start = Date.now();
       
       // Simple latency check using database query
-      const { getSQLiteConnection } = await import('../database/sqlite');
-      const db = getSQLiteConnection();
+      const { withSQLiteConnection } = await import('../database/sqlite-refactored');
       
-      await new Promise<void>((resolve, reject) => {
-        db.get('SELECT 1', (err) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve();
-          }
-        });
+      await withSQLiteConnection(async (db) => {
+        db.prepare('SELECT 1').get(); // better-sqlite3 API is synchronous
       });
 
       this.status.latency = Date.now() - start;

@@ -103,13 +103,22 @@ export class SSEService extends EventEmitter {
   /**
    * Send event to all clients
    */
-  broadcast(event: SSEEvent): void {
+  broadcast(event: SSEEvent): void;
+  broadcast(eventType: string, data: any): void;
+  broadcast(eventOrType: SSEEvent | string, data?: any): void {
+    let event: SSEEvent;
+    if (typeof eventOrType === 'string') {
+      event = { event: eventOrType, data };
+    } else {
+      event = eventOrType;
+    }
+
     const deadClients: string[] = [];
 
     this.clients.forEach((client, clientId) => {
       try {
-        const data = this.formatSSEMessage(event);
-        client.response.write(data);
+        const message = this.formatSSEMessage(event);
+        client.response.write(message);
         client.lastPing = new Date();
       } catch (error) {
         deadClients.push(clientId);
@@ -237,26 +246,6 @@ export class SSEService extends EventEmitter {
   }
 
   /**
-   * Send error event
-   */
-  sendError(error: string, details?: any, userId?: string): void {
-    const event: SSEEvent = {
-      event: 'error',
-      data: {
-        error,
-        details,
-        timestamp: new Date()
-      }
-    };
-
-    if (userId) {
-      this.sendToUser(userId, event);
-    } else {
-      this.broadcast(event);
-    }
-  }
-
-  /**
    * Format SSE message according to spec
    */
   private formatSSEMessage(event: SSEEvent): string {
@@ -274,8 +263,23 @@ export class SSEService extends EventEmitter {
       message += `retry: ${event.retry}\n`;
     }
 
-    // Data must be stringified
-    const data = typeof event.data === 'string' ? event.data : JSON.stringify(event.data);
+    // Data must be stringified - handle circular references
+    let data: string;
+    try {
+      data = JSON.stringify(event.data);
+    } catch (error) {
+      // Handle circular references
+      const seen = new WeakSet();
+      data = JSON.stringify(event.data, (key, value) => {
+        if (typeof value === 'object' && value !== null) {
+          if (seen.has(value)) {
+            return '[Circular]';
+          }
+          seen.add(value);
+        }
+        return value;
+      });
+    }
     
     // Handle multi-line data
     const lines = data.split('\n');
@@ -321,6 +325,94 @@ export class SSEService extends EventEmitter {
   }
 
   /**
+   * Send progress event
+   */
+  sendProgress(clientId: string, jobId: string, progress: number, message?: string): void {
+    const event: SSEEvent = {
+      event: 'progress',
+      data: {
+        jobId,
+        progress,
+        message,
+        timestamp: new Date()
+      }
+    };
+    this.sendToClient(clientId, event);
+  }
+
+  /**
+   * Send error event
+   */
+  sendError(clientId: string, jobId: string, error: string): void;
+  sendError(error: string, details?: any, userId?: string): void;
+  sendError(clientIdOrError: string, jobIdOrDetails?: string | any, errorOrUserId?: string): void {
+    if (arguments.length === 3 && typeof jobIdOrDetails === 'string') {
+      // sendError(clientId, jobId, error)
+      const event: SSEEvent = {
+        event: 'error',
+        data: {
+          jobId: jobIdOrDetails,
+          error: errorOrUserId,
+          timestamp: new Date()
+        }
+      };
+      this.sendToClient(clientIdOrError, event);
+    } else {
+      // sendError(error, details?, userId?)
+      const event: SSEEvent = {
+        event: 'error',
+        data: {
+          error: clientIdOrError,
+          details: jobIdOrDetails,
+          timestamp: new Date()
+        }
+      };
+
+      if (errorOrUserId) {
+        this.sendToUser(errorOrUserId, event);
+      } else {
+        this.broadcast(event);
+      }
+    }
+  }
+
+  /**
+   * Send complete event
+   */
+  sendComplete(clientId: string, jobId: string, result: any): void {
+    const event: SSEEvent = {
+      event: 'complete',
+      data: {
+        jobId,
+        result,
+        timestamp: new Date()
+      }
+    };
+    this.sendToClient(clientId, event);
+  }
+
+  /**
+   * Get all clients info
+   */
+  getClients(): Array<{
+    id: string;
+    userId?: string;
+    connected: boolean;
+    connectedAt: Date;
+  }> {
+    const clients: any[] = [];
+    this.clients.forEach((client, id) => {
+      clients.push({
+        id,
+        userId: client.userId,
+        connected: true,
+        connectedAt: client.createdAt
+      });
+    });
+    return clients;
+  }
+
+  /**
    * Get clients for a user
    */
   getUserClients(userId: string): SSEClient[] {
@@ -331,6 +423,16 @@ export class SSEService extends EventEmitter {
       }
     });
     return userClients;
+  }
+
+  /**
+   * Stop ping interval
+   */
+  stopPingInterval(): void {
+    if (this.pingInterval) {
+      clearInterval(this.pingInterval);
+      this.pingInterval = null;
+    }
   }
 
   /**

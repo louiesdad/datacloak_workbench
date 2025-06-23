@@ -49,6 +49,9 @@ export const configSchema = Joi.object({
     .default('default-jwt-secret-change-in-production'),
   
   // Rate Limiting
+  RATE_LIMIT_ENABLED: Joi.boolean()
+    .default(true)
+    .description('Enable rate limiting'),
   RATE_LIMIT_WINDOW_MS: Joi.number()
     .integer()
     .default(60000), // 1 minute
@@ -76,6 +79,7 @@ export const configSchema = Joi.object({
     .default(6379)
     .description('Redis server port'),
   REDIS_PASSWORD: Joi.string()
+    .allow('')
     .optional()
     .description('Redis server password'),
   REDIS_DB: Joi.number()
@@ -141,6 +145,119 @@ export const configSchema = Joi.object({
   ENABLE_CONFIG_API: Joi.boolean()
     .default(true)
     .description('Enable configuration management API'),
+  
+  // Secret Management
+  SECRET_PROVIDER: Joi.string()
+    .valid('env', 'aws', 'azure', 'vault')
+    .default('env')
+    .description('Secret management provider'),
+  SECRET_CACHE_TTL: Joi.number()
+    .min(0)
+    .max(86400)
+    .default(3600)
+    .description('Secret cache TTL in seconds'),
+  SECRET_ACCESS_LOG_SIZE: Joi.number()
+    .min(100)
+    .max(100000)
+    .default(10000)
+    .description('Maximum number of access log entries to keep'),
+  SECRET_ROTATION_ENABLED: Joi.boolean()
+    .default(false)
+    .description('Enable automatic secret rotation'),
+  SECRET_ROTATION_NOTIFY_DAYS: Joi.number()
+    .min(1)
+    .max(30)
+    .default(7)
+    .description('Days before rotation to send notifications'),
+  ENABLE_SECRET_MANAGEMENT_API: Joi.boolean()
+    .default(false)
+    .description('Enable secret management REST API'),
+  
+  // AWS Secrets Manager
+  AWS_REGION: Joi.string()
+    .when('SECRET_PROVIDER', {
+      is: 'aws',
+      then: Joi.required()
+    })
+    .description('AWS region for Secrets Manager'),
+  AWS_SECRET_PREFIX: Joi.string()
+    .default('datacloak/')
+    .description('Prefix for AWS secrets'),
+  
+  // Azure Key Vault
+  AZURE_KEY_VAULT_URL: Joi.string()
+    .uri()
+    .when('SECRET_PROVIDER', {
+      is: 'azure',
+      then: Joi.required()
+    })
+    .description('Azure Key Vault URL'),
+  AZURE_TENANT_ID: Joi.string()
+    .when('SECRET_PROVIDER', {
+      is: 'azure',
+      then: Joi.required()
+    })
+    .description('Azure tenant ID'),
+  AZURE_CLIENT_ID: Joi.string()
+    .when('SECRET_PROVIDER', {
+      is: 'azure',
+      then: Joi.required()
+    })
+    .description('Azure client ID'),
+  
+  // HashiCorp Vault
+  VAULT_ADDR: Joi.string()
+    .uri()
+    .when('SECRET_PROVIDER', {
+      is: 'vault',
+      then: Joi.required()
+    })
+    .description('HashiCorp Vault address'),
+  VAULT_TOKEN: Joi.string()
+    .when('SECRET_PROVIDER', {
+      is: 'vault',
+      then: Joi.required()
+    })
+    .description('HashiCorp Vault token'),
+  VAULT_PATH: Joi.string()
+    .default('secret/datacloak')
+    .description('HashiCorp Vault secret path'),
+  
+  // DataCloak Configuration
+  DATACLOAK_ENABLED: Joi.boolean()
+    .default(true)
+    .description('Enable DataCloak PII detection'),
+  DATACLOAK_FFI_ENABLED: Joi.boolean()
+    .default(false)
+    .description('Enable DataCloak FFI bindings'),
+  DATACLOAK_BATCH_SIZE: Joi.number()
+    .integer()
+    .min(100)
+    .max(10000)
+    .default(1000)
+    .description('DataCloak processing batch size'),
+  
+  // Performance Configuration
+  ENABLE_CACHING: Joi.boolean()
+    .default(true)
+    .description('Enable general caching'),
+  CACHE_TTL: Joi.number()
+    .integer()
+    .min(60)
+    .max(86400)
+    .default(3600)
+    .description('Default cache TTL in seconds'),
+  MAX_FILE_SIZE: Joi.number()
+    .integer()
+    .min(1024)
+    .default(100 * 1024 * 1024)
+    .description('Maximum file size in bytes'),
+  ENABLE_METRICS: Joi.boolean()
+    .default(true)
+    .description('Enable metrics collection'),
+  ENABLE_DETAILED_LOGGING: Joi.boolean()
+    .default(false)
+    .description('Enable detailed logging'),
 }).unknown(true); // Allow additional environment variables
 
 export interface IConfig {
@@ -156,6 +273,7 @@ export interface IConfig {
   OPENAI_TIMEOUT: number;
   CONFIG_ENCRYPTION_KEY?: string;
   JWT_SECRET: string;
+  RATE_LIMIT_ENABLED: boolean;
   RATE_LIMIT_WINDOW_MS: number;
   RATE_LIMIT_MAX_REQUESTS: number;
   ADMIN_USERNAME: string;
@@ -177,4 +295,38 @@ export interface IConfig {
   CACHE_COMPRESSION_THRESHOLD: number;
   ENABLE_HOT_RELOAD: boolean;
   ENABLE_CONFIG_API: boolean;
+  
+  // Secret Management
+  SECRET_PROVIDER?: string;
+  SECRET_CACHE_TTL?: number;
+  SECRET_ACCESS_LOG_SIZE?: number;
+  SECRET_ROTATION_ENABLED?: boolean;
+  SECRET_ROTATION_NOTIFY_DAYS?: number;
+  ENABLE_SECRET_MANAGEMENT_API?: boolean;
+  
+  // AWS Secrets Manager
+  AWS_REGION?: string;
+  AWS_SECRET_PREFIX?: string;
+  
+  // Azure Key Vault
+  AZURE_KEY_VAULT_URL?: string;
+  AZURE_TENANT_ID?: string;
+  AZURE_CLIENT_ID?: string;
+  
+  // HashiCorp Vault
+  VAULT_ADDR?: string;
+  VAULT_TOKEN?: string;
+  VAULT_PATH?: string;
+  
+  // DataCloak Configuration
+  DATACLOAK_ENABLED?: boolean;
+  DATACLOAK_FFI_ENABLED?: boolean;
+  DATACLOAK_BATCH_SIZE?: number;
+  
+  // Performance Configuration
+  ENABLE_CACHING?: boolean;
+  CACHE_TTL?: number;
+  MAX_FILE_SIZE?: number;
+  ENABLE_METRICS?: boolean;
+  ENABLE_DETAILED_LOGGING?: boolean;
 }

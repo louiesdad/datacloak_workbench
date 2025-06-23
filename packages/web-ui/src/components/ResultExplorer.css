@@ -543,6 +543,11 @@
   cursor: not-allowed;
 }
 
+.export-button.pdf:hover:not(:disabled) {
+  border-color: #dc2626;
+  box-shadow: 0 2px 4px rgba(220, 38, 38, 0.1);
+}
+
 .export-icon {
   font-size: 2rem;
   flex-shrink: 0;

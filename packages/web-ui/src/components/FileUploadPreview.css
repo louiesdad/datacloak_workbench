@@ -1,0 +1,52 @@
+.file-upload-preview {
+  padding: 20px;
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+}
+
+.file-info {
+  margin-top: 20px;
+}
+
+.time-estimates {
+  background-color: #f0f0f0;
+  padding: 15px;
+  border-radius: 5px;
+  margin: 15px 0;
+}
+
+.time-estimates p {
+  margin: 8px 0;
+  font-size: 14px;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
+  margin: 20px 0;
+}
+
+.action-buttons button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.action-buttons button:first-child {
+  background-color: #007bff;
+  color: white;
+}
+
+.action-buttons button:last-child {
+  background-color: #28a745;
+  color: white;
+}
+
+.info-message {
+  color: #666;
+  font-size: 14px;
+  font-style: italic;
+}

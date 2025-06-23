@@ -1,0 +1,1195 @@
+openapi: 3.0.3
+info:
+  title: DataCloak Sentiment Workbench API
+  description: |
+    Comprehensive API for sentiment analysis, data security, PII detection, and compliance management.
+    
+    ## Features
+    - **Sentiment Analysis**: Advanced sentiment analysis with OpenAI integration
+    - **Data Security**: PII detection, masking, and security auditing  
+    - **Compliance**: GDPR, HIPAA, and custom compliance framework support
+    - **Real-time Processing**: WebSocket and Server-Sent Events for live updates
+    - **Batch Processing**: High-volume data processing with job queues
+    - **Stream Processing**: Large file handling with memory-efficient streaming
+    
+    ## Authentication
+    Most endpoints require JWT authentication. Include the token in the Authorization header:
+    ```
+    Authorization: Bearer <your-jwt-token>
+    ```
+    
+    Admin endpoints support both JWT and Basic authentication.
+  version: 1.0.0
+  contact:
+    name: DataCloak API Support
+    email: support@datacloak.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3001
+    description: Development server
+  - url: https://api.datacloak-sentiment.com
+    description: Production server
+
+security:
+  - BearerAuth: []
+  - BasicAuth: []
+
+paths:
+  # Health & Status
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Basic health check
+      description: Returns basic health status of the API
+      security: []
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /api/v1/health/status:
+    get:
+      tags:
+        - Health
+      summary: Detailed health status
+      description: Returns detailed health status with service checks
+      security: []
+      responses:
+        '200':
+          description: Detailed health information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+
+  # Authentication
+  /api/auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: User login
+      description: Authenticate user and receive JWT token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                  example: admin
+                password:
+                  type: string
+                  example: password123
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      token:
+                        type: string
+                        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                      expiresIn:
+                        type: string
+                        example: 24h
+                      user:
+                        $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/auth/verify:
+    post:
+      tags:
+        - Authentication
+      summary: Verify JWT token
+      description: Verify the validity of a JWT token
+      responses:
+        '200':
+          description: Token is valid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      valid:
+                        type: boolean
+                        example: true
+                      user:
+                        $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # Sentiment Analysis
+  /api/v1/sentiment/analyze:
+    post:
+      tags:
+        - Sentiment Analysis
+      summary: Analyze sentiment
+      description: Analyze sentiment of text input with advanced options
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - text
+              properties:
+                text:
+                  type: string
+                  description: Text to analyze
+                  example: "I love this new product! It's amazing."
+                options:
+                  type: object
+                  properties:
+                    model:
+                      type: string
+                      enum: [gpt-3.5-turbo, gpt-4, gpt-4-turbo]
+                      default: gpt-3.5-turbo
+                      example: gpt-4
+                    includeEmotions:
+                      type: boolean
+                      default: false
+                      example: true
+                    includeKeywords:
+                      type: boolean
+                      default: false
+                      example: true
+                    language:
+                      type: string
+                      default: en
+                      example: en
+      responses:
+        '200':
+          description: Sentiment analysis completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/SentimentAnalysisResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimit'
+
+  /api/v1/sentiment/batch:
+    post:
+      tags:
+        - Sentiment Analysis
+      summary: Batch sentiment analysis
+      description: Analyze sentiment for multiple texts in a single request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - texts
+              properties:
+                texts:
+                  type: array
+                  items:
+                    type: string
+                  minItems: 1
+                  maxItems: 1000
+                  example: 
+                    - "This product is great!"
+                    - "I'm not satisfied with the service."
+                    - "The experience was okay."
+                options:
+                  type: object
+                  properties:
+                    model:
+                      type: string
+                      enum: [gpt-3.5-turbo, gpt-4, gpt-4-turbo]
+                      default: gpt-3.5-turbo
+                    parallel:
+                      type: boolean
+                      default: true
+                      description: Process texts in parallel for better performance
+                    includeEmotions:
+                      type: boolean
+                      default: false
+      responses:
+        '200':
+          description: Batch analysis completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/BatchSentimentResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/sentiment/history:
+    get:
+      tags:
+        - Sentiment Analysis
+      summary: Get sentiment analysis history
+      description: Retrieve historical sentiment analysis results with pagination and filtering
+      parameters:
+        - name: limit
+          in: query
+          description: Number of results to return
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 50
+        - name: offset
+          in: query
+          description: Pagination offset
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: startDate
+          in: query
+          description: Start date filter (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+        - name: endDate
+          in: query
+          description: End date filter (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+        - name: sentiment
+          in: query
+          description: Filter by sentiment label
+          schema:
+            type: string
+            enum: [positive, negative, neutral]
+      responses:
+        '200':
+          description: Analysis history retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      analyses:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/SentimentAnalysisResult'
+                      pagination:
+                        $ref: '#/components/schemas/Pagination'
+
+  # Security & PII Detection
+  /api/v1/security/detect:
+    post:
+      tags:
+        - Security
+      summary: Detect PII
+      description: Detect personally identifiable information in text content
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - text
+              properties:
+                text:
+                  type: string
+                  description: Text to scan for PII
+                  example: "My email is john.doe@example.com and phone is 555-123-4567"
+                options:
+                  type: object
+                  properties:
+                    types:
+                      type: array
+                      items:
+                        type: string
+                        enum: [EMAIL, PHONE, SSN, CREDIT_CARD, NAME, ADDRESS, IP_ADDRESS]
+                      description: Specific PII types to detect
+                      example: ["EMAIL", "PHONE", "SSN"]
+                    confidence:
+                      type: number
+                      minimum: 0
+                      maximum: 1
+                      default: 0.8
+                      description: Minimum confidence threshold
+                    includePosition:
+                      type: boolean
+                      default: true
+                      description: Include position information in results
+      responses:
+        '200':
+          description: PII detection completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/PIIDetectionResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/security/mask:
+    post:
+      tags:
+        - Security
+      summary: Mask sensitive information
+      description: Mask personally identifiable information in text
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - text
+              properties:
+                text:
+                  type: string
+                  description: Text containing sensitive information to mask
+                  example: "Contact John at john.doe@example.com or call 555-123-4567"
+                options:
+                  type: object
+                  properties:
+                    maskChar:
+                      type: string
+                      default: "*"
+                      maxLength: 1
+                      description: Character to use for masking
+                    preserveLength:
+                      type: boolean
+                      default: true
+                      description: Whether to preserve the original length
+                    maskTypes:
+                      type: array
+                      items:
+                        type: string
+                        enum: [EMAIL, PHONE, SSN, CREDIT_CARD, NAME, ADDRESS]
+                      description: Types of PII to mask
+      responses:
+        '200':
+          description: Text masking completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/MaskingResult'
+
+  # Data Management
+  /api/v1/data/upload:
+    post:
+      tags:
+        - Data Management
+      summary: Upload dataset
+      description: Upload data files (CSV, Excel) for processing
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Data file to upload (CSV, XLSX, XLS)
+                metadata:
+                  type: string
+                  description: JSON string containing dataset metadata
+                  example: '{"name": "customer-feedback.csv", "description": "Customer feedback data", "tags": ["customer", "feedback", "2024"]}'
+      responses:
+        '201':
+          description: File uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/DatasetInfo'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '413':
+          description: File too large
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/data/datasets:
+    get:
+      tags:
+        - Data Management
+      summary: List datasets
+      description: Get list of uploaded datasets with pagination and filtering
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: search
+          in: query
+          description: Search term for dataset name/description
+          schema:
+            type: string
+        - name: tags
+          in: query
+          description: Filter by tags (comma-separated)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Datasets retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      datasets:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/DatasetInfo'
+                      pagination:
+                        $ref: '#/components/schemas/Pagination'
+
+  # Job Queue Management  
+  /api/v1/jobs:
+    post:
+      tags:
+        - Job Management
+      summary: Create job
+      description: Create a new processing job
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - type
+                - data
+              properties:
+                type:
+                  type: string
+                  enum: [sentiment_analysis, pii_detection, data_export, compliance_audit]
+                  example: sentiment_analysis
+                data:
+                  type: object
+                  description: Job-specific data
+                  example:
+                    datasetId: dataset_abc123
+                    options:
+                      model: gpt-4
+                      batchSize: 100
+                priority:
+                  type: string
+                  enum: [low, medium, high]
+                  default: medium
+                metadata:
+                  type: object
+                  description: Additional job metadata
+      responses:
+        '201':
+          description: Job created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/JobInfo'
+
+    get:
+      tags:
+        - Job Management
+      summary: List jobs
+      description: Get list of jobs with filtering options
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [queued, processing, completed, failed, cancelled]
+        - name: type
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Jobs retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      jobs:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/JobInfo'
+                      pagination:
+                        $ref: '#/components/schemas/Pagination'
+
+  /api/v1/jobs/{jobId}:
+    get:
+      tags:
+        - Job Management
+      summary: Get job status
+      description: Get detailed status and progress of a specific job
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+            example: job_xyz789
+      responses:
+        '200':
+          description: Job details retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/JobDetails'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Job Management
+      summary: Cancel job
+      description: Cancel a queued or processing job
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Job cancelled successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Job cancelled successfully
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token for API authentication
+    BasicAuth:
+      type: http
+      scheme: basic
+      description: Basic authentication for admin endpoints
+
+  schemas:
+    # Common schemas
+    User:
+      type: object
+      properties:
+        username:
+          type: string
+          example: admin
+        role:
+          type: string
+          enum: [admin, user]
+          example: admin
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+          example: Invalid request parameters
+        code:
+          type: string
+          example: VALIDATION_ERROR
+        details:
+          type: object
+          description: Additional error details
+        timestamp:
+          type: string
+          format: date-time
+
+    Pagination:
+      type: object
+      properties:
+        total:
+          type: integer
+          example: 250
+        limit:
+          type: integer
+          example: 50
+        offset:
+          type: integer
+          example: 0
+        hasNext:
+          type: boolean
+          example: true
+        hasPrev:
+          type: boolean
+          example: false
+
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+          example: healthy
+        services:
+          type: object
+          properties:
+            database:
+              type: string
+              example: healthy
+            redis:
+              type: string
+              example: healthy
+            openai:
+              type: string
+              example: healthy
+            datacloak:
+              type: string
+              example: healthy
+        uptime:
+          type: integer
+          description: Uptime in seconds
+          example: 86400
+        version:
+          type: string
+          example: 1.0.0
+        timestamp:
+          type: string
+          format: date-time
+
+    # Sentiment Analysis schemas
+    SentimentAnalysisResult:
+      type: object
+      properties:
+        id:
+          type: string
+          example: analysis_12345
+        sentiment:
+          type: object
+          properties:
+            label:
+              type: string
+              enum: [positive, negative, neutral]
+              example: positive
+            score:
+              type: number
+              minimum: -1
+              maximum: 1
+              example: 0.95
+            confidence:
+              type: number
+              minimum: 0
+              maximum: 1
+              example: 0.92
+        emotions:
+          type: object
+          properties:
+            joy:
+              type: number
+              minimum: 0
+              maximum: 1
+              example: 0.85
+            excitement:
+              type: number
+              minimum: 0
+              maximum: 1
+              example: 0.78
+            satisfaction:
+              type: number
+              minimum: 0
+              maximum: 1
+              example: 0.82
+        keywords:
+          type: array
+          items:
+            type: object
+            properties:
+              word:
+                type: string
+                example: love
+              sentiment:
+                type: string
+                enum: [positive, negative, neutral]
+                example: positive
+              weight:
+                type: number
+                minimum: 0
+                maximum: 1
+                example: 0.9
+        processingTime:
+          type: integer
+          description: Processing time in milliseconds
+          example: 1250
+        timestamp:
+          type: string
+          format: date-time
+
+    BatchSentimentResult:
+      type: object
+      properties:
+        batchId:
+          type: string
+          example: batch_67890
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              index:
+                type: integer
+                example: 0
+              text:
+                type: string
+                example: This product is great!
+              sentiment:
+                type: object
+                properties:
+                  label:
+                    type: string
+                    enum: [positive, negative, neutral]
+                    example: positive
+                  score:
+                    type: number
+                    example: 0.88
+                  confidence:
+                    type: number
+                    example: 0.91
+        statistics:
+          type: object
+          properties:
+            totalTexts:
+              type: integer
+              example: 3
+            positive:
+              type: integer
+              example: 1
+            negative:
+              type: integer
+              example: 1
+            neutral:
+              type: integer
+              example: 1
+            averageScore:
+              type: number
+              example: 0.08
+            processingTime:
+              type: integer
+              example: 2100
+
+    # Security schemas
+    PIIDetectionResult:
+      type: object
+      properties:
+        detectedPII:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum: [EMAIL, PHONE, SSN, CREDIT_CARD, NAME, ADDRESS, IP_ADDRESS]
+                example: EMAIL
+              value:
+                type: string
+                example: john.doe@example.com
+              confidence:
+                type: number
+                minimum: 0
+                maximum: 1
+                example: 0.95
+              position:
+                type: object
+                properties:
+                  start:
+                    type: integer
+                    example: 12
+                  end:
+                    type: integer
+                    example: 32
+              riskLevel:
+                type: string
+                enum: [low, medium, high, critical]
+                example: medium
+        riskScore:
+          type: integer
+          minimum: 0
+          maximum: 100
+          example: 65
+        processingTime:
+          type: integer
+          description: Processing time in milliseconds
+          example: 120
+
+    MaskingResult:
+      type: object
+      properties:
+        originalText:
+          type: string
+          example: Contact John at john.doe@example.com or call 555-123-4567
+        maskedText:
+          type: string
+          example: Contact John at ********************* or call ************
+        maskedItems:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum: [EMAIL, PHONE, SSN, CREDIT_CARD, NAME, ADDRESS]
+                example: EMAIL
+              original:
+                type: string
+                example: john.doe@example.com
+              masked:
+                type: string
+                example: "*********************"
+        processingTime:
+          type: integer
+          example: 85
+
+    # Data Management schemas
+    DatasetInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          example: dataset_abc123
+        name:
+          type: string
+          example: customer-feedback.csv
+        description:
+          type: string
+          example: Customer feedback data
+        fileSize:
+          type: integer
+          example: 1048576
+        rowCount:
+          type: integer
+          example: 5000
+        columnCount:
+          type: integer
+          example: 10
+        columns:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                example: customer_id
+              type:
+                type: string
+                enum: [string, number, boolean, date]
+                example: string
+              nullable:
+                type: boolean
+                example: false
+        uploadTime:
+          type: string
+          format: date-time
+        tags:
+          type: array
+          items:
+            type: string
+          example: [customer, feedback, "2024"]
+        processingStatus:
+          type: string
+          enum: [uploading, processing, completed, failed]
+          example: completed
+
+    # Job Management schemas
+    JobInfo:
+      type: object
+      properties:
+        jobId:
+          type: string
+          example: job_xyz789
+        status:
+          type: string
+          enum: [queued, processing, completed, failed, cancelled]
+          example: queued
+        type:
+          type: string
+          example: sentiment_analysis
+        priority:
+          type: string
+          enum: [low, medium, high]
+          example: high
+        estimatedDuration:
+          type: integer
+          description: Estimated duration in seconds
+          example: 1800
+        createdAt:
+          type: string
+          format: date-time
+        queuePosition:
+          type: integer
+          example: 3
+
+    JobDetails:
+      type: object
+      properties:
+        jobId:
+          type: string
+          example: job_xyz789
+        status:
+          type: string
+          enum: [queued, processing, completed, failed, cancelled]
+          example: processing
+        type:
+          type: string
+          example: sentiment_analysis
+        progress:
+          type: object
+          properties:
+            current:
+              type: integer
+              example: 2500
+            total:
+              type: integer
+              example: 5000
+            percentage:
+              type: number
+              example: 50
+            eta:
+              type: integer
+              description: Estimated time to completion in seconds
+              example: 900
+        result:
+          type: object
+          nullable: true
+          description: Job result data (null until completed)
+        error:
+          type: string
+          nullable: true
+          description: Error message if job failed
+        createdAt:
+          type: string
+          format: date-time
+        startedAt:
+          type: string
+          format: date-time
+          nullable: true
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+        processingTime:
+          type: integer
+          description: Processing time in milliseconds
+          example: 120
+
+  responses:
+    BadRequest:
+      description: Bad request - invalid parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error: Invalid request parameters
+            code: VALIDATION_ERROR
+            timestamp: "2024-01-15T10:30:00Z"
+
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error: Authentication required
+            code: AUTH_REQUIRED
+            timestamp: "2024-01-15T10:30:00Z"
+
+    Forbidden:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error: Insufficient permissions
+            code: INSUFFICIENT_PERMISSIONS
+            timestamp: "2024-01-15T10:30:00Z"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error: Resource not found
+            code: RESOURCE_NOT_FOUND
+            timestamp: "2024-01-15T10:30:00Z"
+
+    RateLimit:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error: Rate limit exceeded
+            code: RATE_LIMIT_EXCEEDED
+            timestamp: "2024-01-15T10:30:00Z"
+      headers:
+        X-RateLimit-Limit:
+          description: Request limit per time window
+          schema:
+            type: integer
+        X-RateLimit-Remaining:
+          description: Remaining requests in current window
+          schema:
+            type: integer
+        X-RateLimit-Reset:
+          description: Time when rate limit resets (Unix timestamp)
+          schema:
+            type: integer
+
+tags:
+  - name: Health
+    description: Health check and status endpoints
+  - name: Authentication
+    description: User authentication and token management
+  - name: Sentiment Analysis
+    description: Text sentiment analysis endpoints
+  - name: Security
+    description: PII detection and data security endpoints
+  - name: Data Management
+    description: Dataset upload and management
+  - name: Job Management
+    description: Asynchronous job processing and monitoring

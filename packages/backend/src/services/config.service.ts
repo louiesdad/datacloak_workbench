@@ -47,8 +47,8 @@ export class ConfigService extends EventEmitter {
       );
     }
     
-    // Set up hot-reload if enabled
-    if (this.config.ENABLE_HOT_RELOAD) {
+    // Set up hot-reload if enabled (disabled in test environment to prevent memory leaks)
+    if (this.config.ENABLE_HOT_RELOAD && process.env.NODE_ENV !== 'test') {
       this.setupHotReload();
     }
   }
@@ -131,20 +131,30 @@ export class ConfigService extends EventEmitter {
       return text;
     }
     
-    const parts = text.split(':');
-    const iv = Buffer.from(parts[0], 'hex');
-    const encryptedText = parts[1];
-    
-    const decipher = crypto.createDecipheriv(
-      'aes-256-cbc',
-      this.encryptionKey,
-      iv
-    );
-    
-    let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
-    decrypted += decipher.final('utf8');
-    
-    return decrypted;
+    try {
+      const parts = text.split(':');
+      if (parts.length !== 2) {
+        // Not encrypted format, return as-is
+        return text;
+      }
+      
+      const iv = Buffer.from(parts[0], 'hex');
+      const encryptedText = parts[1];
+      
+      const decipher = crypto.createDecipheriv(
+        'aes-256-cbc',
+        this.encryptionKey,
+        iv
+      );
+      
+      let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
+      decrypted += decipher.final('utf8');
+      
+      return decrypted;
+    } catch (error) {
+      console.warn('Failed to decrypt configuration, returning as plaintext:', error);
+      return text;
+    }
   }
 
   public get<K extends keyof IConfig>(key: K): IConfig[K] {
@@ -160,10 +170,51 @@ export class ConfigService extends EventEmitter {
     value: IConfig[K]
   ): Promise<void> {
     const oldValue = this.config[key];
+    
+    // Create temporary config for validation
+    const tempConfig = { ...this.config };
+    tempConfig[key] = value;
+    
+    // Validate the new configuration with timeout
+    const validationTimeout = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error('Configuration validation timeout')), 5000);
+    });
+    
+    try {
+      const validationPromise = new Promise<void>((resolve, reject) => {
+        try {
+          const { error } = configSchema.validate(tempConfig, { abortEarly: true });
+          if (error) {
+            reject(new Error(`Configuration validation error: ${error.message}`));
+          } else {
+            resolve();
+          }
+        } catch (err) {
+          reject(err);
+        }
+      });
+      
+      await Promise.race([validationPromise, validationTimeout]);
+    } catch (error) {
+      throw error;
+    }
+    
+    // Apply the change
     this.config[key] = value;
     
-    // Persist the configuration
-    await this.persistConfig();
+    // Persist the configuration with timeout
+    try {
+      await Promise.race([
+        this.persistConfig(),
+        new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error('Configuration persistence timeout')), 3000)
+        )
+      ]);
+    } catch (error) {
+      // Rollback on persistence failure
+      this.config[key] = oldValue;
+      throw new Error(`Failed to persist configuration: ${error.message}`);
+    }
     
     // Emit update event
     this.emit('config.updated', {

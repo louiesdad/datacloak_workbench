@@ -15,7 +15,7 @@ describe('Security API Integration Tests', () => {
     await initializeDatabases();
     
     // Create app
-    app = createApp();
+    app = await createApp();
   });
 
   describe('PII Detection', () => {

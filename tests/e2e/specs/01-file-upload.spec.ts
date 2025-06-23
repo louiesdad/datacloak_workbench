@@ -2,6 +2,50 @@ import { test, expect, expectWorkflowStep, waitForFileProcessing, uploadFile } f
 
 test.describe('File Upload Functionality', () => {
   test.beforeEach(async ({ page, mockBackend, mockOpenAI, platformBridge }) => {
+    // Set up request interception for file upload
+    await page.route('**/api/v1/data/upload', async (route, request) => {
+      console.log('Intercepting upload request:', request.url());
+      
+      if (request.method() === 'POST') {
+        // Simulate successful upload response
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            data: {
+              dataset: {
+                datasetId: `ds_${Date.now()}`,
+                originalFilename: 'small-test.csv',
+                recordCount: 100,
+                size: 1024,
+                uploadedAt: new Date().toISOString(),
+                status: 'ready'
+              },
+              fieldInfo: [
+                { name: 'id', type: 'integer', piiDetected: false },
+                { name: 'name', type: 'text', piiDetected: true, piiType: 'NAME' },
+                { name: 'email', type: 'email', piiDetected: true, piiType: 'EMAIL' },
+                { name: 'comment', type: 'text', piiDetected: false },
+                { name: 'rating', type: 'integer', piiDetected: false }
+              ],
+              previewData: [
+                { id: 1, name: 'John Doe', email: 'john@example.com', comment: 'Great product!', rating: 5 },
+                { id: 2, name: 'Jane Smith', email: 'jane@example.com', comment: 'Could be better', rating: 3 }
+              ],
+              securityScan: {
+                piiItemsDetected: 2,
+                complianceScore: 85,
+                riskLevel: 'medium'
+              }
+            }
+          })
+        });
+      } else {
+        await route.continue();
+      }
+    });
+    
     // Enable request/response logging
     page.on('request', request => {
       console.log('→', request.method(), request.url());
@@ -30,6 +74,11 @@ test.describe('File Upload Functionality', () => {
     await test.step('Upload small CSV file', async () => {
       await uploadFile(page, testFiles.small, browserMode);
       
+      // Click the Upload File button
+      const uploadButton = page.locator('button:has-text("Upload File")');
+      await expect(uploadButton).toBeVisible();
+      await uploadButton.click();
+      
       // Wait for file processing to complete
       await waitForFileProcessing(page);
       
@@ -38,28 +87,31 @@ test.describe('File Upload Functionality', () => {
     });
 
     await test.step('Verify file was processed', async () => {
-      // Check that we moved to the next step or see success indicators
-      const successIndicators = [
-        page.locator('text=/uploaded successfully/i'),
-        page.locator('text=/file processed/i'),
-        page.locator('.success, .uploaded, [data-testid="upload-success"]')
-      ];
+      // After successful upload, app should navigate to Data Profile step
+      await page.waitForTimeout(2000); // Give time for navigation
       
-      let foundSuccess = false;
-      for (const indicator of successIndicators) {
-        if (await indicator.isVisible({ timeout: 5000 }).catch(() => false)) {
-          foundSuccess = true;
-          break;
-        }
-      }
+      // Check that we're on the Data Profile step
+      const dataProfileHeader = page.locator('h2:has-text("Data Profile")');
+      await expect(dataProfileHeader).toBeVisible({ timeout: 10000 });
       
-      expect(foundSuccess, 'Should show upload success indicator').toBeTruthy();
+      // Verify dataset info is displayed
+      const datasetInfo = page.locator('text=/Records: 100|File: small-test.csv/i');
+      await expect(datasetInfo.first()).toBeVisible();
+      
+      // Verify PII warning is shown
+      const piiWarning = page.locator('text=/PII Protection Active/i');
+      await expect(piiWarning).toBeVisible();
     });
   });
 
   test('should upload medium CSV file with progress indication', async ({ page, testFiles, browserMode }) => {
     await test.step('Upload medium CSV file', async () => {
       await uploadFile(page, testFiles.medium, browserMode);
+      
+      // Click the Upload File button
+      const uploadButton = page.locator('button:has-text("Upload File")');
+      await expect(uploadButton).toBeVisible();
+      await uploadButton.click();
       
       // Look for progress indicators during upload
       const progressIndicators = [
@@ -108,6 +160,11 @@ test.describe('File Upload Functionality', () => {
     await test.step('Upload large CSV file', async () => {
       await uploadFile(page, testFiles.large, browserMode);
       
+      // Click the Upload File button
+      const uploadButton = page.locator('button:has-text("Upload File")');
+      await expect(uploadButton).toBeVisible();
+      await uploadButton.click();
+      
       // For large files, we should definitely see progress indicators
       const progressBar = page.locator('.progress-bar, [role="progressbar"]');
       if (await progressBar.isVisible({ timeout: 3000 }).catch(() => false)) {
@@ -137,6 +194,12 @@ test.describe('File Upload Functionality', () => {
   test('should upload PII-containing file and show warnings', async ({ page, testFiles, browserMode }) => {
     await test.step('Upload PII file', async () => {
       await uploadFile(page, testFiles.withPII, browserMode);
+      
+      // Click the Upload File button
+      const uploadButton = page.locator('button:has-text("Upload File")');
+      await expect(uploadButton).toBeVisible();
+      await uploadButton.click();
+      
       await waitForFileProcessing(page);
       
       await page.screenshot({ path: 'test-results/04-pii-file-uploaded.png', fullPage: true });
@@ -145,7 +208,7 @@ test.describe('File Upload Functionality', () => {
     await test.step('Verify PII warnings or detection', async () => {
       // Look for PII-related warnings or badges
       const piiIndicators = [
-        page.locator('text=/pii|personal|sensitive/i'),
+        page.locator('.notification-toast').filter({ hasText: /pii|personal|sensitive/i }),
         page.locator('.pii-warning, .security-warning, .badge-pii'),
         page.locator('[data-testid*="pii"]')
       ];
@@ -218,8 +281,9 @@ test.describe('File Upload Functionality', () => {
     await test.step('Verify graceful error handling', async () => {
       // Should show helpful error messages, not crash
       const errorMessages = [
-        page.locator('text=/malformed|invalid csv|parsing error/i'),
-        page.locator('.error-message, .validation-error')
+        page.locator('.notification-toast').filter({ hasText: /malformed|invalid csv|parsing error|failed/i }),
+        page.locator('.error-message, .validation-error'),
+        page.locator('[data-testid*="validation-error"]')
       ];
       
       let foundErrorMessage = false;
@@ -232,15 +296,15 @@ test.describe('File Upload Functionality', () => {
         }
       }
       
-      // Verify the app didn't crash
-      const appTitle = page.locator('text=/DataCloak Sentiment Workbench/i');
+      // Verify the app didn't crash - check app title exists
+      const appTitle = page.locator('.app-title').filter({ hasText: /DataCloak/i });
       await expect(appTitle).toBeVisible();
     });
   });
 
   test('should support drag and drop file upload', async ({ page, testFiles, browserMode }) => {
     await test.step('Drag and drop file', async () => {
-      const dropZone = page.locator('.drop-zone, [data-testid="drop-zone"]');
+      const dropZone = page.locator('[data-testid="file-drop-zone"]');
       await expect(dropZone).toBeVisible();
       
       if (browserMode) {
@@ -308,10 +372,10 @@ test.describe('File Upload Functionality', () => {
     await test.step('Verify file requirements display', async () => {
       // Check that file requirements are clearly displayed
       const requirements = [
-        page.locator('text=/supported formats/i'),
-        page.locator('text=/csv|xlsx|xls|tsv/i'),
-        page.locator('text=/50gb|maximum size/i'),
-        page.locator('text=/drag.*drop|browse files/i')
+        page.locator('.file-requirements').filter({ hasText: /supported formats/i }),
+        page.locator('.file-requirements').filter({ hasText: /csv|xlsx|xls|tsv/i }),
+        page.locator('.file-requirements').filter({ hasText: /50gb|maximum size/i }),
+        page.locator('.secondary-text').filter({ hasText: /drag.*drop|browse/i })
       ];
       
       for (const requirement of requirements) {

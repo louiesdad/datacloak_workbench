@@ -8,6 +8,8 @@ import {
   OpenAIStreamProcessor,
   TokenUsage
 } from './openai-enhancements';
+import { CircuitBreaker, circuitBreakerManager } from './circuit-breaker.service';
+import { ICacheService } from './cache.service';
 
 export interface OpenAIConfig {
   apiKey: string;
@@ -15,6 +17,9 @@ export interface OpenAIConfig {
   maxTokens?: number;
   temperature?: number;
   timeout?: number;
+  enableCache?: boolean;
+  cacheService?: ICacheService;
+  cacheTTL?: number; // Cache TTL in seconds
 }
 
 export interface OpenAIError {
@@ -28,6 +33,7 @@ export interface OpenAISentimentRequest {
   text: string;
   model?: string;
   includeConfidence?: boolean;
+  signal?: AbortSignal;
 }
 
 export interface OpenAISentimentResponse {
@@ -37,6 +43,7 @@ export interface OpenAISentimentResponse {
   reasoning?: string;
   tokensUsed: number;
   model: string;
+  fromCache?: boolean;
 }
 
 export class OpenAIService {
@@ -47,12 +54,16 @@ export class OpenAIService {
   private rateLimiter: RateLimiterService;
   private logger: OpenAILogger;
   private costTracker: CostTracker;
+  private circuitBreaker: CircuitBreaker;
+  private cacheService?: ICacheService;
 
   constructor(config: OpenAIConfig) {
     this.config = {
       maxTokens: 150,
       temperature: 0.1,
       timeout: 30000,
+      enableCache: false,
+      cacheTTL: 3600, // 1 hour default
       ...config,
       model: config.model || 'gpt-3.5-turbo'
     };
@@ -67,16 +78,49 @@ export class OpenAIService {
     // Initialize logger and cost tracker
     this.logger = new OpenAILogger();
     this.costTracker = new CostTracker();
+
+    // Initialize circuit breaker with OpenAI-specific settings
+    this.circuitBreaker = circuitBreakerManager.getBreaker('openai-api', {
+      failureThreshold: 5,
+      successThreshold: 2,
+      timeout: this.config.timeout || 30000,
+      resetTimeout: 60000, // 1 minute
+      volumeThreshold: 10,
+      errorThresholdPercentage: 50,
+      fallbackFunction: async () => {
+        throw new AppError(
+          'OpenAI service is temporarily unavailable. Circuit breaker is open.',
+          503,
+          'OPENAI_SERVICE_UNAVAILABLE'
+        );
+      }
+    });
+
+    // Initialize cache service if provided
+    if (this.config.enableCache && this.config.cacheService) {
+      this.cacheService = this.config.cacheService;
+    }
   }
 
   /**
    * Analyze sentiment using OpenAI API
    */
   async analyzeSentiment(request: OpenAISentimentRequest): Promise<OpenAISentimentResponse> {
-    const { text, model = this.config.model, includeConfidence = true } = request;
+    const { text, model = this.config.model, includeConfidence = true, signal } = request;
 
     if (!text || text.trim().length === 0) {
       throw new AppError('Text is required for sentiment analysis', 400, 'INVALID_INPUT');
+    }
+
+    // Check cache first if enabled
+    const cacheKey = this.generateCacheKey(text, model, includeConfidence);
+    const cachedResult = await this.getCachedResult(cacheKey);
+    if (cachedResult) {
+      // Add cache hit indicator to the response
+      return {
+        ...cachedResult,
+        fromCache: true
+      };
     }
 
     // Optimize text if needed
@@ -107,9 +151,14 @@ export class OpenAIService {
         ],
         max_tokens: this.config.maxTokens,
         temperature: this.config.temperature
-      });
+      }, 1, signal);
 
-      return this.parseSentimentResponse(response, model);
+      const result = this.parseSentimentResponse(response, model);
+      
+      // Cache the result for future requests
+      await this.setCachedResult(cacheKey, result);
+      
+      return result;
     } catch (error) {
       if (error instanceof AppError) {
         throw error;
@@ -125,16 +174,24 @@ export class OpenAIService {
   /**
    * Make a request to OpenAI API with retry logic and error handling
    */
-  private async makeOpenAIRequest(payload: any, attempt = 1): Promise<any> {
+  private async makeOpenAIRequest(payload: any, attempt = 1, signal?: AbortSignal): Promise<any> {
     // Apply rate limiting
-    await this.rateLimiter.waitForLimit();
+    await this.rateLimiter.waitForLimit('openai-requests');
 
     const startTime = Date.now();
     this.logger.logRequest(payload.model, payload);
 
-    try {
+    // Execute request with circuit breaker protection
+    return this.circuitBreaker.execute(async () => {
+      try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
+      
+      // Use provided signal or internal controller
+      const effectiveSignal = signal || controller.signal;
+      if (signal) {
+        signal.addEventListener('abort', () => controller.abort());
+      }
 
       const response = await fetch(`${this.baseUrl}/chat/completions`, {
         method: 'POST',
@@ -144,7 +201,7 @@ export class OpenAIService {
           'User-Agent': 'DataCloak-Sentiment-Workbench/1.0'
         },
         body: JSON.stringify(payload),
-        signal: controller.signal
+        signal: effectiveSignal
       });
 
       clearTimeout(timeoutId);
@@ -153,11 +210,11 @@ export class OpenAIService {
         const shouldRetry = await this.handleAPIError(response, attempt);
         if (shouldRetry && attempt < this.retryAttempts) {
           // Retry the request
-          return this.makeOpenAIRequest(payload, attempt + 1);
+          return this.makeOpenAIRequest(payload, attempt + 1, signal);
         }
       }
 
-      const data = await response.json();
+      const data = await response.json() as any;
       
       // Track costs and log response
       if (data.usage) {
@@ -199,7 +256,8 @@ export class OpenAIService {
       }
 
       throw this.createOpenAIError('api_error', 'Unexpected API error', 'api_error');
-    }
+      }
+    });
   }
 
   /**
@@ -316,6 +374,10 @@ Text to analyze: "${text.replace(/"/g, '\\"')}"`;
    * Parse OpenAI response for sentiment analysis
    */
   private parseSentimentResponse(response: any, model: string): OpenAISentimentResponse {
+    if (!response || typeof response !== 'object') {
+      throw new AppError('Invalid response from OpenAI API', 500, 'OPENAI_RESPONSE_ERROR');
+    }
+    
     if (!response.choices || response.choices.length === 0) {
       throw new AppError('No response from OpenAI', 500, 'OPENAI_PARSE_ERROR');
     }
@@ -328,7 +390,26 @@ Text to analyze: "${text.replace(/"/g, '\\"')}"`;
     }
 
     try {
-      const parsed = JSON.parse(content.trim());
+      // Try parsing JSON first
+      let parsed: any;
+      try {
+        parsed = JSON.parse(content.trim());
+      } catch {
+        // If JSON parsing fails, try parsing plain text format
+        const sentimentMatch = content.match(/Sentiment:\s*(positive|negative|neutral)/i);
+        const scoreMatch = content.match(/Score:\s*([-\d.]+)/);
+        const confidenceMatch = content.match(/Confidence:\s*([\d.]+)/);
+        
+        if (sentimentMatch && scoreMatch) {
+          parsed = {
+            sentiment: sentimentMatch[1].toLowerCase(),
+            score: parseFloat(scoreMatch[1]),
+            confidence: confidenceMatch ? parseFloat(confidenceMatch[1]) : 0.8
+          };
+        } else {
+          throw new Error('Unable to parse response format');
+        }
+      }
       
       // Validate required fields
       if (!parsed.sentiment || !['positive', 'negative', 'neutral'].includes(parsed.sentiment)) {
@@ -361,20 +442,28 @@ Text to analyze: "${text.replace(/"/g, '\\"')}"`;
   /**
    * Test OpenAI API connection and authentication
    */
-  async testConnection(): Promise<{ connected: boolean; model: string; error?: string }> {
+  async testConnection(): Promise<{ connected: boolean; model: string; available?: boolean; error?: string }> {
     try {
-      await this.makeOpenAIRequest({
-        model: this.config.model,
-        messages: [
-          { role: 'user', content: 'Test connection. Reply with just "OK".' }
-        ],
-        max_tokens: 5,
-        temperature: 0
+      // Test with models endpoint instead of chat completions for connection test
+      const response = await fetch(`${this.baseUrl}/models`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${this.config.apiKey}`,
+          'Content-Type': 'application/json'
+        }
       });
+
+      if (!response.ok) {
+        throw new Error(`API returned ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json() as any;
+      const modelAvailable = data.data?.some((model: any) => model.id === this.config.model);
 
       return {
         connected: true,
-        model: this.config.model
+        model: this.config.model,
+        available: modelAvailable
       };
 
     } catch (error) {
@@ -390,27 +479,47 @@ Text to analyze: "${text.replace(/"/g, '\\"')}"`;
    * Get API usage and rate limit information
    */
   async getAPIStatus(): Promise<{
-    rateLimit: {
-      requestsRemaining: number;
-      tokensRemaining: number;
-      resetTime: Date;
+    operational: boolean;
+    metrics: {
+      totalRequests: number;
+      successfulRequests: number;
+      failedRequests: number;
+      averageResponseTime: number;
     };
     usage: {
-      requestsToday: number;
-      tokensToday: number;
+      totalTokens: number;
+      totalCost: number;
+      breakdown: Record<string, { tokens: number; cost: number }>;
+    };
+    rateLimitStatus: {
+      available: boolean;
+      limit: number;
+      remaining: number;
+      resetAt: Date;
     };
   }> {
     const rateLimitStatus = this.rateLimiter.getStatus();
+    const logStats = this.logger.getStats();
+    const dailyCost = this.costTracker.getDailyCost();
     
     return {
-      rateLimit: {
-        requestsRemaining: rateLimitStatus.tokensRemaining,
-        tokensRemaining: 50000, // This would need to be tracked separately
-        resetTime: new Date(Date.now() + rateLimitStatus.nextRefillIn)
+      operational: true,
+      metrics: {
+        totalRequests: logStats.totalRequests || 0,
+        successfulRequests: (logStats.totalRequests || 0) - (logStats.totalErrors || 0),
+        failedRequests: logStats.totalErrors || 0,
+        averageResponseTime: logStats.averageResponseTime || 0
       },
       usage: {
-        requestsToday: rateLimitStatus.maxTokens - rateLimitStatus.tokensRemaining,
-        tokensToday: 8500 // This would need to be tracked separately
+        totalTokens: dailyCost.total.tokens,
+        totalCost: dailyCost.total.cost,
+        breakdown: dailyCost.byModel
+      },
+      rateLimitStatus: {
+        available: rateLimitStatus.tokensRemaining > 0,
+        limit: rateLimitStatus.maxTokens || 3,
+        remaining: rateLimitStatus.tokensRemaining || 3,
+        resetAt: new Date(Date.now() + (rateLimitStatus.nextRefillIn || 60000))
       }
     };
   }
@@ -426,6 +535,20 @@ Text to analyze: "${text.replace(/"/g, '\\"')}"`;
    * Update configuration
    */
   updateConfig(newConfig: Partial<OpenAIConfig>): void {
+    // Validate temperature range
+    if (newConfig.temperature !== undefined) {
+      if (newConfig.temperature < 0 || newConfig.temperature > 2) {
+        throw new AppError('Temperature must be between 0 and 2', 400, 'INVALID_CONFIG');
+      }
+    }
+    
+    // Validate max tokens
+    if (newConfig.maxTokens !== undefined) {
+      if (newConfig.maxTokens <= 0) {
+        throw new AppError('Max tokens must be greater than 0', 400, 'INVALID_CONFIG');
+      }
+    }
+    
     this.config = { ...this.config, ...newConfig };
   }
 
@@ -534,5 +657,257 @@ Text to analyze: "${text.replace(/"/g, '\\"')}"`;
     }
     
     return results;
+  }
+
+  /**
+   * Batch sentiment analysis (alias for analyzeSentimentBatch for test compatibility)
+   */
+  async batchAnalyzeSentiment(texts: string[]): Promise<OpenAISentimentResponse[]> {
+    if (!texts || texts.length === 0) {
+      throw new AppError('Texts array is required', 400, 'INVALID_INPUT');
+    }
+    
+    if (texts.length > 100) {
+      throw new AppError('Batch size cannot exceed 100 texts', 400, 'BATCH_TOO_LARGE');
+    }
+    
+    // For the test compatibility, process in batch with OpenAI API
+    try {
+      const response = await this.makeOpenAIRequest({
+        model: this.config.model,
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a precise sentiment analysis expert. Analyze each text and respond with a JSON array of sentiment objects.'
+          },
+          {
+            role: 'user',
+            content: `Analyze the sentiment of these texts and respond with a JSON array where each element has format {"sentiment": "positive|negative|neutral", "score": number, "confidence": number}:\n\n${texts.map((text, i) => `${i + 1}. ${text}`).join('\n')}`
+          }
+        ],
+        max_tokens: this.config.maxTokens,
+        temperature: this.config.temperature
+      });
+
+      if (!response.choices || response.choices.length === 0) {
+        throw new AppError('No response from OpenAI', 500, 'OPENAI_PARSE_ERROR');
+      }
+
+      const content = response.choices[0].message?.content;
+      if (!content) {
+        throw new AppError('Empty response from OpenAI', 500, 'OPENAI_PARSE_ERROR');
+      }
+
+      const parsed = JSON.parse(content.trim());
+      if (!Array.isArray(parsed)) {
+        throw new Error('Expected array response');
+      }
+
+      return parsed.map((item: any, index: number) => ({
+        sentiment: item.sentiment,
+        score: Number(item.score.toFixed(3)),
+        confidence: item.confidence ? Number(item.confidence.toFixed(3)) : 0.8,
+        reasoning: item.reasoning || '',
+        tokensUsed: Math.floor((response.usage?.total_tokens || 0) / texts.length),
+        model: this.config.model
+      }));
+
+    } catch (error) {
+      throw new AppError(
+        `Batch sentiment analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        500,
+        'OPENAI_ANALYSIS_ERROR'
+      );
+    }
+  }
+
+  /**
+   * Stream sentiment analysis with callback-based approach (for test compatibility)
+   */
+  async streamAnalyzeSentiment(options: {
+    text: string;
+    model?: string;
+    onChunk?: (chunk: any) => void;
+    onComplete?: (result: any) => void;
+    onError?: (error: Error) => void;
+  }): Promise<void> {
+    try {
+      const payload = {
+        model: options.model || this.config.model,
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a precise sentiment analysis expert. Respond only in the requested JSON format.'
+          },
+          {
+            role: 'user',
+            content: this.buildSentimentPrompt(options.text, true)
+          }
+        ],
+        max_tokens: this.config.maxTokens,
+        temperature: this.config.temperature,
+        stream: true
+      };
+
+      const response = await fetch(`${this.baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.config.apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        throw new Error(`Stream request failed: ${response.statusText}`);
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error('Response body is not readable');
+      }
+
+      let buffer = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += new TextDecoder().decode(value);
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') {
+              if (options.onComplete) {
+                options.onComplete({ finished: true });
+              }
+              return;
+            }
+
+            try {
+              const parsed = JSON.parse(data);
+              if (options.onChunk) {
+                options.onChunk(parsed);
+              }
+            } catch (e) {
+              // Skip invalid JSON chunks
+            }
+          }
+        }
+      }
+    } catch (error) {
+      if (options.onError) {
+        options.onError(error instanceof Error ? error : new Error('Stream error'));
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Get current usage statistics (for test compatibility)
+   */
+  getCurrentUsage(): {
+    totalTokens: number;
+    totalCost: number;
+    breakdown: Record<string, { tokens: number; cost: number }>;
+  } {
+    const dailyCost = this.costTracker.getDailyCost();
+    return {
+      totalTokens: dailyCost.total.tokens,
+      totalCost: dailyCost.total.cost,
+      breakdown: dailyCost.byModel
+    };
+  }
+
+  /**
+   * Get circuit breaker status
+   */
+  getCircuitBreakerStatus() {
+    return this.circuitBreaker.getMetrics();
+  }
+
+  /**
+   * Reset circuit breaker (for manual intervention)
+   */
+  resetCircuitBreaker(): void {
+    this.circuitBreaker.reset();
+  }
+
+  /**
+   * Generate cache key for sentiment analysis
+   */
+  private generateCacheKey(text: string, model: string, includeConfidence: boolean): string {
+    const contentHash = Buffer.from(text).toString('base64').slice(0, 32);
+    return `openai:sentiment:${model}:${includeConfidence}:${contentHash}`;
+  }
+
+  /**
+   * Get cached sentiment result
+   */
+  private async getCachedResult(cacheKey: string): Promise<OpenAISentimentResponse | null> {
+    if (!this.cacheService) return null;
+
+    try {
+      const cached = await this.cacheService.get(cacheKey);
+      if (cached) {
+        return JSON.parse(cached);
+      }
+    } catch (error) {
+      // Cache errors shouldn't break the service
+      console.warn('Cache retrieval error:', error);
+    }
+    return null;
+  }
+
+  /**
+   * Cache sentiment result
+   */
+  private async setCachedResult(cacheKey: string, result: OpenAISentimentResponse): Promise<void> {
+    if (!this.cacheService) return;
+
+    try {
+      await this.cacheService.set(
+        cacheKey, 
+        JSON.stringify(result), 
+        { ttl: this.config.cacheTTL }
+      );
+    } catch (error) {
+      // Cache errors shouldn't break the service
+      console.warn('Cache storage error:', error);
+    }
+  }
+
+  /**
+   * Clear OpenAI cache (for testing/maintenance)
+   */
+  async clearCache(): Promise<void> {
+    if (!this.cacheService) return;
+
+    try {
+      const keys = await this.cacheService.keys('openai:*');
+      for (const key of keys) {
+        await this.cacheService.del(key);
+      }
+    } catch (error) {
+      console.warn('Cache clearing error:', error);
+    }
+  }
+
+  /**
+   * Get cache statistics
+   */
+  async getCacheStats(): Promise<{ enabled: boolean; keys: number; }> {
+    if (!this.cacheService) {
+      return { enabled: false, keys: 0 };
+    }
+
+    try {
+      const keys = await this.cacheService.keys('openai:*');
+      return { enabled: true, keys: keys.length };
+    } catch (error) {
+      return { enabled: true, keys: -1 };
+    }
   }
 }

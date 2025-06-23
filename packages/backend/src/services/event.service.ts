@@ -36,6 +36,7 @@ export const EventTypes = {
   JOB_PROGRESS: 'job:progress',
   JOB_COMPLETE: 'job:complete',
   JOB_FAILED: 'job:failed',
+  JOB_CANCELLED: 'job:cancelled',
   JOB_RETRY: 'job:retry',
   
   // System Events
@@ -63,4 +64,57 @@ export function emitEvent(eventType: string, data: any): void {
     ...data,
     timestamp: new Date().toISOString(),
   });
+}
+
+// EventService class for dependency injection
+export class EventService {
+  private static instance: EventService;
+  private emitter: EventEmitter;
+
+  private constructor() {
+    this.emitter = eventEmitter;
+  }
+
+  static getInstance(): EventService {
+    if (!EventService.instance) {
+      EventService.instance = new EventService();
+    }
+    return EventService.instance;
+  }
+
+  emit(event: string, data?: any): void {
+    emitEvent(event, data || {});
+  }
+
+  on(event: string, listener: (...args: any[]) => void): void {
+    this.emitter.on(event, listener);
+  }
+
+  off(event: string, listener: (...args: any[]) => void): void {
+    this.emitter.off(event, listener);
+  }
+
+  once(event: string, listener: (...args: any[]) => void): void {
+    this.emitter.once(event, listener);
+  }
+
+  removeAllListeners(event?: string): void {
+    this.emitter.removeAllListeners(event);
+  }
+
+  getMaxListeners(): number {
+    return this.emitter.getMaxListeners();
+  }
+
+  setMaxListeners(n: number): void {
+    this.emitter.setMaxListeners(n);
+  }
+
+  listenerCount(event: string): number {
+    return this.emitter.listenerCount(event);
+  }
+
+  eventNames(): (string | symbol)[] {
+    return this.emitter.eventNames();
+  }
 }

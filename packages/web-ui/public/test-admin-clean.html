@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Section Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+        .info { color: blue; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        iframe { width: 100%; height: 800px; border: 2px solid #333; }
+    </style>
+</head>
+<body>
+    <h1>Admin Section Clean Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Instructions</h2>
+        <ol>
+            <li>Click "Start Test" to load the app</li>
+            <li>Click on "Logs" in the navigation</li>
+            <li>Verify NO login form appears</li>
+            <li>Verify dashboard loads with proper styling</li>
+            <li>Test all tabs work correctly</li>
+        </ol>
+        <button onclick="startTest()">Start Test</button>
+        <button onclick="navigateToLogs()">Navigate to Logs</button>
+        <button onclick="checkForLogin()">Check for Login Form</button>
+        <button onclick="checkDashboard()">Check Dashboard</button>
+    </div>
+    
+    <div id="results" class="test-section">
+        <h2>Test Results</h2>
+        <div id="test-output"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Live App</h2>
+        <iframe id="app-frame" src="/"></iframe>
+    </div>
+
+    <script>
+        const output = document.getElementById('test-output');
+        const appFrame = document.getElementById('app-frame');
+        
+        function log(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = type;
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            output.appendChild(div);
+        }
+        
+        function startTest() {
+            output.innerHTML = '';
+            log('Starting admin section test...', 'info');
+            appFrame.src = '/';
+            
+            appFrame.onload = () => {
+                log('App loaded', 'success');
+                checkInitialState();
+            };
+        }
+        
+        function checkInitialState() {
+            try {
+                const doc = appFrame.contentDocument;
+                
+                // Check for navigation
+                const navSteps = doc.querySelectorAll('.nav-step');
+                log(`Found ${navSteps.length} navigation items`, navSteps.length > 0 ? 'success' : 'error');
+                
+                // Find Logs button
+                let logsButton = null;
+                navSteps.forEach(step => {
+                    if (step.textContent.includes('Logs')) {
+                        logsButton = step;
+                        log('Found Logs button with text: ' + step.textContent, 'success');
+                    }
+                });
+                
+                if (!logsButton) {
+                    log('Logs button not found!', 'error');
+                }
+            } catch (e) {
+                log('Error checking initial state: ' + e.message, 'error');
+            }
+        }
+        
+        function navigateToLogs() {
+            try {
+                const doc = appFrame.contentDocument;
+                const navSteps = doc.querySelectorAll('.nav-step');
+                
+                let clicked = false;
+                navSteps.forEach(step => {
+                    if (step.textContent.includes('Logs') && !clicked) {
+                        step.click();
+                        clicked = true;
+                        log('Clicked Logs button', 'success');
+                    }
+                });
+                
+                if (!clicked) {
+                    log('Could not find Logs button to click', 'error');
+                }
+                
+                // Check what loaded after click
+                setTimeout(() => {
+                    checkForLogin();
+                    checkDashboard();
+                }, 500);
+            } catch (e) {
+                log('Error navigating: ' + e.message, 'error');
+            }
+        }
+        
+        function checkForLogin() {
+            try {
+                const doc = appFrame.contentDocument;
+                
+                // Check for login form elements
+                const passwordInputs = doc.querySelectorAll('input[type="password"]');
+                const loginButtons = Array.from(doc.querySelectorAll('button')).filter(btn => 
+                    btn.textContent.toLowerCase().includes('login')
+                );
+                const passwordLabels = Array.from(doc.querySelectorAll('*')).filter(el => 
+                    el.textContent.toLowerCase().includes('password') && 
+                    el.tagName !== 'SCRIPT'
+                );
+                
+                if (passwordInputs.length > 0) {
+                    log(`FAIL: Found ${passwordInputs.length} password input(s)`, 'error');
+                } else {
+                    log('PASS: No password inputs found', 'success');
+                }
+                
+                if (loginButtons.length > 0) {
+                    log(`FAIL: Found ${loginButtons.length} login button(s)`, 'error');
+                } else {
+                    log('PASS: No login buttons found', 'success');
+                }
+                
+                if (passwordLabels.length > 0) {
+                    log(`WARNING: Found ${passwordLabels.length} elements mentioning 'password'`, 'error');
+                    passwordLabels.slice(0, 3).forEach(el => {
+                        log(`  - ${el.tagName}: "${el.textContent.substring(0, 50)}..."`, 'info');
+                    });
+                }
+            } catch (e) {
+                log('Error checking for login: ' + e.message, 'error');
+            }
+        }
+        
+        function checkDashboard() {
+            try {
+                const doc = appFrame.contentDocument;
+                
+                // Check for dashboard elements
+                const dashboard = doc.querySelector('.simplified-admin-dashboard');
+                const enhancedDashboard = doc.querySelector('.enhanced-admin-dashboard');
+                const adminDashboard = doc.querySelector('.admin-dashboard');
+                const tabs = doc.querySelector('.dashboard-tabs');
+                const tabButtons = tabs ? tabs.querySelectorAll('button') : [];
+                
+                if (dashboard) {
+                    log('PASS: Found SimplifiedAdminDashboard', 'success');
+                } else if (enhancedDashboard) {
+                    log('WARNING: Found EnhancedAdminDashboard (may have auth)', 'error');
+                } else if (adminDashboard) {
+                    log('WARNING: Found AdminDashboard (may have auth)', 'error');
+                } else {
+                    log('FAIL: No dashboard found', 'error');
+                }
+                
+                if (tabs) {
+                    log(`PASS: Found dashboard tabs with ${tabButtons.length} buttons`, 'success');
+                    tabButtons.forEach(btn => {
+                        log(`  - Tab: "${btn.textContent}"`, 'info');
+                    });
+                } else {
+                    log('FAIL: No dashboard tabs found', 'error');
+                }
+                
+                // Check styling
+                if (tabButtons.length > 0) {
+                    const firstButton = tabButtons[0];
+                    const styles = window.getComputedStyle(firstButton);
+                    
+                    if (styles.cursor === 'pointer' && styles.padding !== '0px') {
+                        log('PASS: Buttons have proper styling', 'success');
+                    } else {
+                        log('FAIL: Buttons missing proper styling', 'error');
+                        log(`  - cursor: ${styles.cursor}`, 'info');
+                        log(`  - padding: ${styles.padding}`, 'info');
+                    }
+                }
+                
+                // Check content
+                const h2s = doc.querySelectorAll('h2');
+                const h3s = doc.querySelectorAll('h3');
+                log(`Found ${h2s.length} h2 and ${h3s.length} h3 elements`, 'info');
+                
+                Array.from(h2s).slice(0, 3).forEach(h => {
+                    log(`  - H2: "${h.textContent}"`, 'info');
+                });
+            } catch (e) {
+                log('Error checking dashboard: ' + e.message, 'error');
+            }
+        }
+    </script>
+</body>
+</html>

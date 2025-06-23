@@ -14,16 +14,17 @@ export const adminAuthMiddleware = async (
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
-) => {
+): Promise<void> => {
   try {
     const configService = ConfigService.getInstance();
     const authHeader = req.headers.authorization;
 
     if (!authHeader) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         error: 'No authorization header provided',
       });
+      return;
     }
 
     // Check for Bearer token
@@ -36,10 +37,11 @@ export const adminAuthMiddleware = async (
         
         // Check if token contains admin role
         if (decoded.role !== 'admin') {
-          return res.status(403).json({
+          res.status(403).json({
             success: false,
             error: 'Insufficient permissions',
           });
+          return;
         }
         
         req.admin = {
@@ -49,7 +51,7 @@ export const adminAuthMiddleware = async (
         
         return next();
       } catch (error) {
-        return res.status(401).json({
+        res.status(401).json({
           success: false,
           error: 'Invalid or expired token',
         });
@@ -68,7 +70,7 @@ export const adminAuthMiddleware = async (
         const adminPassword = configService.get('ADMIN_PASSWORD');
         
         if (username !== adminUsername) {
-          return res.status(401).json({
+          res.status(401).json({
             success: false,
             error: 'Invalid credentials',
           });
@@ -78,7 +80,7 @@ export const adminAuthMiddleware = async (
         const isValidPassword = await comparePassword(password, adminPassword);
         
         if (!isValidPassword) {
-          return res.status(401).json({
+          res.status(401).json({
             success: false,
             error: 'Invalid credentials',
           });
@@ -91,23 +93,25 @@ export const adminAuthMiddleware = async (
         
         return next();
       } catch (error) {
-        return res.status(401).json({
+        res.status(401).json({
           success: false,
           error: 'Invalid credentials',
         });
       }
     }
 
-    return res.status(401).json({
+    res.status(401).json({
       success: false,
       error: 'Invalid authorization method',
     });
+    return;
   } catch (error) {
     console.error('Auth middleware error:', error);
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
       error: 'Authentication error',
     });
+    return;
   }
 };
 

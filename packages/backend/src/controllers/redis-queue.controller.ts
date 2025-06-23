@@ -239,7 +239,7 @@ export class RedisQueueController {
         nextRetry: job.retryInfo?.nextRetry,
         originalError: job.originalError,
         currentError: job.error,
-        isInDeadLetterQueue: job.status === 'failed' && job.retryInfo?.attempts >= 3
+        isInDeadLetterQueue: job.status === 'failed' && (job.retryInfo?.attempts || 0) >= 3
       };
       
       res.json({

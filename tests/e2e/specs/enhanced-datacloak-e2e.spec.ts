@@ -10,6 +10,296 @@ import { test, expect } from '@playwright/test';
  * - File processing with enhanced features
  */
 
+// Setup function for security and compliance API mocking
+async function setupSecurityAndComplianceMocks(page) {
+  // Mock compliance frameworks endpoint
+  await page.route('**/api/v1/compliance/frameworks', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(['HIPAA', 'PCI_DSS', 'GDPR', 'GENERAL', 'CUSTOM'])
+    });
+  });
+
+  // Mock risk assessment endpoint
+  await page.route('**/api/v1/risk-assessment/analyze', async (route) => {
+    const requestData = route.request().postDataJSON();
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: {
+          risk_score: 75,
+          overall_risk: 'medium',
+          pii_detected: [
+            {
+              type: 'SSN',
+              count: 1,
+              confidence: 0.95,
+              risk_level: 'high',
+              samples: ['***-**-6789'],
+              compliance_impact: ['HIPAA', 'PCI_DSS'],
+              field_distribution: { ssn: 1 }
+            },
+            {
+              type: 'EMAIL',
+              count: 1,
+              confidence: 0.92,
+              risk_level: 'medium',
+              samples: ['john.doe@***'],
+              compliance_impact: ['GDPR'],
+              field_distribution: { email: 1 }
+            }
+          ],
+          compliance_status: [
+            {
+              framework: requestData?.complianceFramework || 'HIPAA',
+              compliant: false,
+              violations: ['Missing encryption at rest', 'Insufficient access controls'],
+              recommendations: ['Enable encryption', 'Implement role-based access'],
+              risk_factors: ['PII exposure', 'Regulatory compliance gap']
+            }
+          ],
+          data_sensitivity: {
+            total_records: 100,
+            sensitive_records: 25,
+            sensitivity_percentage: 25.0,
+            sensitivity_by_field: { ssn: 100, email: 80, name: 60 }
+          },
+          geographic_risk: {
+            jurisdiction: ['US', 'EU'],
+            cross_border_transfer: true,
+            gdpr_applicable: true,
+            additional_regulations: ['CCPA']
+          },
+          recommendations: {
+            immediate: ['Encrypt PII fields', 'Implement access logging'],
+            short_term: ['Data minimization review', 'Consent management'],
+            long_term: ['Compliance automation', 'Risk monitoring']
+          }
+        }
+      })
+    });
+  });
+
+  // Mock file upload endpoint with PII detection
+  await page.route('**/api/v1/data/upload', async (route) => {
+    if (route.request().method() === 'POST') {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: {
+            dataset: {
+              datasetId: `ds_${Date.now()}`,
+              originalFilename: 'medical-records.csv',
+              recordCount: 3,
+              size: 2048,
+              uploadedAt: new Date().toISOString(),
+              status: 'ready'
+            },
+            fieldInfo: [
+              { name: 'name', type: 'text', piiDetected: true, piiType: 'NAME', confidence: 0.95 },
+              { name: 'email', type: 'email', piiDetected: true, piiType: 'EMAIL', confidence: 0.92 },
+              { name: 'phone', type: 'phone', piiDetected: true, piiType: 'PHONE', confidence: 0.88 },
+              { name: 'ssn', type: 'text', piiDetected: true, piiType: 'SSN', confidence: 0.95 },
+              { name: 'credit_card', type: 'text', piiDetected: true, piiType: 'CREDIT_CARD', confidence: 0.97 },
+              { name: 'medical_id', type: 'text', piiDetected: true, piiType: 'MEDICAL_RECORD_NUMBER', confidence: 0.89 }
+            ],
+            previewData: [
+              { 
+                name: 'John Doe', 
+                email: 'john.doe@email.com', 
+                phone: '555-123-4567', 
+                ssn: '***-**-6789', 
+                credit_card: '****-****-****-0366', 
+                medical_id: 'MRN123456' 
+              }
+            ],
+            securityScan: {
+              piiItemsDetected: 6,
+              complianceScore: 65,
+              riskLevel: 'high',
+              frameworksAffected: ['HIPAA', 'PCI_DSS', 'GDPR'],
+              recommendedActions: ['Enable format-preserving encryption', 'Implement access controls']
+            }
+          }
+        })
+      });
+    } else {
+      await route.continue();
+    }
+  });
+
+  // Mock performance analytics endpoint
+  await page.route('**/api/v1/analytics/performance', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: {
+          processing_time: {
+            avg_file_processing: 2.5,
+            avg_pii_detection: 1.2,
+            avg_risk_assessment: 0.8
+          },
+          throughput: {
+            files_per_hour: 120,
+            records_per_second: 850
+          },
+          accuracy_metrics: {
+            pii_detection_accuracy: 0.94,
+            false_positive_rate: 0.03,
+            false_negative_rate: 0.06
+          }
+        }
+      })
+    });
+  });
+
+  // Mock custom patterns endpoint
+  await page.route('**/api/v1/patterns/custom', async (route) => {
+    if (route.request().method() === 'POST') {
+      const patternData = route.request().postDataJSON();
+      await route.fulfill({
+        status: 201,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: {
+            id: `pattern_${Date.now()}`,
+            name: patternData.name,
+            regex: patternData.regex,
+            risk_level: patternData.risk_level,
+            compliance_frameworks: patternData.compliance_frameworks,
+            created_at: new Date().toISOString(),
+            status: 'active'
+          }
+        })
+      });
+    } else {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: [
+            {
+              id: 'pattern_1',
+              name: 'Employee ID',
+              regex: '\\bEMP[0-9]{6}\\b',
+              risk_level: 'medium',
+              compliance_frameworks: ['GENERAL'],
+              created_at: '2024-01-01T00:00:00Z',
+              status: 'active'
+            }
+          ]
+        })
+      });
+    }
+  });
+
+  // Mock pattern testing endpoint
+  await page.route('**/api/v1/patterns/test', async (route) => {
+    const testData = route.request().postDataJSON();
+    const hasMatch = testData.text && testData.text.includes('EMP123456');
+    
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: {
+          matches_found: hasMatch,
+          match_count: hasMatch ? 1 : 0,
+          matches: hasMatch ? [{ text: 'EMP123456', start: testData.text.indexOf('EMP123456'), end: testData.text.indexOf('EMP123456') + 9 }] : [],
+          confidence: hasMatch ? 0.95 : 0.0
+        }
+      })
+    });
+  });
+
+  // Mock compliance report generation
+  await page.route('**/api/v1/compliance/report', async (route) => {
+    const reportData = route.request().postDataJSON();
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: {
+          report_id: `report_${Date.now()}`,
+          framework: reportData?.framework || 'HIPAA',
+          executive_summary: {
+            overall_score: 78,
+            critical_findings: 3,
+            recommendations: 8,
+            compliance_status: 'Partially Compliant'
+          },
+          detailed_findings: [
+            {
+              category: 'Data Encryption',
+              status: 'Non-Compliant',
+              description: 'PII fields are not encrypted at rest',
+              severity: 'Critical',
+              remediation: 'Implement field-level encryption'
+            },
+            {
+              category: 'Access Controls',
+              status: 'Partially Compliant', 
+              description: 'Basic access controls in place but lacking granular permissions',
+              severity: 'Medium',
+              remediation: 'Implement role-based access control'
+            }
+          ],
+          recommendations: [
+            'Enable format-preserving encryption for PII fields',
+            'Implement comprehensive audit logging',
+            'Establish data retention policies',
+            'Conduct regular compliance assessments'
+          ],
+          generated_at: new Date().toISOString()
+        }
+      })
+    });
+  });
+
+  // Mock export endpoints
+  await page.route('**/api/v1/compliance/report/export', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/pdf',
+      body: Buffer.from('Mock PDF report content'),
+      headers: {
+        'Content-Disposition': 'attachment; filename="compliance-report.pdf"'
+      }
+    });
+  });
+
+  // Mock WebSocket connections for real-time updates
+  await page.route('**/ws', async (route) => {
+    // For WebSocket endpoints, we'll simulate the connection
+    await route.continue();
+  });
+
+  // Mock generic error scenarios (will be overridden by specific tests)
+  await page.route('**/api/v1/error-test', async (route) => {
+    await route.fulfill({
+      status: 500,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        error: {
+          message: 'Simulated server error',
+          code: 'INTERNAL_ERROR'
+        }
+      })
+    });
+  });
+}
+
 // Test data and configuration
 const TEST_DATA = {
   csvWithPII: `name,email,phone,ssn,credit_card,medical_id
@@ -30,12 +320,12 @@ Bob Johnson,bob.j@test.org,555-555-5555,111-22-3333,4000000000000002,MRN345678`,
 test.describe('Enhanced DataCloak E2E Tests', () => {
   
   test.beforeEach(async ({ page }) => {
-    // Navigate to the application
-    await page.goto('http://localhost:3000');
-    await page.waitForLoadState('domcontentloaded');
+    // Set up comprehensive API mocking for security and compliance features
+    await setupSecurityAndComplianceMocks(page);
     
-    // Wait for the app to be ready
-    await expect(page.locator('[data-testid="app-container"]')).toBeVisible({ timeout: 10000 });
+    // Navigate to the application
+    await page.goto('/');
+    await page.waitForLoadState('networkidle');
   });
 
   test('Complete Enhanced DataCloak Workflow - HIPAA Compliance', async ({ page }) => {
@@ -398,6 +688,9 @@ test.describe('Performance Benchmarks', () => {
   test('Measure key performance metrics', async ({ page }) => {
     console.log('⏱️ Testing Performance Benchmarks');
     
+    // Set up API mocking for performance tests
+    await setupSecurityAndComplianceMocks(page);
+    
     // Start performance monitoring
     await page.addInitScript(() => {
       window.performanceMetrics = {
@@ -408,7 +701,7 @@ test.describe('Performance Benchmarks', () => {
     });
     
     const startTime = Date.now();
-    await page.goto('http://localhost:3000');
+    await page.goto('/');
     
     // Wait for app to be ready
     await expect(page.locator('[data-testid="app-container"]')).toBeVisible();

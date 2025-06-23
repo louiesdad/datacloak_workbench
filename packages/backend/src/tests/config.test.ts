@@ -12,6 +12,13 @@ describe('Configuration Service Tests', () => {
   });
 
   afterAll(() => {
+    // Cleanup ConfigService watchers to prevent memory leaks
+    try {
+      configService.destroy();
+    } catch (error) {
+      // Ignore cleanup errors
+    }
+    
     // Clean up test files
     if (fs.existsSync(testConfigPath)) {
       fs.unlinkSync(testConfigPath);
@@ -126,7 +133,7 @@ describe('Configuration Service Tests', () => {
 
   describe('Configuration Encryption', () => {
     it('should handle encryption key configuration', async () => {
-      const testEncryptionKey = 'test-encryption-key-12345';
+      const testEncryptionKey = 'test-encryption-key-32-chars-min-length-required-here';
       
       await configService.update('CONFIG_ENCRYPTION_KEY', testEncryptionKey);
       expect(configService.get('CONFIG_ENCRYPTION_KEY')).toBe(testEncryptionKey);
@@ -134,7 +141,7 @@ describe('Configuration Service Tests', () => {
 
     it('should encrypt sensitive configuration data', async () => {
       // Set encryption key first
-      await configService.update('CONFIG_ENCRYPTION_KEY', 'test-encryption-key');
+      await configService.update('CONFIG_ENCRYPTION_KEY', 'test-encryption-key-32-chars-min-length-required-here');
       
       // Update sensitive data
       const sensitiveKey = 'sk-test-sensitive-key-12345';
@@ -175,7 +182,7 @@ describe('Configuration Service Tests', () => {
     });
 
     it('should maintain state across instances', async () => {
-      const testValue = Math.random();
+      const testValue = Math.floor(Math.random() * 1000) + 100; // Integer value between 100-1100
       await configService.update('CACHE_DEFAULT_TTL', testValue);
       
       const newInstance = ConfigService.getInstance();

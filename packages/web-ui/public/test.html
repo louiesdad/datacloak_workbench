@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DataCloak Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-container {
+            border: 2px solid #4CAF50;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+        }
+        textarea {
+            width: 100%;
+            min-height: 100px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>DataCloak Sentiment Analysis Test</h1>
+    
+    <div class="test-container">
+        <h2>Quick Sentiment Test</h2>
+        <textarea id="testText" placeholder="Enter text for sentiment analysis...">I love this product! It's amazing and works perfectly. Contact me at john@example.com</textarea>
+        <br>
+        <label>
+            <input type="checkbox" id="enablePII" checked> Enable PII Masking
+        </label>
+        <select id="model">
+            <option value="basic">Basic Model</option>
+            <option value="advanced">Advanced Model</option>
+        </select>
+        <br><br>
+        <button onclick="testSentiment()">Analyze Sentiment</button>
+        <button onclick="testBackend()">Test Backend</button>
+        <button onclick="testModels()">List Models</button>
+        <div id="result" class="result"></div>
+    </div>
+
+    <div class="test-container">
+        <h2>PII Detection Test</h2>
+        <textarea id="piiText" placeholder="Enter text with PII...">Contact me at john.doe@example.com or call 555-123-4567</textarea>
+        <br>
+        <button onclick="testPII()">Detect PII</button>
+        <div id="piiResult" class="result"></div>
+    </div>
+
+    <script>
+        async function testBackend() {
+            const resultDiv = document.getElementById('result');
+            try {
+                const response = await fetch('http://localhost:3001/health');
+                const data = await response.json();
+                resultDiv.innerHTML = '<strong>Backend Status:</strong><br>' + JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultDiv.innerHTML = '<strong>Error:</strong> ' + error.message;
+            }
+        }
+
+        async function testSentiment() {
+            const resultDiv = document.getElementById('result');
+            const text = document.getElementById('testText').value;
+            const enablePII = document.getElementById('enablePII').checked;
+            const model = document.getElementById('model').value;
+            
+            try {
+                resultDiv.innerHTML = 'Analyzing...';
+                
+                // Note: The API only accepts 'text' in the body, other params are handled server-side
+                const response = await fetch('http://localhost:3001/api/v1/sentiment/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        text: text
+                    })
+                });
+                
+                const data = await response.json();
+                resultDiv.innerHTML = '<strong>Sentiment Analysis Result:</strong><br><pre>' + 
+                    JSON.stringify(data, null, 2) + '</pre>';
+            } catch (error) {
+                resultDiv.innerHTML = '<strong>Error:</strong> ' + error.message;
+            }
+        }
+        
+        async function testModels() {
+            const resultDiv = document.getElementById('result');
+            try {
+                const response = await fetch('http://localhost:3001/api/v1/sentiment/models');
+                const data = await response.json();
+                resultDiv.innerHTML = '<strong>Available Models:</strong><br><pre>' + 
+                    JSON.stringify(data, null, 2) + '</pre>';
+            } catch (error) {
+                resultDiv.innerHTML = '<strong>Error:</strong> ' + error.message;
+            }
+        }
+
+        async function testPII() {
+            const resultDiv = document.getElementById('piiResult');
+            const text = document.getElementById('piiText').value;
+            
+            try {
+                resultDiv.innerHTML = 'Detecting PII...';
+                const response = await fetch('http://localhost:3001/api/v1/security/detect', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ text: text })
+                });
+                
+                const data = await response.json();
+                resultDiv.innerHTML = '<strong>PII Detection Result:</strong><br><pre>' + 
+                    JSON.stringify(data, null, 2) + '</pre>';
+            } catch (error) {
+                resultDiv.innerHTML = '<strong>Error:</strong> ' + error.message;
+            }
+        }
+
+        // Test backend on load
+        window.onload = () => {
+            testBackend();
+        };
+    </script>
+</body>
+</html>

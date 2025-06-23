@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataCloak Admin - Log Viewer</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f5f5f5;
+        }
+        .header {
+            background: #1a1a1a;
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .controls {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .controls-row {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        .control-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.25rem;
+            font-weight: 500;
+            color: #333;
+        }
+        select, input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        .logs-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .logs-header {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logs-content {
+            height: 600px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            padding: 1rem;
+            background: #1e1e1e;
+            color: #d4d4d4;
+        }
+        .log-entry {
+            padding: 0.25rem 0;
+            border-bottom: 1px solid #333;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .log-entry.error {
+            color: #f48771;
+        }
+        .log-entry.warn {
+            color: #dcdcaa;
+        }
+        .log-entry.info {
+            color: #4ec9b0;
+        }
+        .log-entry.debug {
+            color: #9cdcfe;
+        }
+        .status {
+            display: flex;
+            gap: 2rem;
+            margin-bottom: 1rem;
+        }
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #28a745;
+        }
+        .status-indicator.error {
+            background: #dc3545;
+        }
+        .login-container {
+            max-width: 400px;
+            margin: 10rem auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .login-container h2 {
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 0.75rem 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div id="login-screen" style="display: none;">
+        <div class="login-container">
+            <h2>Admin Login</h2>
+            <div id="login-error" class="error-message" style="display: none;"></div>
+            <form id="login-form">
+                <div class="control-group">
+                    <label>Username</label>
+                    <input type="text" id="username" required>
+                </div>
+                <div class="control-group" style="margin-top: 1rem;">
+                    <label>Password</label>
+                    <input type="password" id="password" required>
+                </div>
+                <button type="submit" class="btn-primary" style="width: 100%; margin-top: 1.5rem;">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="main-screen" style="display: none;">
+        <div class="header">
+            <h1>DataCloak Admin - Log Viewer</h1>
+            <div>
+                <span id="admin-user"></span>
+                <button onclick="logout()" class="btn-secondary" style="margin-left: 1rem;">Logout</button>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="status">
+                <div class="status-item">
+                    <div class="status-indicator" id="system-status"></div>
+                    <span>System: <span id="system-status-text">Checking...</span></span>
+                </div>
+                <div class="status-item">
+                    <div class="status-indicator" id="db-status"></div>
+                    <span>Database: <span id="db-status-text">Checking...</span></span>
+                </div>
+                <div class="status-item">
+                    <span>Uptime: <span id="uptime">--:--:--</span></span>
+                </div>
+            </div>
+
+            <div class="controls">
+                <div class="controls-row">
+                    <div class="control-group">
+                        <label>Log Type</label>
+                        <select id="log-type">
+                            <option value="combined">Combined</option>
+                            <option value="error">Errors Only</option>
+                            <option value="performance">Performance</option>
+                            <option value="exceptions">Exceptions</option>
+                            <option value="rejections">Promise Rejections</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>Log Level</label>
+                        <select id="log-level">
+                            <option value="">All Levels</option>
+                            <option value="error">Error</option>
+                            <option value="warn">Warning</option>
+                            <option value="info">Info</option>
+                            <option value="debug">Debug</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>Search</label>
+                        <input type="text" id="search" placeholder="Search logs...">
+                    </div>
+                </div>
+                <div class="controls-row">
+                    <button onclick="loadLogs()" class="btn-primary">Refresh Logs</button>
+                    <button onclick="startStreaming()" id="stream-btn" class="btn-primary">Start Live Stream</button>
+                    <button onclick="downloadLogs()" class="btn-secondary">Download Logs</button>
+                    <button onclick="viewAuditLogs()" class="btn-secondary">View Audit Logs</button>
+                </div>
+            </div>
+
+            <div class="logs-container">
+                <div class="logs-header">
+                    <h3>Application Logs</h3>
+                    <span id="log-count">0 entries</span>
+                </div>
+                <div class="logs-content" id="logs-content">
+                    <div class="loading">Loading logs...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let authToken = localStorage.getItem('adminToken');
+        let streaming = false;
+        let eventSource = null;
+
+        // Check authentication on load
+        if (authToken) {
+            showMainScreen();
+            loadSystemHealth();
+            loadLogs();
+        } else {
+            showLoginScreen();
+        }
+
+        function showLoginScreen() {
+            document.getElementById('login-screen').style.display = 'block';
+            document.getElementById('main-screen').style.display = 'none';
+        }
+
+        function showMainScreen() {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('main-screen').style.display = 'block';
+            const user = parseJwt(authToken);
+            document.getElementById('admin-user').textContent = user.username || 'Admin';
+        }
+
+        // Login form handler
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok && data.token) {
+                    authToken = data.token;
+                    localStorage.setItem('adminToken', authToken);
+                    showMainScreen();
+                    loadSystemHealth();
+                    loadLogs();
+                } else {
+                    showError(data.error?.message || 'Login failed');
+                }
+            } catch (error) {
+                showError('Network error. Please try again.');
+            }
+        });
+
+        function showError(message) {
+            const errorEl = document.getElementById('login-error');
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+            setTimeout(() => {
+                errorEl.style.display = 'none';
+            }, 5000);
+        }
+
+        function logout() {
+            localStorage.removeItem('adminToken');
+            authToken = null;
+            showLoginScreen();
+        }
+
+        async function loadSystemHealth() {
+            try {
+                const response = await fetch('/api/admin/health', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const health = await response.json();
+                    
+                    // Update system status
+                    const systemStatus = document.getElementById('system-status');
+                    const systemText = document.getElementById('system-status-text');
+                    
+                    if (health.status === 'healthy') {
+                        systemStatus.classList.remove('error');
+                        systemText.textContent = 'Healthy';
+                    } else {
+                        systemStatus.classList.add('error');
+                        systemText.textContent = 'Unhealthy';
+                    }
+
+                    // Update database status
+                    const dbStatus = document.getElementById('db-status');
+                    const dbText = document.getElementById('db-status-text');
+                    
+                    if (health.database?.status === 'connected') {
+                        dbStatus.classList.remove('error');
+                        dbText.textContent = 'Connected';
+                    } else {
+                        dbStatus.classList.add('error');
+                        dbText.textContent = 'Disconnected';
+                    }
+
+                    // Update uptime
+                    document.getElementById('uptime').textContent = formatUptime(health.uptime);
+                }
+            } catch (error) {
+                console.error('Failed to load system health:', error);
+            }
+        }
+
+        async function loadLogs() {
+            const logType = document.getElementById('log-type').value;
+            const level = document.getElementById('log-level').value;
+            const search = document.getElementById('search').value;
+
+            try {
+                const params = new URLSearchParams({
+                    logType,
+                    limit: 500
+                });
+                
+                if (level) params.append('level', level);
+                if (search) params.append('search', search);
+
+                const response = await fetch(`/api/admin/logs?${params}`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    displayLogs(data.logs);
+                    document.getElementById('log-count').textContent = `${data.logs.length} entries`;
+                }
+            } catch (error) {
+                console.error('Failed to load logs:', error);
+            }
+        }
+
+        function displayLogs(logs) {
+            const container = document.getElementById('logs-content');
+            container.innerHTML = '';
+
+            if (logs.length === 0) {
+                container.innerHTML = '<div class="loading">No logs found</div>';
+                return;
+            }
+
+            logs.forEach(log => {
+                const entry = document.createElement('div');
+                entry.className = `log-entry ${log.level || ''}`;
+                
+                const timestamp = new Date(log.timestamp).toLocaleString();
+                const message = typeof log === 'string' ? log : 
+                    `[${timestamp}] [${log.level?.toUpperCase() || 'LOG'}] ${log.message || JSON.stringify(log)}`;
+                
+                entry.textContent = message;
+                container.appendChild(entry);
+            });
+
+            // Auto-scroll to bottom
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function startStreaming() {
+            if (streaming) {
+                stopStreaming();
+                return;
+            }
+
+            const logType = document.getElementById('log-type').value;
+            
+            eventSource = new EventSource(`/api/admin/logs/stream?logType=${logType}`, {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
+
+            eventSource.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.log) {
+                    appendLog(data.log);
+                }
+            };
+
+            eventSource.onerror = (error) => {
+                console.error('Stream error:', error);
+                stopStreaming();
+            };
+
+            streaming = true;
+            document.getElementById('stream-btn').textContent = 'Stop Live Stream';
+            document.getElementById('stream-btn').classList.add('btn-danger');
+            document.getElementById('stream-btn').classList.remove('btn-primary');
+        }
+
+        function stopStreaming() {
+            if (eventSource) {
+                eventSource.close();
+                eventSource = null;
+            }
+            
+            streaming = false;
+            document.getElementById('stream-btn').textContent = 'Start Live Stream';
+            document.getElementById('stream-btn').classList.remove('btn-danger');
+            document.getElementById('stream-btn').classList.add('btn-primary');
+        }
+
+        function appendLog(logLine) {
+            const container = document.getElementById('logs-content');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.textContent = logLine;
+            container.appendChild(entry);
+            
+            // Auto-scroll to bottom
+            container.scrollTop = container.scrollHeight;
+            
+            // Limit to 1000 entries
+            while (container.children.length > 1000) {
+                container.removeChild(container.firstChild);
+            }
+        }
+
+        async function downloadLogs() {
+            const logType = document.getElementById('log-type').value;
+            
+            window.location.href = `/api/admin/logs/download?types=${logType}`;
+        }
+
+        function viewAuditLogs() {
+            // Redirect to audit logs page or open modal
+            window.location.href = '/admin-audit.html';
+        }
+
+        function formatUptime(seconds) {
+            const days = Math.floor(seconds / 86400);
+            const hours = Math.floor((seconds % 86400) / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            
+            if (days > 0) {
+                return `${days}d ${hours}h ${minutes}m`;
+            } else if (hours > 0) {
+                return `${hours}h ${minutes}m`;
+            } else {
+                return `${minutes}m`;
+            }
+        }
+
+        function parseJwt(token) {
+            try {
+                const base64Url = token.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+                return JSON.parse(jsonPayload);
+            } catch (e) {
+                return {};
+            }
+        }
+
+        // Auto-refresh health status every 30 seconds
+        setInterval(loadSystemHealth, 30000);
+    </script>
+</body>
+</html>

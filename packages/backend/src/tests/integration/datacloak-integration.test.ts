@@ -1,28 +1,40 @@
 import { DataCloakIntegrationService, DataCloakSentimentRequest } from '../../services/datacloak-integration.service';
 import { OpenAIService } from '../../services/openai.service';
-import { dataCloak } from '../../services/datacloak.service';
 
-// Mock the dataCloak service
-jest.mock('../../services/datacloak.service', () => ({
-  dataCloak: {
-    initialize: jest.fn().mockResolvedValue(undefined),
-    detectPII: jest.fn(),
-    maskText: jest.fn(),
-    getStats: jest.fn().mockResolvedValue({
-      version: '1.0.0-wrapper',
-      available: true,
-      initialized: true
-    }),
-    auditSecurity: jest.fn().mockResolvedValue({
-      complianceScore: 0.85,
-      violations: [],
-      recommendations: ['Enable encryption'],
-      piiItemsDetected: 1,
-      maskingAccuracy: 0.95,
-      encryptionStatus: 'disabled'
-    })
-  }
+// Mock the dataCloak wrapper
+jest.mock('../../services/datacloak-wrapper', () => ({
+  getDataCloakInstance: jest.fn()
 }));
+
+// Mock the OpenAI service to prevent actual API calls
+jest.mock('../../services/openai.service');
+
+// Import after mocking
+import { getDataCloakInstance } from '../../services/datacloak-wrapper';
+
+const mockDataCloakInstance = {
+  initialize: jest.fn().mockResolvedValue(undefined),
+  detectPII: jest.fn(),
+  maskText: jest.fn(),
+  getStats: jest.fn().mockResolvedValue({
+    version: '1.0.0-wrapper',
+    available: true,
+    initialized: true
+  }),
+  auditSecurity: jest.fn().mockResolvedValue({
+    complianceScore: 0.85,
+    violations: [],
+    recommendations: ['Enable encryption'],
+    piiItemsDetected: 1,
+    maskingAccuracy: 0.95,
+    encryptionStatus: 'disabled'
+  }),
+  isAvailable: jest.fn().mockReturnValue(true),
+  getVersion: jest.fn().mockReturnValue('1.0.0-wrapper')
+};
+
+// Set up the mock to return our instance
+(getDataCloakInstance as jest.Mock).mockResolvedValue(mockDataCloakInstance);
 
 describe('DataCloakIntegrationService', () => {
   let service: DataCloakIntegrationService;
@@ -30,6 +42,7 @@ describe('DataCloakIntegrationService', () => {
 
   beforeAll(() => {
     // Create a proper mock OpenAI service
+    const MockedOpenAIService = OpenAIService as jest.MockedClass<typeof OpenAIService>;
     mockOpenAIService = {
       analyzeSentiment: jest.fn(),
       testConnection: jest.fn(),
@@ -49,42 +62,36 @@ describe('DataCloakIntegrationService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     
-    // Cast to jest mock to access mockImplementation
-    const mockInitialize = dataCloak.initialize as jest.MockedFunction<typeof dataCloak.initialize>;
-    const mockDetectPII = dataCloak.detectPII as jest.MockedFunction<typeof dataCloak.detectPII>;
-    const mockMaskText = dataCloak.maskText as jest.MockedFunction<typeof dataCloak.maskText>;
-    const mockGetStats = dataCloak.getStats as jest.MockedFunction<typeof dataCloak.getStats>;
-    
     // Ensure initialize always succeeds
-    mockInitialize.mockResolvedValue(undefined);
+    mockDataCloakInstance.initialize.mockResolvedValue(undefined);
     
     // Ensure getStats returns proper data
-    mockGetStats.mockResolvedValue({
+    mockDataCloakInstance.getStats.mockResolvedValue({
       version: '1.0.0-wrapper',
       available: true,
       initialized: true
     });
     
     // Set up default mock implementations
-    mockDetectPII.mockImplementation((text: string) => {
+    mockDataCloakInstance.detectPII.mockImplementation((text: string) => {
       const piiResults: any[] = [];
       if (text.includes('@')) {
         piiResults.push({
-          piiType: 'email',
+          piiType: 'EMAIL',
           sample: text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/)?.[0] || 'email@example.com',
           confidence: 0.95
         });
       }
       if (text.includes('555-')) {
         piiResults.push({
-          piiType: 'phone',
+          piiType: 'PHONE',
           sample: text.match(/\d{3}-\d{3}-\d{4}/)?.[0] || '555-123-4567',
           confidence: 0.90
         });
       }
       if (text.includes('SSN') || text.match(/\d{3}-\d{2}-\d{4}/)) {
         piiResults.push({
-          piiType: 'ssn',
+          piiType: 'SSN',
           sample: text.match(/\d{3}-\d{2}-\d{4}/)?.[0] || '123-45-6789',
           confidence: 0.98
         });
@@ -92,7 +99,7 @@ describe('DataCloakIntegrationService', () => {
       return Promise.resolve(piiResults);
     });
 
-    mockMaskText.mockImplementation((text: string) => {
+    mockDataCloakInstance.maskText.mockImplementation((text: string) => {
       let maskedText = text;
       const piiCount = (text.match(/@/g) || []).length + 
                       (text.match(/555-/g) || []).length + 

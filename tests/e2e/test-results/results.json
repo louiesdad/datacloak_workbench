@@ -4,8 +4,8 @@
     "rootDir": "/Users/thomaswagner/Documents/datacloak-sentiment-workbench/tests/e2e/specs",
     "forbidOnly": false,
     "fullyParallel": true,
-    "globalSetup": "/Users/thomaswagner/Documents/datacloak-sentiment-workbench/tests/e2e/fixtures/global-setup.ts",
-    "globalTeardown": "/Users/thomaswagner/Documents/datacloak-sentiment-workbench/tests/e2e/fixtures/global-teardown.ts",
+    "globalSetup": null,
+    "globalTeardown": null,
     "globalTimeout": 0,
     "grep": {},
     "grepInvert": null,
@@ -137,7 +137,7 @@
               ],
               "id": "19a5a2d50a937c3a4785-d8e7e1764a47a20e6102",
               "file": "01-file-upload.spec.ts",
-              "line": 29,
+              "line": 73,
               "column": 7
             },
             {
@@ -157,7 +157,7 @@
               ],
               "id": "19a5a2d50a937c3a4785-57dbc477d6efd678dd97",
               "file": "01-file-upload.spec.ts",
-              "line": 60,
+              "line": 107,
               "column": 7
             },
             {
@@ -177,7 +177,7 @@
               ],
               "id": "19a5a2d50a937c3a4785-a33c7b4e09309dce4952",
               "file": "01-file-upload.spec.ts",
-              "line": 107,
+              "line": 159,
               "column": 7
             },
             {
@@ -197,7 +197,7 @@
               ],
               "id": "19a5a2d50a937c3a4785-c432d49f693412fdd769",
               "file": "01-file-upload.spec.ts",
-              "line": 137,
+              "line": 194,
               "column": 7
             },
             {
@@ -217,7 +217,7 @@
               ],
               "id": "19a5a2d50a937c3a4785-2f090f39fdf254fba332",
               "file": "01-file-upload.spec.ts",
-              "line": 171,
+              "line": 234,
               "column": 7
             },
             {
@@ -237,7 +237,7 @@
               ],
               "id": "19a5a2d50a937c3a4785-4877e99630d9aefc35cf",
               "file": "01-file-upload.spec.ts",
-              "line": 208,
+              "line": 271,
               "column": 7
             },
             {
@@ -257,7 +257,7 @@
               ],
               "id": "19a5a2d50a937c3a4785-ae0a9a37a275d841faea",
               "file": "01-file-upload.spec.ts",
-              "line": 241,
+              "line": 305,
               "column": 7
             },
             {
@@ -277,7 +277,7 @@
               ],
               "id": "19a5a2d50a937c3a4785-c09891d43ac4d6aede69",
               "file": "01-file-upload.spec.ts",
-              "line": 307,
+              "line": 371,
               "column": 7
             },
             {
@@ -297,7 +297,7 @@
               ],
               "id": "19a5a2d50a937c3a4785-4375449d3dd6770a5c07",
               "file": "01-file-upload.spec.ts",
-              "line": 29,
+              "line": 73,
               "column": 7
             },
             {
@@ -317,7 +317,7 @@
               ],
               "id": "19a5a2d50a937c3a4785-e8414ab2f4205bae55e6",
               "file": "01-file-upload.spec.ts",
-              "line": 60,
+              "line": 107,
               "column": 7
             },
             {
@@ -337,7 +337,7 @@
               ],
               "id": "19a5a2d50a937c3a4785-1f87a511aa1d97deed5f",
               "file": "01-file-upload.spec.ts",
-              "line": 107,
+              "line": 159,
               "column": 7
             },
             {
@@ -357,7 +357,7 @@
               ],
               "id": "19a5a2d50a937c3a4785-ada0e7cb8dc5d1c01f40",
               "file": "01-file-upload.spec.ts",
-              "line": 137,
+              "line": 194,
               "column": 7
             },
             {
@@ -377,7 +377,7 @@
               ],
               "id": "19a5a2d50a937c3a4785-a78ed18f7f0cf7efa1f7",
               "file": "01-file-upload.spec.ts",
-              "line": 171,
+              "line": 234,
               "column": 7
             },
             {
@@ -397,7 +397,7 @@
               ],
               "id": "19a5a2d50a937c3a4785-ebb60fadb36094de9924",
               "file": "01-file-upload.spec.ts",
-              "line": 208,
+              "line": 271,
               "column": 7
             },
             {
@@ -417,7 +417,7 @@
               ],
               "id": "19a5a2d50a937c3a4785-5abf4d7eb5af7f09a604",
               "file": "01-file-upload.spec.ts",
-              "line": 241,
+              "line": 305,
               "column": 7
             },
             {
@@ -437,7 +437,7 @@
               ],
               "id": "19a5a2d50a937c3a4785-770ac426a00eabc95af0",
               "file": "01-file-upload.spec.ts",
-              "line": 307,
+              "line": 371,
               "column": 7
             },
             {
@@ -457,7 +457,7 @@
               ],
               "id": "19a5a2d50a937c3a4785-9bb7b346ad93c4d2c928",
               "file": "01-file-upload.spec.ts",
-              "line": 29,
+              "line": 73,
               "column": 7
             },
             {
@@ -477,7 +477,7 @@
               ],
               "id": "19a5a2d50a937c3a4785-faa932d16e0433d7d6b7",
               "file": "01-file-upload.spec.ts",
-              "line": 60,
+              "line": 107,
               "column": 7
             },
             {
@@ -497,7 +497,7 @@
               ],
               "id": "19a5a2d50a937c3a4785-6a2a79388f75b56eeaa9",
               "file": "01-file-upload.spec.ts",
-              "line": 107,
+              "line": 159,
               "column": 7
             },
             {
@@ -517,7 +517,7 @@
               ],
               "id": "19a5a2d50a937c3a4785-15a3c866e5a41d990564",
               "file": "01-file-upload.spec.ts",
-              "line": 137,
+              "line": 194,
               "column": 7
             },
             {
@@ -537,7 +537,7 @@
               ],
               "id": "19a5a2d50a937c3a4785-8f7b0a16a6a769a05ef9",
               "file": "01-file-upload.spec.ts",
-              "line": 171,
+              "line": 234,
               "column": 7
             },
             {
@@ -557,7 +557,7 @@
               ],
               "id": "19a5a2d50a937c3a4785-b007b6484cbc7ae5b4ac",
               "file": "01-file-upload.spec.ts",
-              "line": 208,
+              "line": 271,
               "column": 7
             },
             {
@@ -577,7 +577,7 @@
               ],
               "id": "19a5a2d50a937c3a4785-b31c37d8451bd550480e",
               "file": "01-file-upload.spec.ts",
-              "line": 241,
+              "line": 305,
               "column": 7
             },
             {
@@ -597,7 +597,7 @@
               ],
               "id": "19a5a2d50a937c3a4785-e8838993177beca2effa",
               "file": "01-file-upload.spec.ts",
-              "line": 307,
+              "line": 371,
               "column": 7
             },
             {
@@ -617,7 +617,7 @@
               ],
               "id": "19a5a2d50a937c3a4785-da77f3960fdddf777d7a",
               "file": "01-file-upload.spec.ts",
-              "line": 29,
+              "line": 73,
               "column": 7
             },
             {
@@ -637,7 +637,7 @@
               ],
               "id": "19a5a2d50a937c3a4785-50e7ac5e15819ac3d895",
               "file": "01-file-upload.spec.ts",
-              "line": 60,
+              "line": 107,
               "column": 7
             },
             {
@@ -657,7 +657,7 @@
               ],
               "id": "19a5a2d50a937c3a4785-e2a30226f1fd29738ece",
               "file": "01-file-upload.spec.ts",
-              "line": 107,
+              "line": 159,
               "column": 7
             },
             {
@@ -677,7 +677,7 @@
               ],
               "id": "19a5a2d50a937c3a4785-071e8a02610f91daa886",
               "file": "01-file-upload.spec.ts",
-              "line": 137,
+              "line": 194,
               "column": 7
             },
             {
@@ -697,7 +697,7 @@
               ],
               "id": "19a5a2d50a937c3a4785-fdbc48bfd05ec2adb76d",
               "file": "01-file-upload.spec.ts",
-              "line": 171,
+              "line": 234,
               "column": 7
             },
             {
@@ -717,7 +717,7 @@
               ],
               "id": "19a5a2d50a937c3a4785-36e46c159668189ffe59",
               "file": "01-file-upload.spec.ts",
-              "line": 208,
+              "line": 271,
               "column": 7
             },
             {
@@ -737,7 +737,7 @@
               ],
               "id": "19a5a2d50a937c3a4785-a3d5e1b09adee03af219",
               "file": "01-file-upload.spec.ts",
-              "line": 241,
+              "line": 305,
               "column": 7
             },
             {
@@ -757,7 +757,7 @@
               ],
               "id": "19a5a2d50a937c3a4785-705e3197b502cbed83ce",
               "file": "01-file-upload.spec.ts",
-              "line": 307,
+              "line": 371,
               "column": 7
             }
           ]
@@ -765,7 +765,7 @@
         {
           "title": "File Upload Error Scenarios",
           "file": "01-file-upload.spec.ts",
-          "line": 345,
+          "line": 409,
           "column": 6,
           "specs": [
             {
@@ -785,7 +785,7 @@
               ],
               "id": "19a5a2d50a937c3a4785-7293c40ecdfed1d37cc7",
               "file": "01-file-upload.spec.ts",
-              "line": 351,
+              "line": 415,
               "column": 7
             },
             {
@@ -805,7 +805,7 @@
               ],
               "id": "19a5a2d50a937c3a4785-43db5fa23cea46a5d1ac",
               "file": "01-file-upload.spec.ts",
-              "line": 394,
+              "line": 458,
               "column": 7
             },
             {
@@ -825,7 +825,7 @@
               ],
               "id": "19a5a2d50a937c3a4785-9e532bc4c27b888e0887",
               "file": "01-file-upload.spec.ts",
-              "line": 351,
+              "line": 415,
               "column": 7
             },
             {
@@ -845,7 +845,7 @@
               ],
               "id": "19a5a2d50a937c3a4785-26a45e6a3cb8816ac826",
               "file": "01-file-upload.spec.ts",
-              "line": 394,
+              "line": 458,
               "column": 7
             },
             {
@@ -865,7 +865,7 @@
               ],
               "id": "19a5a2d50a937c3a4785-232090ed4d69990ebbf1",
               "file": "01-file-upload.spec.ts",
-              "line": 351,
+              "line": 415,
               "column": 7
             },
             {
@@ -885,7 +885,7 @@
               ],
               "id": "19a5a2d50a937c3a4785-0382f1cebce6365ce84d",
               "file": "01-file-upload.spec.ts",
-              "line": 394,
+              "line": 458,
               "column": 7
             },
             {
@@ -905,7 +905,7 @@
               ],
               "id": "19a5a2d50a937c3a4785-7b18c5d4818ae6320864",
               "file": "01-file-upload.spec.ts",
-              "line": 351,
+              "line": 415,
               "column": 7
             },
             {
@@ -925,7 +925,7 @@
               ],
               "id": "19a5a2d50a937c3a4785-5352f5c53b90b2bff3b8",
               "file": "01-file-upload.spec.ts",
-              "line": 394,
+              "line": 458,
               "column": 7
             }
           ]
@@ -982,7 +982,7 @@
               ],
               "id": "303cf419b79616ef015e-2909bfcb65718ea1b971",
               "file": "02-field-detection.spec.ts",
-              "line": 86,
+              "line": 93,
               "column": 7
             },
             {
@@ -1002,7 +1002,7 @@
               ],
               "id": "303cf419b79616ef015e-6f7642cbbde941c55e70",
               "file": "02-field-detection.spec.ts",
-              "line": 158,
+              "line": 165,
               "column": 7
             },
             {
@@ -1022,7 +1022,7 @@
               ],
               "id": "303cf419b79616ef015e-beb81c077a3a8bad4122",
               "file": "02-field-detection.spec.ts",
-              "line": 220,
+              "line": 227,
               "column": 7
             },
             {
@@ -1042,7 +1042,7 @@
               ],
               "id": "303cf419b79616ef015e-0258fcee4c4039196b91",
               "file": "02-field-detection.spec.ts",
-              "line": 258,
+              "line": 265,
               "column": 7
             },
             {
@@ -1062,7 +1062,7 @@
               ],
               "id": "303cf419b79616ef015e-64a7d555ab46953abeb3",
               "file": "02-field-detection.spec.ts",
-              "line": 302,
+              "line": 309,
               "column": 7
             },
             {
@@ -1082,7 +1082,7 @@
               ],
               "id": "303cf419b79616ef015e-6396457ca90b9e9519c3",
               "file": "02-field-detection.spec.ts",
-              "line": 342,
+              "line": 349,
               "column": 7
             },
             {
@@ -1122,7 +1122,7 @@
               ],
               "id": "303cf419b79616ef015e-b3619368e2a49d3e05ff",
               "file": "02-field-detection.spec.ts",
-              "line": 86,
+              "line": 93,
               "column": 7
             },
             {
@@ -1142,7 +1142,7 @@
               ],
               "id": "303cf419b79616ef015e-8ad820ab825aba5b0ff6",
               "file": "02-field-detection.spec.ts",
-              "line": 158,
+              "line": 165,
               "column": 7
             },
             {
@@ -1162,7 +1162,7 @@
               ],
               "id": "303cf419b79616ef015e-5f761562926674763a15",
               "file": "02-field-detection.spec.ts",
-              "line": 220,
+              "line": 227,
               "column": 7
             },
             {
@@ -1182,7 +1182,7 @@
               ],
               "id": "303cf419b79616ef015e-5676a0c0227cff25c603",
               "file": "02-field-detection.spec.ts",
-              "line": 258,
+              "line": 265,
               "column": 7
             },
             {
@@ -1202,7 +1202,7 @@
               ],
               "id": "303cf419b79616ef015e-9cbcb4a3901e7f3b4a75",
               "file": "02-field-detection.spec.ts",
-              "line": 302,
+              "line": 309,
               "column": 7
             },
             {
@@ -1222,7 +1222,7 @@
               ],
               "id": "303cf419b79616ef015e-68035804df352683ae64",
               "file": "02-field-detection.spec.ts",
-              "line": 342,
+              "line": 349,
               "column": 7
             },
             {
@@ -1262,7 +1262,7 @@
               ],
               "id": "303cf419b79616ef015e-826f375ad889bad06afc",
               "file": "02-field-detection.spec.ts",
-              "line": 86,
+              "line": 93,
               "column": 7
             },
             {
@@ -1282,7 +1282,7 @@
               ],
               "id": "303cf419b79616ef015e-b79e19b4842ba578808e",
               "file": "02-field-detection.spec.ts",
-              "line": 158,
+              "line": 165,
               "column": 7
             },
             {
@@ -1302,7 +1302,7 @@
               ],
               "id": "303cf419b79616ef015e-c3f7f91c97a8f2591e44",
               "file": "02-field-detection.spec.ts",
-              "line": 220,
+              "line": 227,
               "column": 7
             },
             {
@@ -1322,7 +1322,7 @@
               ],
               "id": "303cf419b79616ef015e-b016bb410de034a62c1a",
               "file": "02-field-detection.spec.ts",
-              "line": 258,
+              "line": 265,
               "column": 7
             },
             {
@@ -1342,7 +1342,7 @@
               ],
               "id": "303cf419b79616ef015e-423bb0c341c55e908e43",
               "file": "02-field-detection.spec.ts",
-              "line": 302,
+              "line": 309,
               "column": 7
             },
             {
@@ -1362,7 +1362,7 @@
               ],
               "id": "303cf419b79616ef015e-9cd1f0406474e9994911",
               "file": "02-field-detection.spec.ts",
-              "line": 342,
+              "line": 349,
               "column": 7
             },
             {
@@ -1402,7 +1402,7 @@
               ],
               "id": "303cf419b79616ef015e-4d253a5ede91266c05df",
               "file": "02-field-detection.spec.ts",
-              "line": 86,
+              "line": 93,
               "column": 7
             },
             {
@@ -1422,7 +1422,7 @@
               ],
               "id": "303cf419b79616ef015e-54daf6d680e63fb2e233",
               "file": "02-field-detection.spec.ts",
-              "line": 158,
+              "line": 165,
               "column": 7
             },
             {
@@ -1442,7 +1442,7 @@
               ],
               "id": "303cf419b79616ef015e-c4494c75580c4020b15c",
               "file": "02-field-detection.spec.ts",
-              "line": 220,
+              "line": 227,
               "column": 7
             },
             {
@@ -1462,7 +1462,7 @@
               ],
               "id": "303cf419b79616ef015e-f7f666164c9e87d1e28d",
               "file": "02-field-detection.spec.ts",
-              "line": 258,
+              "line": 265,
               "column": 7
             },
             {
@@ -1482,7 +1482,7 @@
               ],
               "id": "303cf419b79616ef015e-bf92a9fadbbe033aea48",
               "file": "02-field-detection.spec.ts",
-              "line": 302,
+              "line": 309,
               "column": 7
             },
             {
@@ -1502,7 +1502,7 @@
               ],
               "id": "303cf419b79616ef015e-bfd4ae8a6a9271b1e22c",
               "file": "02-field-detection.spec.ts",
-              "line": 342,
+              "line": 349,
               "column": 7
             }
           ]
@@ -1539,7 +1539,7 @@
               ],
               "id": "da422fea62ddb1b8a72c-5b3a62a3ef0c926366ac",
               "file": "03-transform-operations.spec.ts",
-              "line": 26,
+              "line": 85,
               "column": 7
             },
             {
@@ -1559,7 +1559,7 @@
               ],
               "id": "da422fea62ddb1b8a72c-b06d9c984f41456e7a0b",
               "file": "03-transform-operations.spec.ts",
-              "line": 72,
+              "line": 131,
               "column": 7
             },
             {
@@ -1579,7 +1579,7 @@
               ],
               "id": "da422fea62ddb1b8a72c-25852009b96da8c17b44",
               "file": "03-transform-operations.spec.ts",
-              "line": 128,
+              "line": 187,
               "column": 7
             },
             {
@@ -1599,7 +1599,7 @@
               ],
               "id": "da422fea62ddb1b8a72c-a895126cccaa51dc3bc3",
               "file": "03-transform-operations.spec.ts",
-              "line": 161,
+              "line": 220,
               "column": 7
             },
             {
@@ -1619,7 +1619,7 @@
               ],
               "id": "da422fea62ddb1b8a72c-6d1c46e340c64c789189",
               "file": "03-transform-operations.spec.ts",
-              "line": 188,
+              "line": 247,
               "column": 7
             },
             {
@@ -1639,7 +1639,7 @@
               ],
               "id": "da422fea62ddb1b8a72c-9bf5ec06528a0ade98a4",
               "file": "03-transform-operations.spec.ts",
-              "line": 243,
+              "line": 302,
               "column": 7
             },
             {
@@ -1659,7 +1659,7 @@
               ],
               "id": "da422fea62ddb1b8a72c-576a242e98bdcd69dfde",
               "file": "03-transform-operations.spec.ts",
-              "line": 281,
+              "line": 340,
               "column": 7
             },
             {
@@ -1679,7 +1679,7 @@
               ],
               "id": "da422fea62ddb1b8a72c-e3004f6716d5d5ef2c08",
               "file": "03-transform-operations.spec.ts",
-              "line": 346,
+              "line": 408,
               "column": 7
             },
             {
@@ -1699,7 +1699,7 @@
               ],
               "id": "da422fea62ddb1b8a72c-5049e46a273884b5d0c9",
               "file": "03-transform-operations.spec.ts",
-              "line": 394,
+              "line": 456,
               "column": 7
             },
             {
@@ -1719,7 +1719,7 @@
               ],
               "id": "da422fea62ddb1b8a72c-8f331f76cad43ba72462",
               "file": "03-transform-operations.spec.ts",
-              "line": 26,
+              "line": 85,
               "column": 7
             },
             {
@@ -1739,7 +1739,7 @@
               ],
               "id": "da422fea62ddb1b8a72c-ec65bb275112c43b203a",
               "file": "03-transform-operations.spec.ts",
-              "line": 72,
+              "line": 131,
               "column": 7
             },
             {
@@ -1759,7 +1759,7 @@
               ],
               "id": "da422fea62ddb1b8a72c-5dda37c31b4d8f625a0c",
               "file": "03-transform-operations.spec.ts",
-              "line": 128,
+              "line": 187,
               "column": 7
             },
             {
@@ -1779,7 +1779,7 @@
               ],
               "id": "da422fea62ddb1b8a72c-c7fce7d3d83609bd2790",
               "file": "03-transform-operations.spec.ts",
-              "line": 161,
+              "line": 220,
               "column": 7
             },
             {
@@ -1799,7 +1799,7 @@
               ],
               "id": "da422fea62ddb1b8a72c-2609d8e87c25a3a0ced4",
               "file": "03-transform-operations.spec.ts",
-              "line": 188,
+              "line": 247,
               "column": 7
             },
             {
@@ -1819,7 +1819,7 @@
               ],
               "id": "da422fea62ddb1b8a72c-638c40b022ccf3080aa9",
               "file": "03-transform-operations.spec.ts",
-              "line": 243,
+              "line": 302,
               "column": 7
             },
             {
@@ -1839,7 +1839,7 @@
               ],
               "id": "da422fea62ddb1b8a72c-e7ef613efdbcf2d659ac",
               "file": "03-transform-operations.spec.ts",
-              "line": 281,
+              "line": 340,
               "column": 7
             },
             {
@@ -1859,7 +1859,7 @@
               ],
               "id": "da422fea62ddb1b8a72c-24370c0f19ba2bb9bceb",
               "file": "03-transform-operations.spec.ts",
-              "line": 346,
+              "line": 408,
               "column": 7
             },
             {
@@ -1879,7 +1879,7 @@
               ],
               "id": "da422fea62ddb1b8a72c-20666fc35abf034a1ea1",
               "file": "03-transform-operations.spec.ts",
-              "line": 394,
+              "line": 456,
               "column": 7
             },
             {
@@ -1899,7 +1899,7 @@
               ],
               "id": "da422fea62ddb1b8a72c-eb639026f09c0c4af5d6",
               "file": "03-transform-operations.spec.ts",
-              "line": 26,
+              "line": 85,
               "column": 7
             },
             {
@@ -1919,7 +1919,7 @@
               ],
               "id": "da422fea62ddb1b8a72c-177819e955589a6fa60b",
               "file": "03-transform-operations.spec.ts",
-              "line": 72,
+              "line": 131,
               "column": 7
             },
             {
@@ -1939,7 +1939,7 @@
               ],
               "id": "da422fea62ddb1b8a72c-93983a7a558be2ee2431",
               "file": "03-transform-operations.spec.ts",
-              "line": 128,
+              "line": 187,
               "column": 7
             },
             {
@@ -1959,7 +1959,7 @@
               ],
               "id": "da422fea62ddb1b8a72c-9fa484ffbd5af74b4759",
               "file": "03-transform-operations.spec.ts",
-              "line": 161,
+              "line": 220,
               "column": 7
             },
             {
@@ -1979,7 +1979,7 @@
               ],
               "id": "da422fea62ddb1b8a72c-6794e9df1ae5bab29914",
               "file": "03-transform-operations.spec.ts",
-              "line": 188,
+              "line": 247,
               "column": 7
             },
             {
@@ -1999,7 +1999,7 @@
               ],
               "id": "da422fea62ddb1b8a72c-0e9a53e412860008c489",
               "file": "03-transform-operations.spec.ts",
-              "line": 243,
+              "line": 302,
               "column": 7
             },
             {
@@ -2019,7 +2019,7 @@
               ],
               "id": "da422fea62ddb1b8a72c-8516e755eb1dea93870a",
               "file": "03-transform-operations.spec.ts",
-              "line": 281,
+              "line": 340,
               "column": 7
             },
             {
@@ -2039,7 +2039,7 @@
               ],
               "id": "da422fea62ddb1b8a72c-4508184fc31e53d165a3",
               "file": "03-transform-operations.spec.ts",
-              "line": 346,
+              "line": 408,
               "column": 7
             },
             {
@@ -2059,7 +2059,7 @@
               ],
               "id": "da422fea62ddb1b8a72c-f06c4198bd46a19d3c0a",
               "file": "03-transform-operations.spec.ts",
-              "line": 394,
+              "line": 456,
               "column": 7
             }
           ]
@@ -2096,7 +2096,7 @@
               ],
               "id": "71b7078c6a36f526728c-23b2dd6ddc6c257d16a3",
               "file": "04-sentiment-analysis.spec.ts",
-              "line": 26,
+              "line": 157,
               "column": 7
             },
             {
@@ -2116,7 +2116,7 @@
               ],
               "id": "71b7078c6a36f526728c-cbb1e91a894d171c740f",
               "file": "04-sentiment-analysis.spec.ts",
-              "line": 91,
+              "line": 238,
               "column": 7
             },
             {
@@ -2136,7 +2136,7 @@
               ],
               "id": "71b7078c6a36f526728c-d90431c16cce76b07ed8",
               "file": "04-sentiment-analysis.spec.ts",
-              "line": 142,
+              "line": 289,
               "column": 7
             },
             {
@@ -2156,7 +2156,7 @@
               ],
               "id": "71b7078c6a36f526728c-fcca4d71770fa1184e09",
               "file": "04-sentiment-analysis.spec.ts",
-              "line": 200,
+              "line": 347,
               "column": 7
             },
             {
@@ -2176,7 +2176,7 @@
               ],
               "id": "71b7078c6a36f526728c-c6c6c43f55fae0d6893c",
               "file": "04-sentiment-analysis.spec.ts",
-              "line": 270,
+              "line": 417,
               "column": 7
             },
             {
@@ -2196,7 +2196,7 @@
               ],
               "id": "71b7078c6a36f526728c-0ab32c676bc59c8a268e",
               "file": "04-sentiment-analysis.spec.ts",
-              "line": 345,
+              "line": 528,
               "column": 7
             },
             {
@@ -2216,7 +2216,7 @@
               ],
               "id": "71b7078c6a36f526728c-4e92e33431ca16996acc",
               "file": "04-sentiment-analysis.spec.ts",
-              "line": 400,
+              "line": 613,
               "column": 7
             },
             {
@@ -2236,7 +2236,7 @@
               ],
               "id": "71b7078c6a36f526728c-a23825778d957038dd35",
               "file": "04-sentiment-analysis.spec.ts",
-              "line": 448,
+              "line": 661,
               "column": 7
             },
             {
@@ -2256,7 +2256,7 @@
               ],
               "id": "71b7078c6a36f526728c-38cc56fbabd174b7bcef",
               "file": "04-sentiment-analysis.spec.ts",
-              "line": 26,
+              "line": 157,
               "column": 7
             },
             {
@@ -2276,7 +2276,7 @@
               ],
               "id": "71b7078c6a36f526728c-c5447072b79ddc40ad41",
               "file": "04-sentiment-analysis.spec.ts",
-              "line": 91,
+              "line": 238,
               "column": 7
             },
             {
@@ -2296,7 +2296,7 @@
               ],
               "id": "71b7078c6a36f526728c-ceca75e99d017a82ae20",
               "file": "04-sentiment-analysis.spec.ts",
-              "line": 142,
+              "line": 289,
               "column": 7
             },
             {
@@ -2316,7 +2316,7 @@
               ],
               "id": "71b7078c6a36f526728c-f9338eec9b6a6cac3adf",
               "file": "04-sentiment-analysis.spec.ts",
-              "line": 200,
+              "line": 347,
               "column": 7
             },
             {
@@ -2336,7 +2336,7 @@
               ],
               "id": "71b7078c6a36f526728c-29764a4962fd7a901ff6",
               "file": "04-sentiment-analysis.spec.ts",
-              "line": 270,
+              "line": 417,
               "column": 7
             },
             {
@@ -2356,7 +2356,7 @@
               ],
               "id": "71b7078c6a36f526728c-576489b45e49e02ec92d",
               "file": "04-sentiment-analysis.spec.ts",
-              "line": 345,
+              "line": 528,
               "column": 7
             },
             {
@@ -2376,7 +2376,7 @@
               ],
               "id": "71b7078c6a36f526728c-8d977070b47a4a92e4db",
               "file": "04-sentiment-analysis.spec.ts",
-              "line": 400,
+              "line": 613,
               "column": 7
             },
             {
@@ -2396,7 +2396,7 @@
               ],
               "id": "71b7078c6a36f526728c-8b631f27afe96ecd032e",
               "file": "04-sentiment-analysis.spec.ts",
-              "line": 448,
+              "line": 661,
               "column": 7
             },
             {
@@ -2416,7 +2416,7 @@
               ],
               "id": "71b7078c6a36f526728c-271ef098148b3ed92a5f",
               "file": "04-sentiment-analysis.spec.ts",
-              "line": 26,
+              "line": 157,
               "column": 7
             },
             {
@@ -2436,7 +2436,7 @@
               ],
               "id": "71b7078c6a36f526728c-c1930e770e6e477a09fc",
               "file": "04-sentiment-analysis.spec.ts",
-              "line": 91,
+              "line": 238,
               "column": 7
             },
             {
@@ -2456,7 +2456,7 @@
               ],
               "id": "71b7078c6a36f526728c-e84b619ba929ead84490",
               "file": "04-sentiment-analysis.spec.ts",
-              "line": 142,
+              "line": 289,
               "column": 7
             },
             {
@@ -2476,7 +2476,7 @@
               ],
               "id": "71b7078c6a36f526728c-be38f3530c908b982208",
               "file": "04-sentiment-analysis.spec.ts",
-              "line": 200,
+              "line": 347,
               "column": 7
             },
             {
@@ -2496,7 +2496,7 @@
               ],
               "id": "71b7078c6a36f526728c-b79cf10ca6ab74dca5c5",
               "file": "04-sentiment-analysis.spec.ts",
-              "line": 270,
+              "line": 417,
               "column": 7
             },
             {
@@ -2516,7 +2516,7 @@
               ],
               "id": "71b7078c6a36f526728c-e323e293dcd1feae6771",
               "file": "04-sentiment-analysis.spec.ts",
-              "line": 345,
+              "line": 528,
               "column": 7
             },
             {
@@ -2536,7 +2536,7 @@
               ],
               "id": "71b7078c6a36f526728c-785689d93753dbd0b08d",
               "file": "04-sentiment-analysis.spec.ts",
-              "line": 400,
+              "line": 613,
               "column": 7
             },
             {
@@ -2556,7 +2556,7 @@
               ],
               "id": "71b7078c6a36f526728c-b4a54c5ed5e7e92e3390",
               "file": "04-sentiment-analysis.spec.ts",
-              "line": 448,
+              "line": 661,
               "column": 7
             }
           ]
@@ -2593,7 +2593,7 @@
               ],
               "id": "e238870e23f953e02ab8-f16e13d8722bef410ae4",
               "file": "05-results-export.spec.ts",
-              "line": 44,
+              "line": 129,
               "column": 7
             },
             {
@@ -2613,7 +2613,7 @@
               ],
               "id": "e238870e23f953e02ab8-8d85bf8be7b846264c31",
               "file": "05-results-export.spec.ts",
-              "line": 96,
+              "line": 181,
               "column": 7
             },
             {
@@ -2633,7 +2633,7 @@
               ],
               "id": "e238870e23f953e02ab8-91983ba606941b487ac7",
               "file": "05-results-export.spec.ts",
-              "line": 156,
+              "line": 270,
               "column": 7
             },
             {
@@ -2653,7 +2653,7 @@
               ],
               "id": "e238870e23f953e02ab8-b530592421b912067741",
               "file": "05-results-export.spec.ts",
-              "line": 217,
+              "line": 331,
               "column": 7
             },
             {
@@ -2673,7 +2673,7 @@
               ],
               "id": "e238870e23f953e02ab8-543b5e741f54bf052d35",
               "file": "05-results-export.spec.ts",
-              "line": 267,
+              "line": 381,
               "column": 7
             },
             {
@@ -2693,7 +2693,7 @@
               ],
               "id": "e238870e23f953e02ab8-10ecf3d3143c1625de68",
               "file": "05-results-export.spec.ts",
-              "line": 317,
+              "line": 431,
               "column": 7
             },
             {
@@ -2713,7 +2713,7 @@
               ],
               "id": "e238870e23f953e02ab8-1fb270569faec937295a",
               "file": "05-results-export.spec.ts",
-              "line": 384,
+              "line": 498,
               "column": 7
             },
             {
@@ -2733,7 +2733,7 @@
               ],
               "id": "e238870e23f953e02ab8-f172c6d2910e7df639be",
               "file": "05-results-export.spec.ts",
-              "line": 451,
+              "line": 565,
               "column": 7
             },
             {
@@ -2753,7 +2753,7 @@
               ],
               "id": "e238870e23f953e02ab8-134f18c446caf4155fa7",
               "file": "05-results-export.spec.ts",
-              "line": 506,
+              "line": 645,
               "column": 7
             },
             {
@@ -2773,7 +2773,7 @@
               ],
               "id": "e238870e23f953e02ab8-c21e4339ce7f6cc21d9d",
               "file": "05-results-export.spec.ts",
-              "line": 44,
+              "line": 129,
               "column": 7
             },
             {
@@ -2793,7 +2793,7 @@
               ],
               "id": "e238870e23f953e02ab8-1456cc79195a589990a8",
               "file": "05-results-export.spec.ts",
-              "line": 96,
+              "line": 181,
               "column": 7
             },
             {
@@ -2813,7 +2813,7 @@
               ],
               "id": "e238870e23f953e02ab8-b6c97e271c93194aae2d",
               "file": "05-results-export.spec.ts",
-              "line": 156,
+              "line": 270,
               "column": 7
             },
             {
@@ -2833,7 +2833,7 @@
               ],
               "id": "e238870e23f953e02ab8-2c630956d43d08e4e4c1",
               "file": "05-results-export.spec.ts",
-              "line": 217,
+              "line": 331,
               "column": 7
             },
             {
@@ -2853,7 +2853,7 @@
               ],
               "id": "e238870e23f953e02ab8-a4543dcf75dc285f460a",
               "file": "05-results-export.spec.ts",
-              "line": 267,
+              "line": 381,
               "column": 7
             },
             {
@@ -2873,7 +2873,7 @@
               ],
               "id": "e238870e23f953e02ab8-75babd126bcc16c60e4a",
               "file": "05-results-export.spec.ts",
-              "line": 317,
+              "line": 431,
               "column": 7
             },
             {
@@ -2893,7 +2893,7 @@
               ],
               "id": "e238870e23f953e02ab8-5f2a32b18ed60ddd323b",
               "file": "05-results-export.spec.ts",
-              "line": 384,
+              "line": 498,
               "column": 7
             },
             {
@@ -2913,7 +2913,7 @@
               ],
               "id": "e238870e23f953e02ab8-ab5ed2152264d5271670",
               "file": "05-results-export.spec.ts",
-              "line": 451,
+              "line": 565,
               "column": 7
             },
             {
@@ -2933,7 +2933,7 @@
               ],
               "id": "e238870e23f953e02ab8-f43611ebd65507970a87",
               "file": "05-results-export.spec.ts",
-              "line": 506,
+              "line": 645,
               "column": 7
             },
             {
@@ -2953,7 +2953,7 @@
               ],
               "id": "e238870e23f953e02ab8-0c2d9beeb64e80ab9822",
               "file": "05-results-export.spec.ts",
-              "line": 44,
+              "line": 129,
               "column": 7
             },
             {
@@ -2973,7 +2973,7 @@
               ],
               "id": "e238870e23f953e02ab8-946a9c3fdf49d3b31b44",
               "file": "05-results-export.spec.ts",
-              "line": 96,
+              "line": 181,
               "column": 7
             },
             {
@@ -2993,7 +2993,7 @@
               ],
               "id": "e238870e23f953e02ab8-4b6e813f9cc5e0554b46",
               "file": "05-results-export.spec.ts",
-              "line": 156,
+              "line": 270,
               "column": 7
             },
             {
@@ -3013,7 +3013,7 @@
               ],
               "id": "e238870e23f953e02ab8-45d0d9d4829a9399f314",
               "file": "05-results-export.spec.ts",
-              "line": 217,
+              "line": 331,
               "column": 7
             },
             {
@@ -3033,7 +3033,7 @@
               ],
               "id": "e238870e23f953e02ab8-8e07373638ee3705ab9a",
               "file": "05-results-export.spec.ts",
-              "line": 267,
+              "line": 381,
               "column": 7
             },
             {
@@ -3053,7 +3053,7 @@
               ],
               "id": "e238870e23f953e02ab8-ab37b91e922eedca8941",
               "file": "05-results-export.spec.ts",
-              "line": 317,
+              "line": 431,
               "column": 7
             },
             {
@@ -3073,7 +3073,7 @@
               ],
               "id": "e238870e23f953e02ab8-47bc851de07cac4f15bc",
               "file": "05-results-export.spec.ts",
-              "line": 384,
+              "line": 498,
               "column": 7
             },
             {
@@ -3093,7 +3093,7 @@
               ],
               "id": "e238870e23f953e02ab8-8fad80235e4a0fa2a64b",
               "file": "05-results-export.spec.ts",
-              "line": 451,
+              "line": 565,
               "column": 7
             },
             {
@@ -3113,7 +3113,1695 @@
               ],
               "id": "e238870e23f953e02ab8-c5e65f5530f738bba836",
               "file": "05-results-export.spec.ts",
-              "line": 506,
+              "line": 645,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "06-security-features-simple.spec.ts",
+      "file": "06-security-features-simple.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Security Features",
+          "file": "06-security-features-simple.spec.ts",
+          "line": 94,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should handle file upload with PII detection",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1fe12bb0120f72f2cf9c-3ea663e581e3153422e4",
+              "file": "06-security-features-simple.spec.ts",
+              "line": 105,
+              "column": 7
+            },
+            {
+              "title": "should complete sentiment analysis workflow with data protection",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1fe12bb0120f72f2cf9c-106e9dceca5940e724d2",
+              "file": "06-security-features-simple.spec.ts",
+              "line": 140,
+              "column": 7
+            },
+            {
+              "title": "should test API security through mocked responses",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1fe12bb0120f72f2cf9c-84c17aea0fe3867c991a",
+              "file": "06-security-features-simple.spec.ts",
+              "line": 179,
+              "column": 7
+            },
+            {
+              "title": "should demonstrate security headers and network protection",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1fe12bb0120f72f2cf9c-bf7d111b9b0538fb7ec6",
+              "file": "06-security-features-simple.spec.ts",
+              "line": 233,
+              "column": 7
+            },
+            {
+              "title": "should validate data privacy during processing",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1fe12bb0120f72f2cf9c-edb2816da165bf24e5e6",
+              "file": "06-security-features-simple.spec.ts",
+              "line": 259,
+              "column": 7
+            },
+            {
+              "title": "should handle file upload with PII detection",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1fe12bb0120f72f2cf9c-f73d45d5644468df0875",
+              "file": "06-security-features-simple.spec.ts",
+              "line": 105,
+              "column": 7
+            },
+            {
+              "title": "should complete sentiment analysis workflow with data protection",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1fe12bb0120f72f2cf9c-2d1e4238166972aa6d0c",
+              "file": "06-security-features-simple.spec.ts",
+              "line": 140,
+              "column": 7
+            },
+            {
+              "title": "should test API security through mocked responses",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1fe12bb0120f72f2cf9c-d467814aa9f19728a2b0",
+              "file": "06-security-features-simple.spec.ts",
+              "line": 179,
+              "column": 7
+            },
+            {
+              "title": "should demonstrate security headers and network protection",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1fe12bb0120f72f2cf9c-5db24a78f8670d7c6d77",
+              "file": "06-security-features-simple.spec.ts",
+              "line": 233,
+              "column": 7
+            },
+            {
+              "title": "should validate data privacy during processing",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1fe12bb0120f72f2cf9c-50e30f9cd5bac38ab163",
+              "file": "06-security-features-simple.spec.ts",
+              "line": 259,
+              "column": 7
+            },
+            {
+              "title": "should handle file upload with PII detection",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1fe12bb0120f72f2cf9c-d3aa1f2f850b9445e0b7",
+              "file": "06-security-features-simple.spec.ts",
+              "line": 105,
+              "column": 7
+            },
+            {
+              "title": "should complete sentiment analysis workflow with data protection",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1fe12bb0120f72f2cf9c-802905ef6a6d98e93be3",
+              "file": "06-security-features-simple.spec.ts",
+              "line": 140,
+              "column": 7
+            },
+            {
+              "title": "should test API security through mocked responses",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1fe12bb0120f72f2cf9c-72c8222ce0ba2c09199b",
+              "file": "06-security-features-simple.spec.ts",
+              "line": 179,
+              "column": 7
+            },
+            {
+              "title": "should demonstrate security headers and network protection",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1fe12bb0120f72f2cf9c-e68a8cc9eb540d20d303",
+              "file": "06-security-features-simple.spec.ts",
+              "line": 233,
+              "column": 7
+            },
+            {
+              "title": "should validate data privacy during processing",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1fe12bb0120f72f2cf9c-366349bace2a69192813",
+              "file": "06-security-features-simple.spec.ts",
+              "line": 259,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "06-security-features.spec.ts",
+      "file": "06-security-features.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Security Features",
+          "file": "06-security-features.spec.ts",
+          "line": 252,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should display security warnings for high-risk data",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "32af694e9adb39507950-50eae981861ec5c210c4",
+              "file": "06-security-features.spec.ts",
+              "line": 263,
+              "column": 7
+            },
+            {
+              "title": "should show data protection options during workflow",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "32af694e9adb39507950-4bb9c33a570919273a95",
+              "file": "06-security-features.spec.ts",
+              "line": 297,
+              "column": 7
+            },
+            {
+              "title": "should perform comprehensive security scan",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "32af694e9adb39507950-e1e037f85f0327521973",
+              "file": "06-security-features.spec.ts",
+              "line": 334,
+              "column": 7
+            },
+            {
+              "title": "should configure access control settings",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "32af694e9adb39507950-28b0de27de4c671c26fa",
+              "file": "06-security-features.spec.ts",
+              "line": 367,
+              "column": 7
+            },
+            {
+              "title": "should display audit logs",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "32af694e9adb39507950-d8ca0af46eca7983f1e4",
+              "file": "06-security-features.spec.ts",
+              "line": 401,
+              "column": 7
+            },
+            {
+              "title": "should handle security configuration updates",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "32af694e9adb39507950-ee10e1bf292ad0486d61",
+              "file": "06-security-features.spec.ts",
+              "line": 433,
+              "column": 7
+            },
+            {
+              "title": "should show data masking options",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "32af694e9adb39507950-44585d9430efa8f5e3b9",
+              "file": "06-security-features.spec.ts",
+              "line": 470,
+              "column": 7
+            },
+            {
+              "title": "should handle security errors gracefully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "32af694e9adb39507950-9063102685dc130faf00",
+              "file": "06-security-features.spec.ts",
+              "line": 507,
+              "column": 7
+            },
+            {
+              "title": "should validate security compliance status",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "32af694e9adb39507950-a39c088ae858fc545426",
+              "file": "06-security-features.spec.ts",
+              "line": 550,
+              "column": 7
+            },
+            {
+              "title": "should display security warnings for high-risk data",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "32af694e9adb39507950-204ca5af7de26dba3cf0",
+              "file": "06-security-features.spec.ts",
+              "line": 263,
+              "column": 7
+            },
+            {
+              "title": "should show data protection options during workflow",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "32af694e9adb39507950-6f2cf8981f03d1032b3e",
+              "file": "06-security-features.spec.ts",
+              "line": 297,
+              "column": 7
+            },
+            {
+              "title": "should perform comprehensive security scan",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "32af694e9adb39507950-58409b40c218310c3cc8",
+              "file": "06-security-features.spec.ts",
+              "line": 334,
+              "column": 7
+            },
+            {
+              "title": "should configure access control settings",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "32af694e9adb39507950-a5adf9fe1dedb6570a89",
+              "file": "06-security-features.spec.ts",
+              "line": 367,
+              "column": 7
+            },
+            {
+              "title": "should display audit logs",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "32af694e9adb39507950-173596279e451dd3c01b",
+              "file": "06-security-features.spec.ts",
+              "line": 401,
+              "column": 7
+            },
+            {
+              "title": "should handle security configuration updates",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "32af694e9adb39507950-c2b31e9c6840607dc5e4",
+              "file": "06-security-features.spec.ts",
+              "line": 433,
+              "column": 7
+            },
+            {
+              "title": "should show data masking options",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "32af694e9adb39507950-ca9f2957277711aaca6d",
+              "file": "06-security-features.spec.ts",
+              "line": 470,
+              "column": 7
+            },
+            {
+              "title": "should handle security errors gracefully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "32af694e9adb39507950-a2e43f93d7b539d77a53",
+              "file": "06-security-features.spec.ts",
+              "line": 507,
+              "column": 7
+            },
+            {
+              "title": "should validate security compliance status",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "32af694e9adb39507950-5e44accf3e778b8f4413",
+              "file": "06-security-features.spec.ts",
+              "line": 550,
+              "column": 7
+            },
+            {
+              "title": "should display security warnings for high-risk data",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "32af694e9adb39507950-3c11f12f05b4d97623a0",
+              "file": "06-security-features.spec.ts",
+              "line": 263,
+              "column": 7
+            },
+            {
+              "title": "should show data protection options during workflow",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "32af694e9adb39507950-7a718fe0308894cf3dd5",
+              "file": "06-security-features.spec.ts",
+              "line": 297,
+              "column": 7
+            },
+            {
+              "title": "should perform comprehensive security scan",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "32af694e9adb39507950-3c5153dbc8c1a6b611a2",
+              "file": "06-security-features.spec.ts",
+              "line": 334,
+              "column": 7
+            },
+            {
+              "title": "should configure access control settings",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "32af694e9adb39507950-0a84918255a262d63d54",
+              "file": "06-security-features.spec.ts",
+              "line": 367,
+              "column": 7
+            },
+            {
+              "title": "should display audit logs",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "32af694e9adb39507950-e7b83d7355052d8db3a9",
+              "file": "06-security-features.spec.ts",
+              "line": 401,
+              "column": 7
+            },
+            {
+              "title": "should handle security configuration updates",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "32af694e9adb39507950-352f5dbce5190bfc21dd",
+              "file": "06-security-features.spec.ts",
+              "line": 433,
+              "column": 7
+            },
+            {
+              "title": "should show data masking options",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "32af694e9adb39507950-6cd1bb0ee5196c985e8c",
+              "file": "06-security-features.spec.ts",
+              "line": 470,
+              "column": 7
+            },
+            {
+              "title": "should handle security errors gracefully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "32af694e9adb39507950-537a9aa4b9610ce144cf",
+              "file": "06-security-features.spec.ts",
+              "line": 507,
+              "column": 7
+            },
+            {
+              "title": "should validate security compliance status",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "32af694e9adb39507950-db40824350d087519d3d",
+              "file": "06-security-features.spec.ts",
+              "line": 550,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "06-security-minimal.spec.ts",
+      "file": "06-security-minimal.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Security Features - Minimal",
+          "file": "06-security-minimal.spec.ts",
+          "line": 8,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should successfully mock security-related API endpoints",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19015fa05d7dffff2be0-8099ae58d2a596a89319",
+              "file": "06-security-minimal.spec.ts",
+              "line": 10,
+              "column": 7
+            },
+            {
+              "title": "should demonstrate PII detection API mock",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19015fa05d7dffff2be0-c4ab3f4bb60e9aaf4f1e",
+              "file": "06-security-minimal.spec.ts",
+              "line": 80,
+              "column": 7
+            },
+            {
+              "title": "should demonstrate compliance framework API mock",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19015fa05d7dffff2be0-c25ef625a31685b629f3",
+              "file": "06-security-minimal.spec.ts",
+              "line": 127,
+              "column": 7
+            },
+            {
+              "title": "should test error handling in security APIs",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19015fa05d7dffff2be0-226f9493b61e24d82ed1",
+              "file": "06-security-minimal.spec.ts",
+              "line": 190,
+              "column": 7
+            },
+            {
+              "title": "should validate complete security workflow mock",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19015fa05d7dffff2be0-f72c3e161fa6be04c20c",
+              "file": "06-security-minimal.spec.ts",
+              "line": 222,
+              "column": 7
+            },
+            {
+              "title": "should successfully mock security-related API endpoints",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19015fa05d7dffff2be0-832bf985db0afdc4ed6e",
+              "file": "06-security-minimal.spec.ts",
+              "line": 10,
+              "column": 7
+            },
+            {
+              "title": "should demonstrate PII detection API mock",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19015fa05d7dffff2be0-c3a85519a2ea701a500e",
+              "file": "06-security-minimal.spec.ts",
+              "line": 80,
+              "column": 7
+            },
+            {
+              "title": "should demonstrate compliance framework API mock",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19015fa05d7dffff2be0-e0c41cbc2da8d0e37daf",
+              "file": "06-security-minimal.spec.ts",
+              "line": 127,
+              "column": 7
+            },
+            {
+              "title": "should test error handling in security APIs",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19015fa05d7dffff2be0-f99ff683ec623050e02c",
+              "file": "06-security-minimal.spec.ts",
+              "line": 190,
+              "column": 7
+            },
+            {
+              "title": "should validate complete security workflow mock",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19015fa05d7dffff2be0-0b1a56c92c7ba9e70cad",
+              "file": "06-security-minimal.spec.ts",
+              "line": 222,
+              "column": 7
+            },
+            {
+              "title": "should successfully mock security-related API endpoints",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19015fa05d7dffff2be0-1f8a91874723490a0e0c",
+              "file": "06-security-minimal.spec.ts",
+              "line": 10,
+              "column": 7
+            },
+            {
+              "title": "should demonstrate PII detection API mock",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19015fa05d7dffff2be0-b8ed21cce5403b7c0e83",
+              "file": "06-security-minimal.spec.ts",
+              "line": 80,
+              "column": 7
+            },
+            {
+              "title": "should demonstrate compliance framework API mock",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19015fa05d7dffff2be0-0dcb934689425218bb0f",
+              "file": "06-security-minimal.spec.ts",
+              "line": 127,
+              "column": 7
+            },
+            {
+              "title": "should test error handling in security APIs",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19015fa05d7dffff2be0-fc99132c8359cbf66a1e",
+              "file": "06-security-minimal.spec.ts",
+              "line": 190,
+              "column": 7
+            },
+            {
+              "title": "should validate complete security workflow mock",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "19015fa05d7dffff2be0-6257d21987e6387451ee",
+              "file": "06-security-minimal.spec.ts",
+              "line": 222,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "07-pii-detection.spec.ts",
+      "file": "07-pii-detection.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "PII Detection",
+          "file": "07-pii-detection.spec.ts",
+          "line": 339,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should detect common PII types during file upload",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b4d2938a4d1f2e64f707-35d84954ca22a2968721",
+              "file": "07-pii-detection.spec.ts",
+              "line": 350,
+              "column": 7
+            },
+            {
+              "title": "should allow manual PII verification and correction",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b4d2938a4d1f2e64f707-8369959544eb4fa30e82",
+              "file": "07-pii-detection.spec.ts",
+              "line": 394,
+              "column": 7
+            },
+            {
+              "title": "should create and test custom PII patterns",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b4d2938a4d1f2e64f707-f6d44fea5cae18f011cd",
+              "file": "07-pii-detection.spec.ts",
+              "line": 448,
+              "column": 7
+            },
+            {
+              "title": "should show PII confidence scoring and thresholds",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b4d2938a4d1f2e64f707-13fac55a0997adaa8104",
+              "file": "07-pii-detection.spec.ts",
+              "line": 503,
+              "column": 7
+            },
+            {
+              "title": "should handle different compliance framework requirements",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b4d2938a4d1f2e64f707-3710d9a92fd62b958df3",
+              "file": "07-pii-detection.spec.ts",
+              "line": 552,
+              "column": 7
+            },
+            {
+              "title": "should provide PII detection statistics and analytics",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b4d2938a4d1f2e64f707-f85c0e14d3c158f64eee",
+              "file": "07-pii-detection.spec.ts",
+              "line": 587,
+              "column": 7
+            },
+            {
+              "title": "should handle PII detection errors gracefully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b4d2938a4d1f2e64f707-97e0b42a1506de61ef79",
+              "file": "07-pii-detection.spec.ts",
+              "line": 635,
+              "column": 7
+            },
+            {
+              "title": "should support batch PII detection for large datasets",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-chrome",
+                  "projectName": "browser-chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b4d2938a4d1f2e64f707-fb754d51522d5e74c696",
+              "file": "07-pii-detection.spec.ts",
+              "line": 699,
+              "column": 7
+            },
+            {
+              "title": "should detect common PII types during file upload",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b4d2938a4d1f2e64f707-db658df2ca91f60dc4db",
+              "file": "07-pii-detection.spec.ts",
+              "line": 350,
+              "column": 7
+            },
+            {
+              "title": "should allow manual PII verification and correction",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b4d2938a4d1f2e64f707-c6bb584a7fa13e2e840d",
+              "file": "07-pii-detection.spec.ts",
+              "line": 394,
+              "column": 7
+            },
+            {
+              "title": "should create and test custom PII patterns",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b4d2938a4d1f2e64f707-8189db57e589465876f2",
+              "file": "07-pii-detection.spec.ts",
+              "line": 448,
+              "column": 7
+            },
+            {
+              "title": "should show PII confidence scoring and thresholds",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b4d2938a4d1f2e64f707-be4cebc3af2f3842c5a2",
+              "file": "07-pii-detection.spec.ts",
+              "line": 503,
+              "column": 7
+            },
+            {
+              "title": "should handle different compliance framework requirements",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b4d2938a4d1f2e64f707-ab356f8b8c531c80113a",
+              "file": "07-pii-detection.spec.ts",
+              "line": 552,
+              "column": 7
+            },
+            {
+              "title": "should provide PII detection statistics and analytics",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b4d2938a4d1f2e64f707-277cf0da199394eac12a",
+              "file": "07-pii-detection.spec.ts",
+              "line": 587,
+              "column": 7
+            },
+            {
+              "title": "should handle PII detection errors gracefully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b4d2938a4d1f2e64f707-490e7b3ca9038bbb9f33",
+              "file": "07-pii-detection.spec.ts",
+              "line": 635,
+              "column": 7
+            },
+            {
+              "title": "should support batch PII detection for large datasets",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-firefox",
+                  "projectName": "browser-firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b4d2938a4d1f2e64f707-fbc62444b05e35199350",
+              "file": "07-pii-detection.spec.ts",
+              "line": 699,
+              "column": 7
+            },
+            {
+              "title": "should detect common PII types during file upload",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b4d2938a4d1f2e64f707-e64c513d6bf24f483e36",
+              "file": "07-pii-detection.spec.ts",
+              "line": 350,
+              "column": 7
+            },
+            {
+              "title": "should allow manual PII verification and correction",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b4d2938a4d1f2e64f707-3ec7aa7b51503cf942e3",
+              "file": "07-pii-detection.spec.ts",
+              "line": 394,
+              "column": 7
+            },
+            {
+              "title": "should create and test custom PII patterns",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b4d2938a4d1f2e64f707-232e64e9f2e638c94b4d",
+              "file": "07-pii-detection.spec.ts",
+              "line": 448,
+              "column": 7
+            },
+            {
+              "title": "should show PII confidence scoring and thresholds",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b4d2938a4d1f2e64f707-73aadb2f1dae80312e5f",
+              "file": "07-pii-detection.spec.ts",
+              "line": 503,
+              "column": 7
+            },
+            {
+              "title": "should handle different compliance framework requirements",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b4d2938a4d1f2e64f707-12ff3b674e47bd615c81",
+              "file": "07-pii-detection.spec.ts",
+              "line": 552,
+              "column": 7
+            },
+            {
+              "title": "should provide PII detection statistics and analytics",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b4d2938a4d1f2e64f707-83d52eaaae77e54117be",
+              "file": "07-pii-detection.spec.ts",
+              "line": 587,
+              "column": 7
+            },
+            {
+              "title": "should handle PII detection errors gracefully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b4d2938a4d1f2e64f707-f688677f7ec77747367f",
+              "file": "07-pii-detection.spec.ts",
+              "line": 635,
+              "column": 7
+            },
+            {
+              "title": "should support batch PII detection for large datasets",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "browser-webkit",
+                  "projectName": "browser-webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b4d2938a4d1f2e64f707-b1a929c8e22b64489f58",
+              "file": "07-pii-detection.spec.ts",
+              "line": 699,
               "column": 7
             }
           ]
@@ -3344,7 +5032,7 @@
         {
           "title": "Enhanced DataCloak E2E Tests",
           "file": "enhanced-datacloak-e2e.spec.ts",
-          "line": 30,
+          "line": 320,
           "column": 6,
           "specs": [
             {
@@ -3364,7 +5052,7 @@
               ],
               "id": "bee1f918c67d1c8fad4e-918cc6d910c7593771f6",
               "file": "enhanced-datacloak-e2e.spec.ts",
-              "line": 41,
+              "line": 331,
               "column": 7
             },
             {
@@ -3384,7 +5072,7 @@
               ],
               "id": "bee1f918c67d1c8fad4e-775446dbfd6fe5457acd",
               "file": "enhanced-datacloak-e2e.spec.ts",
-              "line": 174,
+              "line": 464,
               "column": 7
             },
             {
@@ -3404,7 +5092,7 @@
               ],
               "id": "bee1f918c67d1c8fad4e-05eb9f4b26c4e5c47156",
               "file": "enhanced-datacloak-e2e.spec.ts",
-              "line": 198,
+              "line": 488,
               "column": 7
             },
             {
@@ -3424,7 +5112,7 @@
               ],
               "id": "bee1f918c67d1c8fad4e-e4af5f0edf716e5d28d6",
               "file": "enhanced-datacloak-e2e.spec.ts",
-              "line": 233,
+              "line": 523,
               "column": 7
             },
             {
@@ -3444,7 +5132,7 @@
               ],
               "id": "bee1f918c67d1c8fad4e-67c78a41c80f0aa3fd7f",
               "file": "enhanced-datacloak-e2e.spec.ts",
-              "line": 274,
+              "line": 564,
               "column": 7
             },
             {
@@ -3464,7 +5152,7 @@
               ],
               "id": "bee1f918c67d1c8fad4e-a17e73ca5c85066db0ed",
               "file": "enhanced-datacloak-e2e.spec.ts",
-              "line": 305,
+              "line": 595,
               "column": 7
             },
             {
@@ -3484,7 +5172,7 @@
               ],
               "id": "bee1f918c67d1c8fad4e-f5385bd0350741527536",
               "file": "enhanced-datacloak-e2e.spec.ts",
-              "line": 336,
+              "line": 626,
               "column": 7
             },
             {
@@ -3504,7 +5192,7 @@
               ],
               "id": "bee1f918c67d1c8fad4e-90637395174609ec8f25",
               "file": "enhanced-datacloak-e2e.spec.ts",
-              "line": 371,
+              "line": 661,
               "column": 7
             },
             {
@@ -3524,7 +5212,7 @@
               ],
               "id": "bee1f918c67d1c8fad4e-c51e17bd58f62217e608",
               "file": "enhanced-datacloak-e2e.spec.ts",
-              "line": 41,
+              "line": 331,
               "column": 7
             },
             {
@@ -3544,7 +5232,7 @@
               ],
               "id": "bee1f918c67d1c8fad4e-51b428e9f3d454756e41",
               "file": "enhanced-datacloak-e2e.spec.ts",
-              "line": 174,
+              "line": 464,
               "column": 7
             },
             {
@@ -3564,7 +5252,7 @@
               ],
               "id": "bee1f918c67d1c8fad4e-7b012d332786bdab49b6",
               "file": "enhanced-datacloak-e2e.spec.ts",
-              "line": 198,
+              "line": 488,
               "column": 7
             },
             {
@@ -3584,7 +5272,7 @@
               ],
               "id": "bee1f918c67d1c8fad4e-3dedf7c67c193b1efe3c",
               "file": "enhanced-datacloak-e2e.spec.ts",
-              "line": 233,
+              "line": 523,
               "column": 7
             },
             {
@@ -3604,7 +5292,7 @@
               ],
               "id": "bee1f918c67d1c8fad4e-af1cfdb9a37467548782",
               "file": "enhanced-datacloak-e2e.spec.ts",
-              "line": 274,
+              "line": 564,
               "column": 7
             },
             {
@@ -3624,7 +5312,7 @@
               ],
               "id": "bee1f918c67d1c8fad4e-609fec028269ee858c74",
               "file": "enhanced-datacloak-e2e.spec.ts",
-              "line": 305,
+              "line": 595,
               "column": 7
             },
             {
@@ -3644,7 +5332,7 @@
               ],
               "id": "bee1f918c67d1c8fad4e-cb5d2c8c9129bbe77182",
               "file": "enhanced-datacloak-e2e.spec.ts",
-              "line": 336,
+              "line": 626,
               "column": 7
             },
             {
@@ -3664,7 +5352,7 @@
               ],
               "id": "bee1f918c67d1c8fad4e-797acefba72913f0639b",
               "file": "enhanced-datacloak-e2e.spec.ts",
-              "line": 371,
+              "line": 661,
               "column": 7
             },
             {
@@ -3684,7 +5372,7 @@
               ],
               "id": "bee1f918c67d1c8fad4e-455f7defe9fd58c51b6a",
               "file": "enhanced-datacloak-e2e.spec.ts",
-              "line": 41,
+              "line": 331,
               "column": 7
             },
             {
@@ -3704,7 +5392,7 @@
               ],
               "id": "bee1f918c67d1c8fad4e-b352b1b6daf5a36e1b54",
               "file": "enhanced-datacloak-e2e.spec.ts",
-              "line": 174,
+              "line": 464,
               "column": 7
             },
             {
@@ -3724,7 +5412,7 @@
               ],
               "id": "bee1f918c67d1c8fad4e-12bde23a13cc28c0cdf5",
               "file": "enhanced-datacloak-e2e.spec.ts",
-              "line": 198,
+              "line": 488,
               "column": 7
             },
             {
@@ -3744,7 +5432,7 @@
               ],
               "id": "bee1f918c67d1c8fad4e-f029954a4f176e10b033",
               "file": "enhanced-datacloak-e2e.spec.ts",
-              "line": 233,
+              "line": 523,
               "column": 7
             },
             {
@@ -3764,7 +5452,7 @@
               ],
               "id": "bee1f918c67d1c8fad4e-16640676a674a2f48c65",
               "file": "enhanced-datacloak-e2e.spec.ts",
-              "line": 274,
+              "line": 564,
               "column": 7
             },
             {
@@ -3784,7 +5472,7 @@
               ],
               "id": "bee1f918c67d1c8fad4e-73adf470c8a618a14214",
               "file": "enhanced-datacloak-e2e.spec.ts",
-              "line": 305,
+              "line": 595,
               "column": 7
             },
             {
@@ -3804,7 +5492,7 @@
               ],
               "id": "bee1f918c67d1c8fad4e-4c568a570d13a7a83783",
               "file": "enhanced-datacloak-e2e.spec.ts",
-              "line": 336,
+              "line": 626,
               "column": 7
             },
             {
@@ -3824,7 +5512,7 @@
               ],
               "id": "bee1f918c67d1c8fad4e-1dc9ea1b13ef669d9cbd",
               "file": "enhanced-datacloak-e2e.spec.ts",
-              "line": 371,
+              "line": 661,
               "column": 7
             }
           ]
@@ -3832,7 +5520,7 @@
         {
           "title": "Performance Benchmarks",
           "file": "enhanced-datacloak-e2e.spec.ts",
-          "line": 396,
+          "line": 686,
           "column": 6,
           "specs": [
             {
@@ -3852,7 +5540,7 @@
               ],
               "id": "bee1f918c67d1c8fad4e-b7d8b5a3674bf817fcc7",
               "file": "enhanced-datacloak-e2e.spec.ts",
-              "line": 398,
+              "line": 688,
               "column": 7
             },
             {
@@ -3872,7 +5560,7 @@
               ],
               "id": "bee1f918c67d1c8fad4e-b3287612148e0e8a285e",
               "file": "enhanced-datacloak-e2e.spec.ts",
-              "line": 398,
+              "line": 688,
               "column": 7
             },
             {
@@ -3892,7 +5580,7 @@
               ],
               "id": "bee1f918c67d1c8fad4e-7b07a11b4f27abcb5a4d",
               "file": "enhanced-datacloak-e2e.spec.ts",
-              "line": 398,
+              "line": 688,
               "column": 7
             }
           ]
@@ -4006,7 +5694,7 @@
               ],
               "id": "db581cdb19f7d756922c-c511b042671ec27426a3",
               "file": "integration-workflow-e2e.spec.ts",
-              "line": 45,
+              "line": 98,
               "column": 7
             },
             {
@@ -4026,7 +5714,7 @@
               ],
               "id": "db581cdb19f7d756922c-19ae7904ac9ee503abb3",
               "file": "integration-workflow-e2e.spec.ts",
-              "line": 193,
+              "line": 199,
               "column": 7
             },
             {
@@ -4046,7 +5734,7 @@
               ],
               "id": "db581cdb19f7d756922c-de3190174428d1ec17f8",
               "file": "integration-workflow-e2e.spec.ts",
-              "line": 225,
+              "line": 230,
               "column": 7
             },
             {
@@ -4066,7 +5754,7 @@
               ],
               "id": "db581cdb19f7d756922c-597428942ed3dce10388",
               "file": "integration-workflow-e2e.spec.ts",
-              "line": 270,
+              "line": 261,
               "column": 7
             },
             {
@@ -4086,7 +5774,7 @@
               ],
               "id": "db581cdb19f7d756922c-a5f81899d0827f001c02",
               "file": "integration-workflow-e2e.spec.ts",
-              "line": 313,
+              "line": 314,
               "column": 7
             },
             {
@@ -4106,7 +5794,7 @@
               ],
               "id": "db581cdb19f7d756922c-25e3075427021a9b4e33",
               "file": "integration-workflow-e2e.spec.ts",
-              "line": 351,
+              "line": 357,
               "column": 7
             },
             {
@@ -4126,7 +5814,7 @@
               ],
               "id": "db581cdb19f7d756922c-d573ef346b5aaf363199",
               "file": "integration-workflow-e2e.spec.ts",
-              "line": 45,
+              "line": 98,
               "column": 7
             },
             {
@@ -4146,7 +5834,7 @@
               ],
               "id": "db581cdb19f7d756922c-279f6961dabcbdad5294",
               "file": "integration-workflow-e2e.spec.ts",
-              "line": 193,
+              "line": 199,
               "column": 7
             },
             {
@@ -4166,7 +5854,7 @@
               ],
               "id": "db581cdb19f7d756922c-eb0fd83b299494d8a74c",
               "file": "integration-workflow-e2e.spec.ts",
-              "line": 225,
+              "line": 230,
               "column": 7
             },
             {
@@ -4186,7 +5874,7 @@
               ],
               "id": "db581cdb19f7d756922c-08a936f7ebe2061dcf91",
               "file": "integration-workflow-e2e.spec.ts",
-              "line": 270,
+              "line": 261,
               "column": 7
             },
             {
@@ -4206,7 +5894,7 @@
               ],
               "id": "db581cdb19f7d756922c-35066dbaa3b34c28586c",
               "file": "integration-workflow-e2e.spec.ts",
-              "line": 313,
+              "line": 314,
               "column": 7
             },
             {
@@ -4226,7 +5914,7 @@
               ],
               "id": "db581cdb19f7d756922c-ad466574ca6570a3dde5",
               "file": "integration-workflow-e2e.spec.ts",
-              "line": 351,
+              "line": 357,
               "column": 7
             },
             {
@@ -4246,7 +5934,7 @@
               ],
               "id": "db581cdb19f7d756922c-1dca5336f389d776cd83",
               "file": "integration-workflow-e2e.spec.ts",
-              "line": 45,
+              "line": 98,
               "column": 7
             },
             {
@@ -4266,7 +5954,7 @@
               ],
               "id": "db581cdb19f7d756922c-a9fb7711b98ce697dcfa",
               "file": "integration-workflow-e2e.spec.ts",
-              "line": 193,
+              "line": 199,
               "column": 7
             },
             {
@@ -4286,7 +5974,7 @@
               ],
               "id": "db581cdb19f7d756922c-8ff057916a514bb80877",
               "file": "integration-workflow-e2e.spec.ts",
-              "line": 225,
+              "line": 230,
               "column": 7
             },
             {
@@ -4306,7 +5994,7 @@
               ],
               "id": "db581cdb19f7d756922c-2d3018a926e248c48a1d",
               "file": "integration-workflow-e2e.spec.ts",
-              "line": 270,
+              "line": 261,
               "column": 7
             },
             {
@@ -4326,7 +6014,7 @@
               ],
               "id": "db581cdb19f7d756922c-c8db0a75d8e0c1c8e61a",
               "file": "integration-workflow-e2e.spec.ts",
-              "line": 313,
+              "line": 314,
               "column": 7
             },
             {
@@ -4346,7 +6034,7 @@
               ],
               "id": "db581cdb19f7d756922c-90b10363325d77f2033c",
               "file": "integration-workflow-e2e.spec.ts",
-              "line": 351,
+              "line": 357,
               "column": 7
             }
           ]
@@ -4354,7 +6042,7 @@
         {
           "title": "API Integration Tests",
           "file": "integration-workflow-e2e.spec.ts",
-          "line": 378,
+          "line": 389,
           "column": 6,
           "specs": [
             {
@@ -4374,7 +6062,7 @@
               ],
               "id": "db581cdb19f7d756922c-2d3002f49c178d960c9e",
               "file": "integration-workflow-e2e.spec.ts",
-              "line": 380,
+              "line": 391,
               "column": 7
             },
             {
@@ -4394,7 +6082,7 @@
               ],
               "id": "db581cdb19f7d756922c-09271ff5e44e1eff864a",
               "file": "integration-workflow-e2e.spec.ts",
-              "line": 438,
+              "line": 449,
               "column": 7
             },
             {
@@ -4414,7 +6102,7 @@
               ],
               "id": "db581cdb19f7d756922c-2312447bf52dacf46e2d",
               "file": "integration-workflow-e2e.spec.ts",
-              "line": 380,
+              "line": 391,
               "column": 7
             },
             {
@@ -4434,7 +6122,7 @@
               ],
               "id": "db581cdb19f7d756922c-43e7331ffa4faa4c1e63",
               "file": "integration-workflow-e2e.spec.ts",
-              "line": 438,
+              "line": 449,
               "column": 7
             },
             {
@@ -4454,7 +6142,7 @@
               ],
               "id": "db581cdb19f7d756922c-54d87d4ee1c5479e0403",
               "file": "integration-workflow-e2e.spec.ts",
-              "line": 380,
+              "line": 391,
               "column": 7
             },
             {
@@ -4474,7 +6162,7 @@
               ],
               "id": "db581cdb19f7d756922c-09139a2b630d5b8a0d6d",
               "file": "integration-workflow-e2e.spec.ts",
-              "line": 438,
+              "line": 449,
               "column": 7
             }
           ]
@@ -4588,7 +6276,7 @@
               ],
               "id": "2bf29e1db9f097c47035-6c3d38f77b030159a024",
               "file": "system-verification-e2e.spec.ts",
-              "line": 11,
+              "line": 102,
               "column": 7
             },
             {
@@ -4608,7 +6296,7 @@
               ],
               "id": "2bf29e1db9f097c47035-db4a9cd7b9e945d8effc",
               "file": "system-verification-e2e.spec.ts",
-              "line": 49,
+              "line": 140,
               "column": 7
             },
             {
@@ -4628,7 +6316,7 @@
               ],
               "id": "2bf29e1db9f097c47035-0a88e81b77ccf9512095",
               "file": "system-verification-e2e.spec.ts",
-              "line": 87,
+              "line": 195,
               "column": 7
             },
             {
@@ -4648,7 +6336,7 @@
               ],
               "id": "2bf29e1db9f097c47035-f874c55abc4088d701a2",
               "file": "system-verification-e2e.spec.ts",
-              "line": 135,
+              "line": 243,
               "column": 7
             },
             {
@@ -4668,7 +6356,7 @@
               ],
               "id": "2bf29e1db9f097c47035-e89924cfa259e2dc2160",
               "file": "system-verification-e2e.spec.ts",
-              "line": 177,
+              "line": 285,
               "column": 7
             },
             {
@@ -4688,7 +6376,7 @@
               ],
               "id": "2bf29e1db9f097c47035-bc9b5903123ebc0b4923",
               "file": "system-verification-e2e.spec.ts",
-              "line": 215,
+              "line": 323,
               "column": 7
             },
             {
@@ -4708,7 +6396,7 @@
               ],
               "id": "2bf29e1db9f097c47035-d9d35693a7371970b9c0",
               "file": "system-verification-e2e.spec.ts",
-              "line": 272,
+              "line": 380,
               "column": 7
             },
             {
@@ -4728,7 +6416,7 @@
               ],
               "id": "2bf29e1db9f097c47035-d2ff6a012989a82bfbe1",
               "file": "system-verification-e2e.spec.ts",
-              "line": 318,
+              "line": 426,
               "column": 7
             },
             {
@@ -4748,7 +6436,7 @@
               ],
               "id": "2bf29e1db9f097c47035-1ae994dfc6349e94c307",
               "file": "system-verification-e2e.spec.ts",
-              "line": 11,
+              "line": 102,
               "column": 7
             },
             {
@@ -4768,7 +6456,7 @@
               ],
               "id": "2bf29e1db9f097c47035-6ed9a463be039c400d55",
               "file": "system-verification-e2e.spec.ts",
-              "line": 49,
+              "line": 140,
               "column": 7
             },
             {
@@ -4788,7 +6476,7 @@
               ],
               "id": "2bf29e1db9f097c47035-bb71c8cd6fced1eb3c94",
               "file": "system-verification-e2e.spec.ts",
-              "line": 87,
+              "line": 195,
               "column": 7
             },
             {
@@ -4808,7 +6496,7 @@
               ],
               "id": "2bf29e1db9f097c47035-f3ac012bbff99b64e368",
               "file": "system-verification-e2e.spec.ts",
-              "line": 135,
+              "line": 243,
               "column": 7
             },
             {
@@ -4828,7 +6516,7 @@
               ],
               "id": "2bf29e1db9f097c47035-82d943af711317b94ff1",
               "file": "system-verification-e2e.spec.ts",
-              "line": 177,
+              "line": 285,
               "column": 7
             },
             {
@@ -4848,7 +6536,7 @@
               ],
               "id": "2bf29e1db9f097c47035-d9012b79fa67cdc2e302",
               "file": "system-verification-e2e.spec.ts",
-              "line": 215,
+              "line": 323,
               "column": 7
             },
             {
@@ -4868,7 +6556,7 @@
               ],
               "id": "2bf29e1db9f097c47035-0cd30757f7226ad8e82d",
               "file": "system-verification-e2e.spec.ts",
-              "line": 272,
+              "line": 380,
               "column": 7
             },
             {
@@ -4888,7 +6576,7 @@
               ],
               "id": "2bf29e1db9f097c47035-20ecdd6c24db005f5fc6",
               "file": "system-verification-e2e.spec.ts",
-              "line": 318,
+              "line": 426,
               "column": 7
             },
             {
@@ -4908,7 +6596,7 @@
               ],
               "id": "2bf29e1db9f097c47035-035e3bf56fe6fb319324",
               "file": "system-verification-e2e.spec.ts",
-              "line": 11,
+              "line": 102,
               "column": 7
             },
             {
@@ -4928,7 +6616,7 @@
               ],
               "id": "2bf29e1db9f097c47035-d64a7394a43a8316a075",
               "file": "system-verification-e2e.spec.ts",
-              "line": 49,
+              "line": 140,
               "column": 7
             },
             {
@@ -4948,7 +6636,7 @@
               ],
               "id": "2bf29e1db9f097c47035-c5bd97f2882c44a4efe2",
               "file": "system-verification-e2e.spec.ts",
-              "line": 87,
+              "line": 195,
               "column": 7
             },
             {
@@ -4968,7 +6656,7 @@
               ],
               "id": "2bf29e1db9f097c47035-42c2bafdeeb80c762a3b",
               "file": "system-verification-e2e.spec.ts",
-              "line": 135,
+              "line": 243,
               "column": 7
             },
             {
@@ -4988,7 +6676,7 @@
               ],
               "id": "2bf29e1db9f097c47035-46d7aa5b17f96a331a31",
               "file": "system-verification-e2e.spec.ts",
-              "line": 177,
+              "line": 285,
               "column": 7
             },
             {
@@ -5008,7 +6696,7 @@
               ],
               "id": "2bf29e1db9f097c47035-2a97e17fa8206857950f",
               "file": "system-verification-e2e.spec.ts",
-              "line": 215,
+              "line": 323,
               "column": 7
             },
             {
@@ -5028,7 +6716,7 @@
               ],
               "id": "2bf29e1db9f097c47035-4ba9b98a6da3e4d52587",
               "file": "system-verification-e2e.spec.ts",
-              "line": 272,
+              "line": 380,
               "column": 7
             },
             {
@@ -5048,7 +6736,7 @@
               ],
               "id": "2bf29e1db9f097c47035-e27d580437b70307783e",
               "file": "system-verification-e2e.spec.ts",
-              "line": 318,
+              "line": 426,
               "column": 7
             }
           ]
@@ -5056,7 +6744,7 @@
         {
           "title": "System Integration Summary",
           "file": "system-verification-e2e.spec.ts",
-          "line": 368,
+          "line": 476,
           "column": 6,
           "specs": [
             {
@@ -5076,7 +6764,7 @@
               ],
               "id": "2bf29e1db9f097c47035-8979675ec33b6fc41b63",
               "file": "system-verification-e2e.spec.ts",
-              "line": 370,
+              "line": 478,
               "column": 7
             },
             {
@@ -5096,7 +6784,7 @@
               ],
               "id": "2bf29e1db9f097c47035-505212497ea53415b22a",
               "file": "system-verification-e2e.spec.ts",
-              "line": 370,
+              "line": 478,
               "column": 7
             },
             {
@@ -5116,7 +6804,7 @@
               ],
               "id": "2bf29e1db9f097c47035-ee05579c74b920bb6e7f",
               "file": "system-verification-e2e.spec.ts",
-              "line": 370,
+              "line": 478,
               "column": 7
             }
           ]
@@ -5203,10 +6891,10 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2025-06-16T19:02:56.319Z",
-    "duration": 555.516,
+    "startTime": "2025-06-20T21:16:41.419Z",
+    "duration": 232.32600000000002,
     "expected": 0,
-    "skipped": 242,
+    "skipped": 323,
     "unexpected": 0,
     "flaky": 0
   }

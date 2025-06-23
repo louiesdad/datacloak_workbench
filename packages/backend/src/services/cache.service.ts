@@ -2,6 +2,84 @@ import { EventEmitter } from 'events';
 import Redis, { Redis as RedisClient } from 'ioredis';
 import { ConfigService } from './config.service';
 
+// Mock Redis implementation for fallback
+class MockRedis {
+  private data = new Map<string, { value: string; expiresAt?: number }>();
+
+  async get(key: string): Promise<string | null> {
+    const entry = this.data.get(key);
+    if (!entry) return null;
+    if (entry.expiresAt && Date.now() > entry.expiresAt) {
+      this.data.delete(key);
+      return null;
+    }
+    return entry.value;
+  }
+
+  async set(key: string, value: string): Promise<string> {
+    this.data.set(key, { value });
+    return 'OK';
+  }
+
+  async setex(key: string, ttl: number, value: string): Promise<string> {
+    this.data.set(key, { value, expiresAt: Date.now() + (ttl * 1000) });
+    return 'OK';
+  }
+
+  async del(key: string): Promise<number> {
+    return this.data.delete(key) ? 1 : 0;
+  }
+
+  async keys(pattern: string): Promise<string[]> {
+    const regex = new RegExp(pattern.replace(/\*/g, '.*'));
+    return Array.from(this.data.keys()).filter(key => regex.test(key));
+  }
+
+  async flushall(): Promise<string> {
+    this.data.clear();
+    return 'OK';
+  }
+
+  async flushdb(): Promise<string> {
+    this.data.clear();
+    return 'OK';
+  }
+
+  async exists(key: string): Promise<number> {
+    return this.data.has(key) ? 1 : 0;
+  }
+
+  async expire(key: string, ttl: number): Promise<number> {
+    const entry = this.data.get(key);
+    if (!entry) return 0;
+    entry.expiresAt = Date.now() + (ttl * 1000);
+    return 1;
+  }
+
+  async ttl(key: string): Promise<number> {
+    const entry = this.data.get(key);
+    if (!entry || !entry.expiresAt) return -1;
+    const remaining = Math.max(0, Math.floor((entry.expiresAt - Date.now()) / 1000));
+    return remaining;
+  }
+
+  async quit(): Promise<string> {
+    this.data.clear();
+    return 'OK';
+  }
+
+  disconnect(): void {
+    this.data.clear();
+  }
+
+  on(event: string, handler: (...args: any[]) => void): void {
+    // Mock event listener - immediately trigger 'ready' event
+    if (event === 'ready') {
+      setTimeout(() => handler(), 10);
+    }
+  }
+}
+
 export interface CacheOptions {
   ttl?: number; // Time to live in seconds
   compress?: boolean; // Whether to compress large values
@@ -51,6 +129,8 @@ export interface ICacheService {
   clear(): Promise<boolean>;
   has(key: string): Promise<boolean>;
   keys(pattern?: string): Promise<string[]>;
+  expire(key: string, seconds: number): Promise<boolean>;
+  ttl(key: string): Promise<number>;
   getStats(): CacheStats;
   getConfig(): CacheConfig;
   close(): Promise<void>;
@@ -110,7 +190,8 @@ export class MemoryCacheService extends EventEmitter implements ICacheService {
 
   async set<T = any>(key: string, value: T, options: CacheOptions = {}): Promise<boolean> {
     try {
-      const ttl = options.ttl || this.config.defaultTTL;
+      // Use provided TTL, fallback to default only if not specified (undefined)
+      const ttl = options.ttl !== undefined ? options.ttl : this.config.defaultTTL;
       const expiresAt = ttl > 0 ? new Date(Date.now() + ttl * 1000) : undefined;
       
       let processedValue = value;
@@ -123,8 +204,9 @@ export class MemoryCacheService extends EventEmitter implements ICacheService {
       // Estimate size
       const estimatedSize = this.estimateSize(processedValue);
       
-      // Check memory limits
-      if (this.getCurrentMemoryUsage() + estimatedSize > this.config.maxMemoryUsage) {
+      // Check memory limits before adding new entry
+      const currentSize = this.getCurrentMemoryUsage();
+      if (currentSize + estimatedSize > this.config.maxMemoryUsage) {
         this.evictOldest();
       }
       
@@ -189,6 +271,23 @@ export class MemoryCacheService extends EventEmitter implements ICacheService {
     return allKeys.filter(key => regex.test(key));
   }
 
+  async expire(key: string, seconds: number): Promise<boolean> {
+    const entry = this.cache.get(key);
+    if (!entry) return false;
+    
+    entry.expiresAt = new Date(Date.now() + seconds * 1000);
+    return true;
+  }
+
+  async ttl(key: string): Promise<number> {
+    const entry = this.cache.get(key);
+    if (!entry) return -2; // Key doesn't exist
+    if (!entry.expiresAt) return -1; // Key exists but has no expiration
+    
+    const remaining = Math.max(0, Math.floor((entry.expiresAt.getTime() - Date.now()) / 1000));
+    return remaining > 0 ? remaining : -2; // -2 means expired
+  }
+
   getStats(): CacheStats {
     return { ...this.stats };
   }
@@ -223,16 +322,21 @@ export class MemoryCacheService extends EventEmitter implements ICacheService {
 
   private evictOldest(): void {
     // Simple LRU eviction - remove oldest entries until we're under the limit
-    const entries = Array.from(this.cache.entries());
-    entries.sort(([, a], [, b]) => a.createdAt.getTime() - b.createdAt.getTime());
-    
     const targetSize = this.config.maxMemoryUsage * 0.8; // Evict to 80% capacity
     let currentSize = this.getCurrentMemoryUsage();
+    
+    // If we're not over the limit, no need to evict
+    if (currentSize <= targetSize) return;
+    
+    // Sort entries by creation time (oldest first)
+    const entries = Array.from(this.cache.entries());
+    entries.sort(([, a], [, b]) => a.createdAt.getTime() - b.createdAt.getTime());
     
     for (const [key, entry] of entries) {
       if (currentSize <= targetSize) break;
       this.cache.delete(key);
       currentSize -= entry.size;
+      this.emit('cache:evicted', { key, size: entry.size });
     }
   }
 
@@ -293,7 +397,6 @@ export class RedisCacheService extends EventEmitter implements ICacheService {
       password: config.redis.password,
       db: config.redis.db,
       keyPrefix: config.redis.keyPrefix,
-      retryDelayOnFailover: 100,
       maxRetriesPerRequest: 3,
     });
 
@@ -301,18 +404,27 @@ export class RedisCacheService extends EventEmitter implements ICacheService {
   }
 
   private setupEventListeners(): void {
-    this.redis.on('error', (error) => {
-      this.stats.errors++;
-      this.emit('cache:error', { operation: 'connection', error });
-    });
+    // Check if redis instance has event emitter methods (for mock compatibility)
+    if (typeof this.redis.on === 'function') {
+      this.redis.on('error', (error) => {
+        this.stats.errors++;
+        this.emit('cache:error', { operation: 'connection', error });
+      });
 
-    this.redis.on('connect', () => {
-      this.emit('cache:connected');
-    });
+      this.redis.on('connect', () => {
+        this.emit('cache:connected');
+      });
 
-    this.redis.on('ready', () => {
-      this.emit('cache:ready');
-    });
+      this.redis.on('ready', () => {
+        this.emit('cache:ready');
+      });
+    } else {
+      // For mocks that don't implement EventEmitter, simulate events
+      setImmediate(() => {
+        this.emit('cache:connected');
+        this.emit('cache:ready');
+      });
+    }
   }
 
   async get<T = any>(key: string): Promise<T | null> {
@@ -330,9 +442,21 @@ export class RedisCacheService extends EventEmitter implements ICacheService {
       
       let parsedValue: T;
       try {
-        parsedValue = JSON.parse(value);
+        // Handle compressed values
+        let processedValue = value;
+        if (value.startsWith('compressed:')) {
+          processedValue = value.substring(11); // Remove 'compressed:' prefix
+          // In a real implementation, you would decompress here
+        }
+        
+        parsedValue = JSON.parse(processedValue);
       } catch {
-        parsedValue = value as unknown as T;
+        // If JSON parsing fails, return as string
+        let processedValue = value;
+        if (value.startsWith('compressed:')) {
+          processedValue = value.substring(11);
+        }
+        parsedValue = processedValue as unknown as T;
       }
       
       this.emit('cache:hit', { key, value: parsedValue });
@@ -347,7 +471,8 @@ export class RedisCacheService extends EventEmitter implements ICacheService {
 
   async set<T = any>(key: string, value: T, options: CacheOptions = {}): Promise<boolean> {
     try {
-      const ttl = options.ttl || this.config.defaultTTL;
+      // Use provided TTL, fallback to default only if not specified (undefined)
+      const ttl = options.ttl !== undefined ? options.ttl : this.config.defaultTTL;
       
       let serializedValue: string;
       if (typeof value === 'string') {
@@ -358,9 +483,10 @@ export class RedisCacheService extends EventEmitter implements ICacheService {
 
       // Compress if needed
       if (options.compress && serializedValue.length > this.config.compressionThreshold) {
-        // In a real implementation, you might use compression here
-        // For now, we'll just set a flag
+        // In a real implementation, you would use actual compression (gzip, lz4, etc.)
+        // For now, we'll just set a flag to indicate compression would happen
         serializedValue = `compressed:${serializedValue}`;
+        this.emit('cache:compressed', { key, originalSize: serializedValue.length - 11, compressedSize: serializedValue.length });
       }
 
       let result: string;
@@ -451,7 +577,9 @@ export class RedisCacheService extends EventEmitter implements ICacheService {
   }
 
   async close(): Promise<void> {
-    await this.redis.quit();
+    if (typeof this.redis.quit === 'function') {
+      await this.redis.quit();
+    }
   }
 
   private updateStats(): void {
@@ -461,7 +589,6 @@ export class RedisCacheService extends EventEmitter implements ICacheService {
       : 0;
   }
 
-  // Redis-specific methods
   async expire(key: string, seconds: number): Promise<boolean> {
     try {
       const result = await this.redis.expire(key, seconds);
@@ -490,20 +617,34 @@ export class RedisCacheService extends EventEmitter implements ICacheService {
  * Cache factory function
  */
 export function createCacheService(config?: Partial<CacheConfig>): ICacheService {
-  const configService = ConfigService.getInstance();
+  let configService;
+  try {
+    configService = ConfigService.getInstance();
+  } catch {
+    configService = null;
+  }
+  
+  // Provide fallback values if configService is not available (e.g., in tests)
+  const getConfigValue = (key: string, fallback?: any) => {
+    try {
+      return configService?.get?.(key) ?? fallback;
+    } catch {
+      return fallback;
+    }
+  };
   
   const cacheConfig: CacheConfig = {
-    enabled: config?.enabled ?? configService.get('REDIS_ENABLED') ?? false,
-    type: config?.type ?? (configService.get('REDIS_ENABLED') ? 'redis' : 'memory'),
+    enabled: config?.enabled ?? getConfigValue('REDIS_ENABLED', false),
+    type: config?.type ?? (getConfigValue('REDIS_ENABLED', false) ? 'redis' : 'memory'),
     defaultTTL: config?.defaultTTL ?? 3600, // 1 hour
     maxMemoryUsage: config?.maxMemoryUsage ?? 100 * 1024 * 1024, // 100MB
     compressionThreshold: config?.compressionThreshold ?? 1024, // 1KB
     redis: config?.redis ?? {
-      host: configService.get('REDIS_HOST') ?? 'localhost',
-      port: configService.get('REDIS_PORT') ?? 6379,
-      password: configService.get('REDIS_PASSWORD'),
-      db: configService.get('REDIS_DB') ?? 1, // Use different DB than job queue
-      keyPrefix: `${configService.get('REDIS_KEY_PREFIX') ?? 'dsw:'}cache:`
+      host: getConfigValue('REDIS_HOST', 'localhost'),
+      port: getConfigValue('REDIS_PORT', 6379),
+      password: getConfigValue('REDIS_PASSWORD', undefined),
+      db: getConfigValue('REDIS_DB', 1), // Use different DB than job queue
+      keyPrefix: `${getConfigValue('REDIS_KEY_PREFIX', 'dsw:')}cache:`
     }
   };
 

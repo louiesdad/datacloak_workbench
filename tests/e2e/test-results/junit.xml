@@ -1,5 +1,5 @@
-<testsuites id="" name="" tests="242" failures="0" skipped="242" errors="0" time="0.555516">
-<testsuite name="01-file-upload.spec.ts" timestamp="2025-06-16T19:02:56.867Z" hostname="browser-chrome" tests="10" failures="0" skipped="10" time="0" errors="0">
+<testsuites id="" name="" tests="323" failures="0" skipped="323" errors="0" time="0.23232600000000003">
+<testsuite name="01-file-upload.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-chrome" tests="10" failures="0" skipped="10" time="0" errors="0">
 <testcase name="File Upload Functionality › should upload small CSV file successfully" classname="01-file-upload.spec.ts" time="0">
 <skipped>
 </skipped>
@@ -41,7 +41,7 @@
 </skipped>
 </testcase>
 </testsuite>
-<testsuite name="02-field-detection.spec.ts" timestamp="2025-06-16T19:02:56.867Z" hostname="browser-chrome" tests="7" failures="0" skipped="7" time="0" errors="0">
+<testsuite name="02-field-detection.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-chrome" tests="7" failures="0" skipped="7" time="0" errors="0">
 <testcase name="Field Detection and PII Identification › should detect common field types correctly" classname="02-field-detection.spec.ts" time="0">
 <skipped>
 </skipped>
@@ -71,7 +71,7 @@
 </skipped>
 </testcase>
 </testsuite>
-<testsuite name="03-transform-operations.spec.ts" timestamp="2025-06-16T19:02:56.867Z" hostname="browser-chrome" tests="9" failures="0" skipped="9" time="0" errors="0">
+<testsuite name="03-transform-operations.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-chrome" tests="9" failures="0" skipped="9" time="0" errors="0">
 <testcase name="Data Transform Operations › should display available transformation options" classname="03-transform-operations.spec.ts" time="0">
 <skipped>
 </skipped>
@@ -109,7 +109,7 @@
 </skipped>
 </testcase>
 </testsuite>
-<testsuite name="04-sentiment-analysis.spec.ts" timestamp="2025-06-16T19:02:56.867Z" hostname="browser-chrome" tests="8" failures="0" skipped="8" time="0" errors="0">
+<testsuite name="04-sentiment-analysis.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-chrome" tests="8" failures="0" skipped="8" time="0" errors="0">
 <testcase name="Sentiment Analysis with OpenAI Integration › should display sentiment analysis configuration options" classname="04-sentiment-analysis.spec.ts" time="0">
 <skipped>
 </skipped>
@@ -143,7 +143,7 @@
 </skipped>
 </testcase>
 </testsuite>
-<testsuite name="05-results-export.spec.ts" timestamp="2025-06-16T19:02:56.867Z" hostname="browser-chrome" tests="9" failures="0" skipped="9" time="0" errors="0">
+<testsuite name="05-results-export.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-chrome" tests="9" failures="0" skipped="9" time="0" errors="0">
 <testcase name="Results Export Functionality › should display sentiment analysis results overview" classname="05-results-export.spec.ts" time="0">
 <skipped>
 </skipped>
@@ -181,13 +181,129 @@
 </skipped>
 </testcase>
 </testsuite>
-<testsuite name="accessibility.spec.ts" timestamp="2025-06-16T19:02:56.867Z" hostname="browser-chrome" tests="1" failures="0" skipped="1" time="0" errors="0">
+<testsuite name="06-security-features-simple.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-chrome" tests="5" failures="0" skipped="5" time="0" errors="0">
+<testcase name="Security Features › should handle file upload with PII detection" classname="06-security-features-simple.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features › should complete sentiment analysis workflow with data protection" classname="06-security-features-simple.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features › should test API security through mocked responses" classname="06-security-features-simple.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features › should demonstrate security headers and network protection" classname="06-security-features-simple.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features › should validate data privacy during processing" classname="06-security-features-simple.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="06-security-features.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-chrome" tests="9" failures="0" skipped="9" time="0" errors="0">
+<testcase name="Security Features › should display security warnings for high-risk data" classname="06-security-features.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features › should show data protection options during workflow" classname="06-security-features.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features › should perform comprehensive security scan" classname="06-security-features.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features › should configure access control settings" classname="06-security-features.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features › should display audit logs" classname="06-security-features.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features › should handle security configuration updates" classname="06-security-features.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features › should show data masking options" classname="06-security-features.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features › should handle security errors gracefully" classname="06-security-features.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features › should validate security compliance status" classname="06-security-features.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="06-security-minimal.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-chrome" tests="5" failures="0" skipped="5" time="0" errors="0">
+<testcase name="Security Features - Minimal › should successfully mock security-related API endpoints" classname="06-security-minimal.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features - Minimal › should demonstrate PII detection API mock" classname="06-security-minimal.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features - Minimal › should demonstrate compliance framework API mock" classname="06-security-minimal.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features - Minimal › should test error handling in security APIs" classname="06-security-minimal.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features - Minimal › should validate complete security workflow mock" classname="06-security-minimal.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="07-pii-detection.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-chrome" tests="8" failures="0" skipped="8" time="0" errors="0">
+<testcase name="PII Detection › should detect common PII types during file upload" classname="07-pii-detection.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PII Detection › should allow manual PII verification and correction" classname="07-pii-detection.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PII Detection › should create and test custom PII patterns" classname="07-pii-detection.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PII Detection › should show PII confidence scoring and thresholds" classname="07-pii-detection.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PII Detection › should handle different compliance framework requirements" classname="07-pii-detection.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PII Detection › should provide PII detection statistics and analytics" classname="07-pii-detection.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PII Detection › should handle PII detection errors gracefully" classname="07-pii-detection.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PII Detection › should support batch PII detection for large datasets" classname="07-pii-detection.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="accessibility.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-chrome" tests="1" failures="0" skipped="1" time="0" errors="0">
 <testcase name="Accessibility Tests › should not have critical accessibility violations on main pages" classname="accessibility.spec.ts" time="0">
 <skipped>
 </skipped>
 </testcase>
 </testsuite>
-<testsuite name="bug-verification.spec.ts" timestamp="2025-06-16T19:02:56.867Z" hostname="browser-chrome" tests="2" failures="0" skipped="2" time="0" errors="0">
+<testsuite name="bug-verification.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-chrome" tests="2" failures="0" skipped="2" time="0" errors="0">
 <testcase name="Bug Fix Verification › should verify all reported bugs are fixed" classname="bug-verification.spec.ts" time="0">
 <skipped>
 </skipped>
@@ -197,7 +313,7 @@
 </skipped>
 </testcase>
 </testsuite>
-<testsuite name="enhanced-datacloak-e2e.spec.ts" timestamp="2025-06-16T19:02:56.867Z" hostname="browser-chrome" tests="9" failures="0" skipped="9" time="0" errors="0">
+<testsuite name="enhanced-datacloak-e2e.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-chrome" tests="9" failures="0" skipped="9" time="0" errors="0">
 <testcase name="Enhanced DataCloak E2E Tests › Complete Enhanced DataCloak Workflow - HIPAA Compliance" classname="enhanced-datacloak-e2e.spec.ts" time="0">
 <skipped>
 </skipped>
@@ -235,13 +351,13 @@
 </skipped>
 </testcase>
 </testsuite>
-<testsuite name="focused-bug-check.spec.ts" timestamp="2025-06-16T19:02:56.867Z" hostname="browser-chrome" tests="1" failures="0" skipped="1" time="0" errors="0">
+<testsuite name="focused-bug-check.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-chrome" tests="1" failures="0" skipped="1" time="0" errors="0">
 <testcase name="Focused Bug Verification › Bugs #8, #11, #12 - Backend errors, Skip transform, Cost estimation" classname="focused-bug-check.spec.ts" time="0">
 <skipped>
 </skipped>
 </testcase>
 </testsuite>
-<testsuite name="integration-workflow-e2e.spec.ts" timestamp="2025-06-16T19:02:56.867Z" hostname="browser-chrome" tests="8" failures="0" skipped="8" time="0" errors="0">
+<testsuite name="integration-workflow-e2e.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-chrome" tests="8" failures="0" skipped="8" time="0" errors="0">
 <testcase name="Integration Workflow E2E Tests › Complete HIPAA Healthcare Data Processing Workflow" classname="integration-workflow-e2e.spec.ts" time="0">
 <skipped>
 </skipped>
@@ -275,13 +391,13 @@
 </skipped>
 </testcase>
 </testsuite>
-<testsuite name="sentiment-execution.spec.ts" timestamp="2025-06-16T19:02:56.867Z" hostname="browser-chrome" tests="1" failures="0" skipped="1" time="0" errors="0">
+<testsuite name="sentiment-execution.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-chrome" tests="1" failures="0" skipped="1" time="0" errors="0">
 <testcase name="Sentiment Analysis Execution › should complete sentiment configuration and enable execution" classname="sentiment-execution.spec.ts" time="0">
 <skipped>
 </skipped>
 </testcase>
 </testsuite>
-<testsuite name="system-verification-e2e.spec.ts" timestamp="2025-06-16T19:02:56.867Z" hostname="browser-chrome" tests="9" failures="0" skipped="9" time="0" errors="0">
+<testsuite name="system-verification-e2e.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-chrome" tests="9" failures="0" skipped="9" time="0" errors="0">
 <testcase name="Enhanced DataCloak System Verification › Verify Enhanced DataCloak Service Structure" classname="system-verification-e2e.spec.ts" time="0">
 <skipped>
 </skipped>
@@ -319,13 +435,13 @@
 </skipped>
 </testcase>
 </testsuite>
-<testsuite name="workflow-navigation.spec.ts" timestamp="2025-06-16T19:02:56.867Z" hostname="browser-chrome" tests="1" failures="0" skipped="1" time="0" errors="0">
+<testsuite name="workflow-navigation.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-chrome" tests="1" failures="0" skipped="1" time="0" errors="0">
 <testcase name="Workflow Navigation › should progress through workflow steps" classname="workflow-navigation.spec.ts" time="0">
 <skipped>
 </skipped>
 </testcase>
 </testsuite>
-<testsuite name="01-file-upload.spec.ts" timestamp="2025-06-16T19:02:56.867Z" hostname="browser-firefox" tests="10" failures="0" skipped="10" time="0" errors="0">
+<testsuite name="01-file-upload.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-firefox" tests="10" failures="0" skipped="10" time="0" errors="0">
 <testcase name="File Upload Functionality › should upload small CSV file successfully" classname="01-file-upload.spec.ts" time="0">
 <skipped>
 </skipped>
@@ -367,7 +483,7 @@
 </skipped>
 </testcase>
 </testsuite>
-<testsuite name="02-field-detection.spec.ts" timestamp="2025-06-16T19:02:56.867Z" hostname="browser-firefox" tests="7" failures="0" skipped="7" time="0" errors="0">
+<testsuite name="02-field-detection.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-firefox" tests="7" failures="0" skipped="7" time="0" errors="0">
 <testcase name="Field Detection and PII Identification › should detect common field types correctly" classname="02-field-detection.spec.ts" time="0">
 <skipped>
 </skipped>
@@ -397,7 +513,7 @@
 </skipped>
 </testcase>
 </testsuite>
-<testsuite name="03-transform-operations.spec.ts" timestamp="2025-06-16T19:02:56.867Z" hostname="browser-firefox" tests="9" failures="0" skipped="9" time="0" errors="0">
+<testsuite name="03-transform-operations.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-firefox" tests="9" failures="0" skipped="9" time="0" errors="0">
 <testcase name="Data Transform Operations › should display available transformation options" classname="03-transform-operations.spec.ts" time="0">
 <skipped>
 </skipped>
@@ -435,7 +551,7 @@
 </skipped>
 </testcase>
 </testsuite>
-<testsuite name="04-sentiment-analysis.spec.ts" timestamp="2025-06-16T19:02:56.867Z" hostname="browser-firefox" tests="8" failures="0" skipped="8" time="0" errors="0">
+<testsuite name="04-sentiment-analysis.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-firefox" tests="8" failures="0" skipped="8" time="0" errors="0">
 <testcase name="Sentiment Analysis with OpenAI Integration › should display sentiment analysis configuration options" classname="04-sentiment-analysis.spec.ts" time="0">
 <skipped>
 </skipped>
@@ -469,7 +585,7 @@
 </skipped>
 </testcase>
 </testsuite>
-<testsuite name="05-results-export.spec.ts" timestamp="2025-06-16T19:02:56.867Z" hostname="browser-firefox" tests="9" failures="0" skipped="9" time="0" errors="0">
+<testsuite name="05-results-export.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-firefox" tests="9" failures="0" skipped="9" time="0" errors="0">
 <testcase name="Results Export Functionality › should display sentiment analysis results overview" classname="05-results-export.spec.ts" time="0">
 <skipped>
 </skipped>
@@ -507,13 +623,129 @@
 </skipped>
 </testcase>
 </testsuite>
-<testsuite name="accessibility.spec.ts" timestamp="2025-06-16T19:02:56.867Z" hostname="browser-firefox" tests="1" failures="0" skipped="1" time="0" errors="0">
+<testsuite name="06-security-features-simple.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-firefox" tests="5" failures="0" skipped="5" time="0" errors="0">
+<testcase name="Security Features › should handle file upload with PII detection" classname="06-security-features-simple.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features › should complete sentiment analysis workflow with data protection" classname="06-security-features-simple.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features › should test API security through mocked responses" classname="06-security-features-simple.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features › should demonstrate security headers and network protection" classname="06-security-features-simple.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features › should validate data privacy during processing" classname="06-security-features-simple.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="06-security-features.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-firefox" tests="9" failures="0" skipped="9" time="0" errors="0">
+<testcase name="Security Features › should display security warnings for high-risk data" classname="06-security-features.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features › should show data protection options during workflow" classname="06-security-features.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features › should perform comprehensive security scan" classname="06-security-features.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features › should configure access control settings" classname="06-security-features.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features › should display audit logs" classname="06-security-features.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features › should handle security configuration updates" classname="06-security-features.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features › should show data masking options" classname="06-security-features.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features › should handle security errors gracefully" classname="06-security-features.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features › should validate security compliance status" classname="06-security-features.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="06-security-minimal.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-firefox" tests="5" failures="0" skipped="5" time="0" errors="0">
+<testcase name="Security Features - Minimal › should successfully mock security-related API endpoints" classname="06-security-minimal.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features - Minimal › should demonstrate PII detection API mock" classname="06-security-minimal.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features - Minimal › should demonstrate compliance framework API mock" classname="06-security-minimal.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features - Minimal › should test error handling in security APIs" classname="06-security-minimal.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features - Minimal › should validate complete security workflow mock" classname="06-security-minimal.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="07-pii-detection.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-firefox" tests="8" failures="0" skipped="8" time="0" errors="0">
+<testcase name="PII Detection › should detect common PII types during file upload" classname="07-pii-detection.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PII Detection › should allow manual PII verification and correction" classname="07-pii-detection.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PII Detection › should create and test custom PII patterns" classname="07-pii-detection.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PII Detection › should show PII confidence scoring and thresholds" classname="07-pii-detection.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PII Detection › should handle different compliance framework requirements" classname="07-pii-detection.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PII Detection › should provide PII detection statistics and analytics" classname="07-pii-detection.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PII Detection › should handle PII detection errors gracefully" classname="07-pii-detection.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PII Detection › should support batch PII detection for large datasets" classname="07-pii-detection.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="accessibility.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-firefox" tests="1" failures="0" skipped="1" time="0" errors="0">
 <testcase name="Accessibility Tests › should not have critical accessibility violations on main pages" classname="accessibility.spec.ts" time="0">
 <skipped>
 </skipped>
 </testcase>
 </testsuite>
-<testsuite name="bug-verification.spec.ts" timestamp="2025-06-16T19:02:56.867Z" hostname="browser-firefox" tests="2" failures="0" skipped="2" time="0" errors="0">
+<testsuite name="bug-verification.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-firefox" tests="2" failures="0" skipped="2" time="0" errors="0">
 <testcase name="Bug Fix Verification › should verify all reported bugs are fixed" classname="bug-verification.spec.ts" time="0">
 <skipped>
 </skipped>
@@ -523,7 +755,7 @@
 </skipped>
 </testcase>
 </testsuite>
-<testsuite name="enhanced-datacloak-e2e.spec.ts" timestamp="2025-06-16T19:02:56.867Z" hostname="browser-firefox" tests="9" failures="0" skipped="9" time="0" errors="0">
+<testsuite name="enhanced-datacloak-e2e.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-firefox" tests="9" failures="0" skipped="9" time="0" errors="0">
 <testcase name="Enhanced DataCloak E2E Tests › Complete Enhanced DataCloak Workflow - HIPAA Compliance" classname="enhanced-datacloak-e2e.spec.ts" time="0">
 <skipped>
 </skipped>
@@ -561,13 +793,13 @@
 </skipped>
 </testcase>
 </testsuite>
-<testsuite name="focused-bug-check.spec.ts" timestamp="2025-06-16T19:02:56.867Z" hostname="browser-firefox" tests="1" failures="0" skipped="1" time="0" errors="0">
+<testsuite name="focused-bug-check.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-firefox" tests="1" failures="0" skipped="1" time="0" errors="0">
 <testcase name="Focused Bug Verification › Bugs #8, #11, #12 - Backend errors, Skip transform, Cost estimation" classname="focused-bug-check.spec.ts" time="0">
 <skipped>
 </skipped>
 </testcase>
 </testsuite>
-<testsuite name="integration-workflow-e2e.spec.ts" timestamp="2025-06-16T19:02:56.867Z" hostname="browser-firefox" tests="8" failures="0" skipped="8" time="0" errors="0">
+<testsuite name="integration-workflow-e2e.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-firefox" tests="8" failures="0" skipped="8" time="0" errors="0">
 <testcase name="Integration Workflow E2E Tests › Complete HIPAA Healthcare Data Processing Workflow" classname="integration-workflow-e2e.spec.ts" time="0">
 <skipped>
 </skipped>
@@ -601,13 +833,13 @@
 </skipped>
 </testcase>
 </testsuite>
-<testsuite name="sentiment-execution.spec.ts" timestamp="2025-06-16T19:02:56.867Z" hostname="browser-firefox" tests="1" failures="0" skipped="1" time="0" errors="0">
+<testsuite name="sentiment-execution.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-firefox" tests="1" failures="0" skipped="1" time="0" errors="0">
 <testcase name="Sentiment Analysis Execution › should complete sentiment configuration and enable execution" classname="sentiment-execution.spec.ts" time="0">
 <skipped>
 </skipped>
 </testcase>
 </testsuite>
-<testsuite name="system-verification-e2e.spec.ts" timestamp="2025-06-16T19:02:56.867Z" hostname="browser-firefox" tests="9" failures="0" skipped="9" time="0" errors="0">
+<testsuite name="system-verification-e2e.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-firefox" tests="9" failures="0" skipped="9" time="0" errors="0">
 <testcase name="Enhanced DataCloak System Verification › Verify Enhanced DataCloak Service Structure" classname="system-verification-e2e.spec.ts" time="0">
 <skipped>
 </skipped>
@@ -645,13 +877,13 @@
 </skipped>
 </testcase>
 </testsuite>
-<testsuite name="workflow-navigation.spec.ts" timestamp="2025-06-16T19:02:56.867Z" hostname="browser-firefox" tests="1" failures="0" skipped="1" time="0" errors="0">
+<testsuite name="workflow-navigation.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-firefox" tests="1" failures="0" skipped="1" time="0" errors="0">
 <testcase name="Workflow Navigation › should progress through workflow steps" classname="workflow-navigation.spec.ts" time="0">
 <skipped>
 </skipped>
 </testcase>
 </testsuite>
-<testsuite name="01-file-upload.spec.ts" timestamp="2025-06-16T19:02:56.867Z" hostname="browser-webkit" tests="10" failures="0" skipped="10" time="0" errors="0">
+<testsuite name="01-file-upload.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-webkit" tests="10" failures="0" skipped="10" time="0" errors="0">
 <testcase name="File Upload Functionality › should upload small CSV file successfully" classname="01-file-upload.spec.ts" time="0">
 <skipped>
 </skipped>
@@ -693,7 +925,7 @@
 </skipped>
 </testcase>
 </testsuite>
-<testsuite name="02-field-detection.spec.ts" timestamp="2025-06-16T19:02:56.867Z" hostname="browser-webkit" tests="7" failures="0" skipped="7" time="0" errors="0">
+<testsuite name="02-field-detection.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-webkit" tests="7" failures="0" skipped="7" time="0" errors="0">
 <testcase name="Field Detection and PII Identification › should detect common field types correctly" classname="02-field-detection.spec.ts" time="0">
 <skipped>
 </skipped>
@@ -723,7 +955,7 @@
 </skipped>
 </testcase>
 </testsuite>
-<testsuite name="03-transform-operations.spec.ts" timestamp="2025-06-16T19:02:56.867Z" hostname="browser-webkit" tests="9" failures="0" skipped="9" time="0" errors="0">
+<testsuite name="03-transform-operations.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-webkit" tests="9" failures="0" skipped="9" time="0" errors="0">
 <testcase name="Data Transform Operations › should display available transformation options" classname="03-transform-operations.spec.ts" time="0">
 <skipped>
 </skipped>
@@ -761,7 +993,7 @@
 </skipped>
 </testcase>
 </testsuite>
-<testsuite name="04-sentiment-analysis.spec.ts" timestamp="2025-06-16T19:02:56.867Z" hostname="browser-webkit" tests="8" failures="0" skipped="8" time="0" errors="0">
+<testsuite name="04-sentiment-analysis.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-webkit" tests="8" failures="0" skipped="8" time="0" errors="0">
 <testcase name="Sentiment Analysis with OpenAI Integration › should display sentiment analysis configuration options" classname="04-sentiment-analysis.spec.ts" time="0">
 <skipped>
 </skipped>
@@ -795,7 +1027,7 @@
 </skipped>
 </testcase>
 </testsuite>
-<testsuite name="05-results-export.spec.ts" timestamp="2025-06-16T19:02:56.867Z" hostname="browser-webkit" tests="9" failures="0" skipped="9" time="0" errors="0">
+<testsuite name="05-results-export.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-webkit" tests="9" failures="0" skipped="9" time="0" errors="0">
 <testcase name="Results Export Functionality › should display sentiment analysis results overview" classname="05-results-export.spec.ts" time="0">
 <skipped>
 </skipped>
@@ -833,13 +1065,129 @@
 </skipped>
 </testcase>
 </testsuite>
-<testsuite name="accessibility.spec.ts" timestamp="2025-06-16T19:02:56.867Z" hostname="browser-webkit" tests="1" failures="0" skipped="1" time="0" errors="0">
+<testsuite name="06-security-features-simple.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-webkit" tests="5" failures="0" skipped="5" time="0" errors="0">
+<testcase name="Security Features › should handle file upload with PII detection" classname="06-security-features-simple.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features › should complete sentiment analysis workflow with data protection" classname="06-security-features-simple.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features › should test API security through mocked responses" classname="06-security-features-simple.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features › should demonstrate security headers and network protection" classname="06-security-features-simple.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features › should validate data privacy during processing" classname="06-security-features-simple.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="06-security-features.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-webkit" tests="9" failures="0" skipped="9" time="0" errors="0">
+<testcase name="Security Features › should display security warnings for high-risk data" classname="06-security-features.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features › should show data protection options during workflow" classname="06-security-features.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features › should perform comprehensive security scan" classname="06-security-features.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features › should configure access control settings" classname="06-security-features.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features › should display audit logs" classname="06-security-features.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features › should handle security configuration updates" classname="06-security-features.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features › should show data masking options" classname="06-security-features.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features › should handle security errors gracefully" classname="06-security-features.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features › should validate security compliance status" classname="06-security-features.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="06-security-minimal.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-webkit" tests="5" failures="0" skipped="5" time="0" errors="0">
+<testcase name="Security Features - Minimal › should successfully mock security-related API endpoints" classname="06-security-minimal.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features - Minimal › should demonstrate PII detection API mock" classname="06-security-minimal.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features - Minimal › should demonstrate compliance framework API mock" classname="06-security-minimal.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features - Minimal › should test error handling in security APIs" classname="06-security-minimal.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Security Features - Minimal › should validate complete security workflow mock" classname="06-security-minimal.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="07-pii-detection.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-webkit" tests="8" failures="0" skipped="8" time="0" errors="0">
+<testcase name="PII Detection › should detect common PII types during file upload" classname="07-pii-detection.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PII Detection › should allow manual PII verification and correction" classname="07-pii-detection.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PII Detection › should create and test custom PII patterns" classname="07-pii-detection.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PII Detection › should show PII confidence scoring and thresholds" classname="07-pii-detection.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PII Detection › should handle different compliance framework requirements" classname="07-pii-detection.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PII Detection › should provide PII detection statistics and analytics" classname="07-pii-detection.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PII Detection › should handle PII detection errors gracefully" classname="07-pii-detection.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="PII Detection › should support batch PII detection for large datasets" classname="07-pii-detection.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="accessibility.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-webkit" tests="1" failures="0" skipped="1" time="0" errors="0">
 <testcase name="Accessibility Tests › should not have critical accessibility violations on main pages" classname="accessibility.spec.ts" time="0">
 <skipped>
 </skipped>
 </testcase>
 </testsuite>
-<testsuite name="bug-verification.spec.ts" timestamp="2025-06-16T19:02:56.867Z" hostname="browser-webkit" tests="2" failures="0" skipped="2" time="0" errors="0">
+<testsuite name="bug-verification.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-webkit" tests="2" failures="0" skipped="2" time="0" errors="0">
 <testcase name="Bug Fix Verification › should verify all reported bugs are fixed" classname="bug-verification.spec.ts" time="0">
 <skipped>
 </skipped>
@@ -849,7 +1197,7 @@
 </skipped>
 </testcase>
 </testsuite>
-<testsuite name="enhanced-datacloak-e2e.spec.ts" timestamp="2025-06-16T19:02:56.867Z" hostname="browser-webkit" tests="9" failures="0" skipped="9" time="0" errors="0">
+<testsuite name="enhanced-datacloak-e2e.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-webkit" tests="9" failures="0" skipped="9" time="0" errors="0">
 <testcase name="Enhanced DataCloak E2E Tests › Complete Enhanced DataCloak Workflow - HIPAA Compliance" classname="enhanced-datacloak-e2e.spec.ts" time="0">
 <skipped>
 </skipped>
@@ -887,13 +1235,13 @@
 </skipped>
 </testcase>
 </testsuite>
-<testsuite name="focused-bug-check.spec.ts" timestamp="2025-06-16T19:02:56.867Z" hostname="browser-webkit" tests="1" failures="0" skipped="1" time="0" errors="0">
+<testsuite name="focused-bug-check.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-webkit" tests="1" failures="0" skipped="1" time="0" errors="0">
 <testcase name="Focused Bug Verification › Bugs #8, #11, #12 - Backend errors, Skip transform, Cost estimation" classname="focused-bug-check.spec.ts" time="0">
 <skipped>
 </skipped>
 </testcase>
 </testsuite>
-<testsuite name="integration-workflow-e2e.spec.ts" timestamp="2025-06-16T19:02:56.867Z" hostname="browser-webkit" tests="8" failures="0" skipped="8" time="0" errors="0">
+<testsuite name="integration-workflow-e2e.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-webkit" tests="8" failures="0" skipped="8" time="0" errors="0">
 <testcase name="Integration Workflow E2E Tests › Complete HIPAA Healthcare Data Processing Workflow" classname="integration-workflow-e2e.spec.ts" time="0">
 <skipped>
 </skipped>
@@ -927,13 +1275,13 @@
 </skipped>
 </testcase>
 </testsuite>
-<testsuite name="sentiment-execution.spec.ts" timestamp="2025-06-16T19:02:56.867Z" hostname="browser-webkit" tests="1" failures="0" skipped="1" time="0" errors="0">
+<testsuite name="sentiment-execution.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-webkit" tests="1" failures="0" skipped="1" time="0" errors="0">
 <testcase name="Sentiment Analysis Execution › should complete sentiment configuration and enable execution" classname="sentiment-execution.spec.ts" time="0">
 <skipped>
 </skipped>
 </testcase>
 </testsuite>
-<testsuite name="system-verification-e2e.spec.ts" timestamp="2025-06-16T19:02:56.867Z" hostname="browser-webkit" tests="9" failures="0" skipped="9" time="0" errors="0">
+<testsuite name="system-verification-e2e.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-webkit" tests="9" failures="0" skipped="9" time="0" errors="0">
 <testcase name="Enhanced DataCloak System Verification › Verify Enhanced DataCloak Service Structure" classname="system-verification-e2e.spec.ts" time="0">
 <skipped>
 </skipped>
@@ -971,13 +1319,13 @@
 </skipped>
 </testcase>
 </testsuite>
-<testsuite name="workflow-navigation.spec.ts" timestamp="2025-06-16T19:02:56.867Z" hostname="browser-webkit" tests="1" failures="0" skipped="1" time="0" errors="0">
+<testsuite name="workflow-navigation.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="browser-webkit" tests="1" failures="0" skipped="1" time="0" errors="0">
 <testcase name="Workflow Navigation › should progress through workflow steps" classname="workflow-navigation.spec.ts" time="0">
 <skipped>
 </skipped>
 </testcase>
 </testsuite>
-<testsuite name="01-file-upload.spec.ts" timestamp="2025-06-16T19:02:56.867Z" hostname="mobile-chrome" tests="10" failures="0" skipped="10" time="0" errors="0">
+<testsuite name="01-file-upload.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="mobile-chrome" tests="10" failures="0" skipped="10" time="0" errors="0">
 <testcase name="File Upload Functionality › should upload small CSV file successfully" classname="01-file-upload.spec.ts" time="0">
 <skipped>
 </skipped>
@@ -1019,7 +1367,7 @@
 </skipped>
 </testcase>
 </testsuite>
-<testsuite name="02-field-detection.spec.ts" timestamp="2025-06-16T19:02:56.867Z" hostname="mobile-chrome" tests="7" failures="0" skipped="7" time="0" errors="0">
+<testsuite name="02-field-detection.spec.ts" timestamp="2025-06-20T21:16:41.633Z" hostname="mobile-chrome" tests="7" failures="0" skipped="7" time="0" errors="0">
 <testcase name="Field Detection and PII Identification › should detect common field types correctly" classname="02-field-detection.spec.ts" time="0">
 <skipped>
 </skipped>

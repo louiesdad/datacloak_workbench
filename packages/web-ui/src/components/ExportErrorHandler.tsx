@@ -7,7 +7,7 @@ import './ExportErrorHandler.css';
 
 interface ExportErrorHandlerProps {
   children: (exportHandler: ExportHandler) => React.ReactNode;
-  fallbackFormats?: ('csv' | 'json' | 'txt')[];
+  fallbackFormats?: ('csv' | 'json' | 'txt' | 'pdf')[];
   maxRetries?: number;
   chunkSize?: number;
   onError?: (error: ExportError) => void;
@@ -17,7 +17,7 @@ interface ExportErrorHandlerProps {
 interface ExportHandler {
   exportData: (
     data: any[], 
-    format: 'csv' | 'excel' | 'json' | 'txt',
+    format: 'csv' | 'excel' | 'json' | 'txt' | 'pdf',
     filename?: string,
     options?: ExportOptions
   ) => Promise<void>;
@@ -206,6 +206,9 @@ export const ExportErrorHandler: React.FC<ExportErrorHandlerProps> = ({
       case 'excel':
         return await generateExcel(processedData, { includeHeaders });
       
+      case 'pdf':
+        return await generatePDF(processedData, options);
+      
       default:
         throw new Error(`Unsupported export format: ${format}`);
     }
@@ -348,6 +351,203 @@ export const ExportErrorHandler: React.FC<ExportErrorHandlerProps> = ({
     });
   };
 
+  const generatePDF = async (data: any[], options: ExportOptions): Promise<Blob> => {
+    setCurrentOperation('Generating PDF report...');
+    
+    // Import jsPDF dynamically to reduce bundle size
+    const { jsPDF } = await import('jspdf');
+    await import('jspdf-autotable');
+    
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
+
+    // Add title
+    doc.setFontSize(20);
+    doc.text('Sentiment Analysis Report', 20, 20);
+    
+    // Add metadata
+    doc.setFontSize(10);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, 20, 30);
+    doc.text(`Total Records: ${data.length}`, 20, 35);
+    
+    // Calculate statistics
+    const stats = calculateStatistics(data);
+    
+    // Add summary section
+    doc.setFontSize(14);
+    doc.text('Summary', 20, 50);
+    doc.setFontSize(10);
+    doc.text(`Average Sentiment Score: ${stats.averageScore.toFixed(3)}`, 20, 58);
+    doc.text(`Average Confidence: ${(stats.averageConfidence * 100).toFixed(1)}%`, 20, 63);
+    doc.text(`Positive: ${stats.positive} (${stats.positivePercent.toFixed(1)}%)`, 20, 68);
+    doc.text(`Negative: ${stats.negative} (${stats.negativePercent.toFixed(1)}%)`, 20, 73);
+    doc.text(`Neutral: ${stats.neutral} (${stats.neutralPercent.toFixed(1)}%)`, 20, 78);
+    
+    // Add sentiment distribution chart (simple text representation)
+    doc.setFontSize(14);
+    doc.text('Sentiment Distribution', 20, 95);
+    const chartY = 103;
+    const barWidth = 50;
+    const maxBarHeight = 20;
+    
+    // Draw simple bars
+    doc.setFillColor(76, 175, 80); // Green for positive
+    doc.rect(20, chartY, barWidth * (stats.positivePercent / 100), 10, 'F');
+    doc.text('Positive', 20, chartY + 15);
+    
+    doc.setFillColor(244, 67, 54); // Red for negative
+    doc.rect(20, chartY + 20, barWidth * (stats.negativePercent / 100), 10, 'F');
+    doc.text('Negative', 20, chartY + 35);
+    
+    doc.setFillColor(158, 158, 158); // Gray for neutral
+    doc.rect(20, chartY + 40, barWidth * (stats.neutralPercent / 100), 10, 'F');
+    doc.text('Neutral', 20, chartY + 55);
+    
+    // Add detailed results table
+    doc.addPage();
+    doc.setFontSize(16);
+    doc.text('Detailed Results', 20, 20);
+    
+    // Prepare table data
+    const tableData = data.map((item, index) => {
+      const row = [index + 1];
+      
+      if (options.selectedColumns?.includes('text')) {
+        // Truncate long text for PDF
+        const text = item.text || '';
+        row.push(text.length > 50 ? text.substring(0, 47) + '...' : text);
+      }
+      
+      if (options.selectedColumns?.includes('sentiment')) {
+        row.push(item.sentiment || '');
+      }
+      
+      if (options.selectedColumns?.includes('score')) {
+        row.push(item.score?.toFixed(3) || '0.000');
+      }
+      
+      if (options.selectedColumns?.includes('confidence')) {
+        row.push(`${((item.confidence || 0) * 100).toFixed(1)}%`);
+      }
+      
+      if (options.selectedColumns?.includes('createdAt')) {
+        row.push(new Date(item.createdAt).toLocaleDateString());
+      }
+      
+      return row;
+    });
+    
+    // Generate table headers based on selected columns
+    const headers = ['#'];
+    if (options.selectedColumns?.includes('text')) headers.push('Text');
+    if (options.selectedColumns?.includes('sentiment')) headers.push('Sentiment');
+    if (options.selectedColumns?.includes('score')) headers.push('Score');
+    if (options.selectedColumns?.includes('confidence')) headers.push('Confidence');
+    if (options.selectedColumns?.includes('createdAt')) headers.push('Date');
+    
+    // Add table with pagination
+    (doc as any).autoTable({
+      head: [headers],
+      body: tableData,
+      startY: 30,
+      margin: { left: 20, right: 20 },
+      styles: {
+        fontSize: 8,
+        cellPadding: 2
+      },
+      headStyles: {
+        fillColor: [66, 139, 202],
+        textColor: 255,
+        fontStyle: 'bold'
+      },
+      alternateRowStyles: {
+        fillColor: [245, 245, 245]
+      },
+      didDrawPage: (data: any) => {
+        // Add page numbers
+        const pageCount = (doc as any).internal.getNumberOfPages();
+        doc.setFontSize(10);
+        doc.text(
+          `Page ${data.pageNumber} of ${pageCount}`,
+          doc.internal.pageSize.width - 40,
+          doc.internal.pageSize.height - 10
+        );
+      }
+    });
+    
+    // Add footer
+    const pageCount = (doc as any).internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(128);
+      doc.text(
+        'Generated by Sentiment Analysis Workbench',
+        20,
+        doc.internal.pageSize.height - 10
+      );
+    }
+    
+    // Convert to blob
+    const pdfBlob = doc.output('blob');
+    setProgress(90);
+    
+    return pdfBlob;
+  };
+
+  const calculateStatistics = (data: any[]) => {
+    const total = data.length;
+    if (total === 0) {
+      return {
+        averageScore: 0,
+        averageConfidence: 0,
+        positive: 0,
+        negative: 0,
+        neutral: 0,
+        positivePercent: 0,
+        negativePercent: 0,
+        neutralPercent: 0
+      };
+    }
+    
+    let totalScore = 0;
+    let totalConfidence = 0;
+    let positive = 0;
+    let negative = 0;
+    let neutral = 0;
+    
+    data.forEach(item => {
+      totalScore += item.score || 0;
+      totalConfidence += item.confidence || 0;
+      
+      switch (item.sentiment) {
+        case 'positive':
+          positive++;
+          break;
+        case 'negative':
+          negative++;
+          break;
+        case 'neutral':
+          neutral++;
+          break;
+      }
+    });
+    
+    return {
+      averageScore: totalScore / total,
+      averageConfidence: totalConfidence / total,
+      positive,
+      negative,
+      neutral,
+      positivePercent: (positive / total) * 100,
+      negativePercent: (negative / total) * 100,
+      neutralPercent: (neutral / total) * 100
+    };
+  };
+
   const downloadBlob = (blob: Blob, filename: string): void => {
     setCurrentOperation('Preparing download...');
     setProgress(90);
@@ -389,7 +589,7 @@ export const ExportErrorHandler: React.FC<ExportErrorHandlerProps> = ({
         setCurrentOperation(`Trying ${format.toUpperCase()} export...`);
         
         const blob = await generateExportBlob(data, format, options);
-        const extension = format === 'excel' ? 'xls' : format;
+        const extension = format === 'excel' ? 'xls' : format === 'pdf' ? 'pdf' : format;
         const finalFilename = filename.replace(/\.[^/.]+$/, '') + `.${extension}`;
         
         downloadBlob(blob, finalFilename);
@@ -417,7 +617,7 @@ export const ExportErrorHandler: React.FC<ExportErrorHandlerProps> = ({
 
   const exportData = useCallback(async (
     data: any[],
-    format: 'csv' | 'excel' | 'json' | 'txt',
+    format: 'csv' | 'excel' | 'json' | 'txt' | 'pdf',
     filename = 'export',
     options: ExportOptions = {}
   ): Promise<void> => {

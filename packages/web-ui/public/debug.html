@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend Debug</title>
+    <script>
+        async function checkFrontend() {
+            const results = document.getElementById('results');
+            
+            try {
+                // Check React
+                results.innerHTML += '<h3>1. Checking React...</h3>';
+                if (window.React) {
+                    results.innerHTML += '<p style="color: green">✓ React is loaded</p>';
+                } else {
+                    results.innerHTML += '<p style="color: red">✗ React is NOT loaded</p>';
+                }
+                
+                // Check for errors
+                results.innerHTML += '<h3>2. Checking for errors...</h3>';
+                window.addEventListener('error', (e) => {
+                    results.innerHTML += `<p style="color: red">Error: ${e.message} at ${e.filename}:${e.lineno}</p>`;
+                });
+                
+                // Check backend
+                results.innerHTML += '<h3>3. Checking backend...</h3>';
+                try {
+                    const response = await fetch('http://localhost:3001/api/v1/health');
+                    results.innerHTML += `<p style="color: green">✓ Backend responded with status: ${response.status}</p>`;
+                } catch (e) {
+                    results.innerHTML += `<p style="color: red">✗ Backend error: ${e.message}</p>`;
+                }
+                
+                // Check OpenAI endpoints
+                results.innerHTML += '<h3>4. Checking OpenAI endpoints...</h3>';
+                try {
+                    const logsResponse = await fetch('http://localhost:3001/api/v1/openai/logs?limit=1');
+                    const logsData = await logsResponse.json();
+                    results.innerHTML += `<p style="color: green">✓ Logs endpoint: ${logsResponse.status}</p>`;
+                    results.innerHTML += `<pre>${JSON.stringify(logsData, null, 2).substring(0, 200)}...</pre>`;
+                } catch (e) {
+                    results.innerHTML += `<p style="color: red">✗ Logs error: ${e.message}</p>`;
+                }
+                
+                // Check app mount point
+                results.innerHTML += '<h3>5. Checking app mount...</h3>';
+                const root = document.getElementById('root');
+                if (root) {
+                    results.innerHTML += `<p style="color: green">✓ Root element exists</p>`;
+                    results.innerHTML += `<p>Root children: ${root.children.length}</p>`;
+                    results.innerHTML += `<p>Root HTML: ${root.innerHTML.substring(0, 100)}${root.innerHTML.length > 100 ? '...' : ''}</p>`;
+                } else {
+                    results.innerHTML += `<p style="color: red">✗ Root element NOT found</p>`;
+                }
+                
+            } catch (error) {
+                results.innerHTML += `<p style="color: red">Debug error: ${error.message}</p>`;
+            }
+        }
+        
+        window.onload = () => {
+            checkFrontend();
+            
+            // Try to load the main app
+            const results = document.getElementById('results');
+            results.innerHTML += '<h3>6. Loading main app in iframe...</h3>';
+            results.innerHTML += '<iframe src="/" style="width: 100%; height: 400px; border: 1px solid #ccc;"></iframe>';
+        };
+    </script>
+</head>
+<body>
+    <h1>Frontend Debug Page</h1>
+    <div id="results"></div>
+</body>
+</html>

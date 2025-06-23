@@ -31,13 +31,45 @@ class DataCloakFallback {
     this.enabled = true;
   }
 
+  private maskWithFormat(value: string, type: string): string {
+    switch (type) {
+      case 'EMAIL':
+        // Preserve @ and domain structure
+        const emailParts = value.split('@');
+        if (emailParts.length === 2) {
+          const [local, domain] = emailParts;
+          const domainParts = domain.split('.');
+          return '*'.repeat(local.length) + '@' + '*'.repeat(domainParts[0].length) + '.' + domainParts.slice(1).join('.');
+        }
+        return '*'.repeat(value.length);
+      
+      case 'PHONE':
+        // Preserve dashes and parentheses
+        return value.replace(/\d/g, '*');
+      
+      case 'SSN':
+        // Preserve dashes
+        return value.replace(/\d/g, '*');
+      
+      case 'CREDIT_CARD':
+        // Show last 4 digits
+        if (value.length >= 4) {
+          return '*'.repeat(value.length - 4) + value.slice(-4);
+        }
+        return '*'.repeat(value.length);
+      
+      default:
+        return '*'.repeat(value.length);
+    }
+  }
+
   async detectPII(text: string): Promise<PIIDetectionResult[]> {
     const results: PIIDetectionResult[] = [];
     
     // Basic PII patterns
     const patterns = [
       { regex: /\b\d{3}-\d{2}-\d{4}\b/g, type: 'SSN' },
-      { regex: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g, type: 'EMAIL' },
+      { regex: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g, type: 'EMAIL', confidence: 0.95 },
       { regex: /\b(?:\+?1[-.\s]?)?\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})\b/g, type: 'PHONE' },
       { regex: /\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13}|6(?:011|5[0-9]{2})[0-9]{12})\b/g, type: 'CREDIT_CARD' }
     ];
@@ -48,9 +80,9 @@ class DataCloakFallback {
         results.push({
           fieldName: 'text',
           piiType: pattern.type,
-          confidence: 0.8,
+          confidence: (pattern as any).confidence || 0.8,
           sample: match[0],
-          masked: '*'.repeat(match[0].length)
+          masked: this.maskWithFormat(match[0], pattern.type)
         });
       }
     }
@@ -78,7 +110,7 @@ class DataCloakFallback {
     );
 
     for (const pii of sortedPII) {
-      maskedText = maskedText.replace(pii.sample, pii.masked);
+      maskedText = maskedText.replace(pii.sample, pii.masked || this.maskWithFormat(pii.sample, pii.piiType));
     }
 
     return {

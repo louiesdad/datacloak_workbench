@@ -1,10 +1,10 @@
 import { SentimentService } from '../../src/services/sentiment.service';
 import { DataService } from '../../src/services/data.service';
-import { getSQLiteConnection } from '../../src/database/sqlite';
+import { getSQLiteConnection } from '../../src/database/sqlite-refactored';
 import { initializeDatabases } from '../../src/database';
 
 // Mock the database
-jest.mock('../../src/database/sqlite');
+jest.mock('../../src/database/sqlite-refactored');
 
 describe('Service Edge Cases', () => {
   describe('SentimentService Edge Cases', () => {

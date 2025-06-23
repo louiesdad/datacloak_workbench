@@ -8,10 +8,10 @@ describe('Job Queue Performance Tests', () => {
   beforeAll(async () => {
     configService = ConfigService.getInstance();
     
-    // Set up test configuration
-    configService.set('JOB_QUEUE_MAX_CONCURRENT', 5);
-    configService.set('JOB_QUEUE_RETRY_ATTEMPTS', 3);
-    configService.set('JOB_QUEUE_RETRY_DELAY', 100);
+    // Set up test configuration using update method
+    await configService.update('JOB_QUEUE_MAX_CONCURRENT', 5);
+    await configService.update('JOB_QUEUE_RETRY_ATTEMPTS', 3);
+    await configService.update('JOB_QUEUE_RETRY_DELAY', 100);
   });
 
   afterEach(async () => {

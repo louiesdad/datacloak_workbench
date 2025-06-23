@@ -1,0 +1,93 @@
+/* Force layout visibility */
+.app {
+  display: flex !important;
+  min-height: 100vh !important;
+  width: 100% !important;
+  position: relative !important;
+}
+
+.app-sidebar {
+  width: 400px !important;
+  min-width: 400px !important;
+  flex-shrink: 0 !important;
+  background: white !important;
+  border-right: 2px solid #e2e8f0 !important;
+  height: 100vh !important;
+  overflow-y: auto !important;
+  position: relative !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.app-main {
+  flex: 1 !important;
+  overflow: auto !important;
+  padding: 20px !important;
+  background: #f8fafc !important;
+  min-height: 100vh !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.navigation {
+  padding: 20px !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.workflow-manager {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Ensure step content is visible */
+.workflow-step-container {
+  background: white !important;
+  padding: 30px !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+  margin-bottom: 20px !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Make navigation items visible */
+.step-item {
+  padding: 15px !important;
+  margin: 10px 0 !important;
+  background: #f8fafc !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 15px !important;
+  transition: all 0.2s !important;
+}
+
+.step-item.active {
+  background: #667eea !important;
+  color: white !important;
+}
+
+.step-item.completed {
+  background: #48bb78 !important;
+  color: white !important;
+}
+
+/* Debug - add borders to see layout */
+.app-sidebar {
+  border: 3px solid red !important;
+}
+
+.app-main {
+  border: 3px solid blue !important;
+}
+
+.navigation {
+  border: 3px solid green !important;
+}

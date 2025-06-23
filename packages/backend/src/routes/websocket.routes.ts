@@ -1,8 +1,7 @@
 import { Router } from 'express';
 import { websocketController } from '../controllers/websocket.controller';
 import { asyncHandler } from '../middleware/async-handler';
-import { authenticate } from '../middleware/auth';
-import { authorize } from '../middleware/authorize';
+import { authenticate, authorize } from '../middleware/auth.middleware';
 import { validate } from '../middleware/validate';
 import Joi from 'joi';
 
@@ -29,31 +28,31 @@ const disconnectSchema = Joi.object({
 router.get(
   '/status',
   authenticate,
-  asyncHandler(websocketController.getStatus)
+  asyncHandler(websocketController.getStatus.bind(websocketController))
 );
 
 router.post(
   '/send/:clientId',
   authenticate,
-  authorize('admin'),
+  authorize(['admin']),
   validate(sendMessageSchema),
-  asyncHandler(websocketController.sendToClient)
+  asyncHandler(websocketController.sendToClient.bind(websocketController))
 );
 
 router.post(
   '/broadcast',
   authenticate,
-  authorize('admin'),
+  authorize(['admin']),
   validate(broadcastSchema),
-  asyncHandler(websocketController.broadcast)
+  asyncHandler(websocketController.broadcast.bind(websocketController))
 );
 
 router.post(
   '/disconnect/:clientId',
   authenticate,
-  authorize('admin'),
+  authorize(['admin']),
   validate(disconnectSchema),
-  asyncHandler(websocketController.disconnectClient)
+  asyncHandler(websocketController.disconnectClient.bind(websocketController))
 );
 
 // Real-time Risk Assessment WebSocket Endpoints - TASK-201
@@ -74,28 +73,28 @@ router.post(
   '/risk-assessment/subscribe',
   authenticate,
   validate(riskAssessmentSubscribeSchema),
-  asyncHandler(websocketController.subscribeToRiskAssessments)
+  asyncHandler(websocketController.subscribeToRiskAssessments.bind(websocketController))
 );
 
 router.post(
   '/risk-assessment/unsubscribe',
   authenticate,
-  asyncHandler(websocketController.unsubscribeFromRiskAssessments)
+  asyncHandler(websocketController.unsubscribeFromRiskAssessments.bind(websocketController))
 );
 
 router.post(
   '/risk-assessment/update',
   authenticate,
-  authorize('analyst'),
+  authorize(['analyst']),
   validate(riskAssessmentUpdateSchema),
-  asyncHandler(websocketController.broadcastRiskAssessmentUpdate)
+  asyncHandler(websocketController.broadcastRiskAssessmentUpdate.bind(websocketController))
 );
 
 router.get(
   '/risk-assessment/active-subscriptions',
   authenticate,
-  authorize('admin'),
-  asyncHandler(websocketController.getActiveRiskSubscriptions)
+  authorize(['admin']),
+  asyncHandler(websocketController.getActiveRiskSubscriptions.bind(websocketController))
 );
 
 export default router;

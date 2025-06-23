@@ -1,0 +1,217 @@
+.openai-usage-tracker {
+  @apply space-y-6;
+}
+
+/* Header */
+.usage-tracker-header {
+  @apply flex items-center justify-between bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border;
+}
+
+.header-left {
+  @apply flex flex-col space-y-1;
+}
+
+.header-controls {
+  @apply flex items-center space-x-2;
+}
+
+/* Metrics Grid */
+.metrics-grid {
+  @apply grid grid-cols-1 md:grid-cols-3 gap-4;
+}
+
+.metric-value {
+  @apply flex items-center justify-between;
+}
+
+/* Budget Tracking */
+.budget-grid {
+  @apply grid grid-cols-1 md:grid-cols-3 gap-6;
+}
+
+.budget-item {
+  @apply space-y-3;
+}
+
+.budget-header {
+  @apply flex items-center justify-between;
+}
+
+.budget-label {
+  @apply text-sm font-medium text-gray-700 dark:text-gray-300;
+}
+
+.budget-amounts {
+  @apply flex items-center justify-between text-sm;
+}
+
+.budget-amounts span:first-child {
+  @apply font-semibold text-gray-900 dark:text-white;
+}
+
+/* Rate Limits */
+.rate-limits-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 gap-6;
+}
+
+.rate-limit-item {
+  @apply space-y-3;
+}
+
+.rate-limit-header {
+  @apply flex items-center justify-between;
+}
+
+.rate-limit-label {
+  @apply text-sm font-medium text-gray-700 dark:text-gray-300;
+}
+
+.rate-limit-amounts {
+  @apply flex items-center justify-between text-sm;
+}
+
+.rate-limit-amounts span:first-child {
+  @apply font-semibold text-gray-900 dark:text-white;
+}
+
+/* Charts */
+.chart-header {
+  @apply flex items-center justify-between;
+}
+
+.time-range-selector {
+  @apply flex items-center space-x-1;
+}
+
+.charts-container {
+  @apply space-y-8;
+}
+
+.chart-item {
+  @apply space-y-4;
+}
+
+.chart-title {
+  @apply text-lg font-semibold text-gray-900 dark:text-white;
+}
+
+/* Empty State */
+.empty-state {
+  @apply text-center py-8 text-gray-500 dark:text-gray-400;
+}
+
+/* Alert Styles */
+.budget-item.critical .budget-label,
+.rate-limit-item.critical .rate-limit-label {
+  @apply text-red-600 dark:text-red-400;
+}
+
+.budget-item.warning .budget-label,
+.rate-limit-item.warning .rate-limit-label {
+  @apply text-yellow-600 dark:text-yellow-400;
+}
+
+/* Animation for updates */
+@keyframes pulse-update {
+  0% { @apply bg-blue-50 dark:bg-blue-900/20; }
+  50% { @apply bg-blue-100 dark:bg-blue-900/40; }
+  100% { @apply bg-blue-50 dark:bg-blue-900/20; }
+}
+
+.metric-value.updating {
+  animation: pulse-update 1s ease-in-out;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .usage-tracker-header {
+    @apply flex-col space-y-4 items-start;
+  }
+  
+  .header-controls {
+    @apply w-full justify-between;
+  }
+  
+  .metrics-grid {
+    @apply grid-cols-1;
+  }
+  
+  .budget-grid {
+    @apply grid-cols-1;
+  }
+  
+  .rate-limits-grid {
+    @apply grid-cols-1;
+  }
+  
+  .chart-header {
+    @apply flex-col space-y-2 items-start;
+  }
+  
+  .time-range-selector {
+    @apply w-full justify-center;
+  }
+}
+
+@media (max-width: 640px) {
+  .charts-container {
+    @apply space-y-6;
+  }
+  
+  .chart-item {
+    @apply space-y-2;
+  }
+  
+  .chart-title {
+    @apply text-base;
+  }
+}
+
+/* Dark mode specific styles */
+@media (prefers-color-scheme: dark) {
+  .openai-usage-tracker {
+    @apply text-white;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .budget-item,
+  .rate-limit-item {
+    @apply border border-gray-300 dark:border-gray-600 p-3 rounded;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .metric-value.updating {
+    animation: none;
+    @apply bg-blue-50 dark:bg-blue-900/20;
+  }
+}
+
+/* Loading states */
+.usage-tracker-loading {
+  @apply flex items-center justify-center py-8;
+}
+
+.loading-spinner {
+  @apply animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600;
+}
+
+/* Custom scrollbar for charts on webkit browsers */
+.charts-container::-webkit-scrollbar {
+  @apply w-2;
+}
+
+.charts-container::-webkit-scrollbar-track {
+  @apply bg-gray-100 dark:bg-gray-800;
+}
+
+.charts-container::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 dark:bg-gray-600 rounded;
+}
+
+.charts-container::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400 dark:bg-gray-500;
+}

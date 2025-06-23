@@ -93,6 +93,6 @@ export default defineConfig({
   outputDir: './test-results/artifacts',
   
   // Global setup for mock servers
-  globalSetup: require.resolve('./fixtures/global-setup.ts'),
-  globalTeardown: require.resolve('./fixtures/global-teardown.ts'),
+  // globalSetup: require.resolve('./fixtures/global-setup.ts'),
+  // globalTeardown: require.resolve('./fixtures/global-teardown.ts'),
 });

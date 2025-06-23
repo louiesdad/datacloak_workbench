@@ -13,14 +13,17 @@ jest.mock('ws', () => {
 });
 
 // Mock logger
-jest.mock('../../config/logger', () => ({
-  logger: {
-    info: jest.fn(),
-    error: jest.fn(),
-    warn: jest.fn(),
-    debug: jest.fn()
-  }
-}));
+jest.mock('../../config/logger', () => {
+  return {
+    __esModule: true,
+    default: {
+      info: jest.fn(),
+      error: jest.fn(),
+      warn: jest.fn(),
+      debug: jest.fn()
+    }
+  };
+});
 
 describe('WebSocketService', () => {
   let service: WebSocketService;
@@ -37,8 +40,11 @@ describe('WebSocketService', () => {
   });
 
   afterEach(() => {
-    service.shutdown();
+    if (service) {
+      service.shutdown();
+    }
     jest.clearAllTimers();
+    jest.useRealTimers();
   });
 
   describe('initialize', () => {

@@ -12,7 +12,8 @@ describe('Security Integration Tests', () => {
     beforeEach(() => {
       nativeBridge = new NativeDataCloakBridge({
         fallbackToMock: true,
-        useSystemBinary: false
+        useSystemBinary: false,
+        binaryPath: '/non/existent/path' // Force it to not find any binary
       });
     });
 

@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
 import { v4 as uuidv4 } from 'uuid';
 import { JobQueueService, Job, JobType, JobStatus, JobPriority, JobOptions, JobHandler } from './job-queue.service';
-import { enhancedDatabaseService } from './enhanced-database.service';
+import { getEnhancedDatabaseService } from './enhanced-database.service';
 import { enhancedCacheService } from './enhanced-cache.service';
 import { eventEmitter, EventTypes } from './event.service';
 
@@ -95,6 +95,7 @@ export class EnhancedJobQueueService extends EventEmitter {
   private schedulingPolicy: JobSchedulingPolicy;
   private resourceUsage: ResourceRequirements = { memoryMB: 0, cpuCores: 0 };
   private jobProgressHistory: Map<string, JobProgressUpdate[]> = new Map();
+  private retryTimeouts: Set<NodeJS.Timeout> = new Set();
 
   constructor(options?: {
     maxConcurrentJobs?: number;
@@ -435,23 +436,45 @@ export class EnhancedJobQueueService extends EventEmitter {
         testData
       );
 
+
+      // Handle case where validationResult might be undefined or null - be more lenient
+      let processedResult = validationResult;
+      if (processedResult === null || processedResult === undefined) {
+        console.warn(`Pattern validation returned null/undefined for pattern ${pattern.id}`);
+        // Create empty result rather than skipping entirely
+        processedResult = [];
+      }
+      
+      // Ensure it's an array (convert single results to array)
+      if (!Array.isArray(processedResult)) {
+        processedResult = [processedResult];
+      }
+
+      const accuracy = processedResult.length > 0 ? 
+        processedResult.filter(r => r?.matches).length / processedResult.length : 0;
+      const avgProcessingTime = processedResult.length > 0 ? 
+        processedResult.reduce((sum, r) => sum + (r?.processingTime || 0), 0) / processedResult.length : 0;
+
       batchResults.validationResults.push({
         patternId: pattern.id,
-        results: validationResult,
-        accuracy: validationResult.filter(r => r.matches).length / validationResult.length,
-        avgProcessingTime: validationResult.reduce((sum, r) => sum + r.processingTime, 0) / validationResult.length
+        results: processedResult,
+        accuracy,
+        avgProcessingTime
       });
 
-      batchResults.performanceMetrics.totalExecutions += validationResult.length;
+      batchResults.performanceMetrics.totalExecutions += processedResult.length;
     }
 
+    // Safe division operations to prevent NaN
     batchResults.performanceMetrics.avgProcessingTime = 
+      batchResults.validationResults.length > 0 ? 
       batchResults.validationResults.reduce((sum, r) => sum + r.avgProcessingTime, 0) / 
-      batchResults.validationResults.length;
+      batchResults.validationResults.length : 0;
 
     batchResults.performanceMetrics.successRate = 
+      batchResults.validationResults.length > 0 ? 
       batchResults.validationResults.reduce((sum, r) => sum + r.accuracy, 0) / 
-      batchResults.validationResults.length;
+      batchResults.validationResults.length : 0;
 
     return batchResults;
   }
@@ -757,7 +780,7 @@ export class EnhancedJobQueueService extends EventEmitter {
         break;
     }
 
-    setTimeout(() => {
+    const timeout = setTimeout(() => {
       job.status = 'pending';
       job.error = undefined;
       job.progress = 0;
@@ -770,7 +793,13 @@ export class EnhancedJobQueueService extends EventEmitter {
 
       // Re-add to processing queue
       this.addToBaseQueue(job);
+      
+      // Remove from timeout tracking
+      this.retryTimeouts.delete(timeout);
     }, delay);
+    
+    // Track timeout for cleanup
+    this.retryTimeouts.add(timeout);
   }
 
   // ==============================================
@@ -904,7 +933,20 @@ export class EnhancedJobQueueService extends EventEmitter {
    */
   private async logJobEvent(jobId: string, eventType: string, details: any): Promise<void> {
     try {
-      await enhancedDatabaseService.createAuditLog({
+      const enhancedDb = getEnhancedDatabaseService();
+      if (!enhancedDb) {
+        // Fallback: log to console if database service unavailable
+        console.log(`Job Event: ${eventType} for job ${jobId}`, details);
+        return;
+      }
+
+      // Check if method exists, but allow test mocks to override
+      if (typeof enhancedDb.createAuditLog !== 'function') {
+        console.log(`Job Event: ${eventType} for job ${jobId}`, details);
+        return;
+      }
+
+      await enhancedDb.createAuditLog({
         event_type: eventType,
         event_category: 'system',
         description: `Job ${eventType}: ${jobId}`,
@@ -1099,6 +1141,26 @@ export class EnhancedJobQueueService extends EventEmitter {
     }
 
     return baseCleanup + removed;
+  }
+
+  /**
+   * Shutdown the enhanced job queue and clean up resources
+   */
+  shutdown(): void {
+    // Clear all pending retry timeouts
+    for (const timeout of this.retryTimeouts) {
+      clearTimeout(timeout);
+    }
+    this.retryTimeouts.clear();
+
+    // Clean up all data structures
+    this.enhancedJobs.clear();
+    this.jobBatches.clear();
+    this.jobDependencies.clear();
+    this.jobProgressHistory.clear();
+
+    // Remove all event listeners
+    this.removeAllListeners();
   }
 }
 

@@ -1,7 +1,7 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
-import { getSQLiteConnection } from './sqlite';
+import { withSQLiteConnection } from './sqlite-refactored';
 
 /**
  * Enhanced SQLite Database Schema Manager
@@ -12,48 +12,44 @@ import { getSQLiteConnection } from './sqlite';
  */
 
 export class EnhancedSQLiteManager {
-  private db: Database.Database | null = null;
-
   constructor() {
-    this.db = getSQLiteConnection();
+    // Database connections are managed via withSQLiteConnection pattern
   }
 
   /**
    * Initialize enhanced database schema
    */
   async initializeEnhancedSchema(): Promise<void> {
-    if (!this.db) {
-      throw new Error('SQLite database not initialized. Call initializeSQLite() first.');
-    }
-
-    try {
-      // Read and execute the enhanced schema
-      const schemaPath = path.join(__dirname, 'enhanced-schema.sql');
-      const schemaSQL = fs.readFileSync(schemaPath, 'utf8');
-      
-      // Split the SQL file into individual statements and execute them
-      const statements = this.splitSQLStatements(schemaSQL);
-      
-      for (const statement of statements) {
-        if (statement.trim()) {
-          try {
-            this.db.exec(statement);
-          } catch (error) {
-            console.warn(`Warning executing schema statement: ${error.message}`);
-            // Continue with other statements even if one fails (for idempotency)
+    return withSQLiteConnection(async (db) => {
+      try {
+        // Read and execute the enhanced schema
+        const schemaPath = path.join(__dirname, 'enhanced-schema.sql');
+        const schemaSQL = fs.readFileSync(schemaPath, 'utf8');
+        
+        // Split the SQL file into individual statements and execute them
+        const statements = this.splitSQLStatements(schemaSQL);
+        
+        for (const statement of statements) {
+          if (statement.trim()) {
+            try {
+              db.exec(statement);
+            } catch (error) {
+              console.warn(`Warning executing schema statement: ${error.message}`);
+              // Continue with other statements even if one fails (for idempotency)
+            }
           }
         }
-      }
 
-      console.log('Enhanced database schema initialized successfully');
-      
-      // Verify tables were created
-      await this.verifyEnhancedTables();
-      
-    } catch (error) {
-      console.error('Failed to initialize enhanced schema:', error);
-      throw error;
-    }
+        console.log('Enhanced database schema initialized successfully');
+        
+        // Verify tables were created
+        await this.verifyEnhancedTables(db);
+        
+      } catch (error) {
+        console.error('Failed to initialize enhanced schema:', error);
+        throw error;
+      }
+    });
   }
 
   /**
@@ -74,9 +70,7 @@ export class EnhancedSQLiteManager {
   /**
    * Verify that all enhanced tables were created successfully
    */
-  private async verifyEnhancedTables(): Promise<void> {
-    if (!this.db) throw new Error('Database not initialized');
-
+  private async verifyEnhancedTables(db: Database.Database): Promise<void> {
     const expectedTables = [
       'compliance_frameworks',
       'framework_configurations', 
@@ -90,7 +84,7 @@ export class EnhancedSQLiteManager {
       'system_alerts'
     ];
 
-    const existingTables = this.db
+    const existingTables = db
       .prepare("SELECT name FROM sqlite_master WHERE type='table'")
       .all()
       .map((row: any) => row.name);
@@ -108,7 +102,7 @@ export class EnhancedSQLiteManager {
    * Seed initial data for compliance frameworks
    */
   async seedComplianceFrameworks(): Promise<void> {
-    if (!this.db) throw new Error('Database not initialized');
+    return withSQLiteConnection(async (db) => {
 
     const frameworks = [
       {
@@ -246,7 +240,7 @@ export class EnhancedSQLiteManager {
       }
     ];
 
-    const insertFramework = this.db.prepare(`
+    const insertFramework = db.prepare(`
       INSERT OR IGNORE INTO compliance_frameworks (
         id, name, description, version, type, status, configuration,
         risk_thresholds, industry, jurisdiction, mandatory_fields,
@@ -281,13 +275,14 @@ export class EnhancedSQLiteManager {
     }
 
     console.log('Compliance frameworks seeded successfully');
+    });
   }
 
   /**
    * Seed initial custom patterns
    */
   async seedCustomPatterns(): Promise<void> {
-    if (!this.db) throw new Error('Database not initialized');
+    return withSQLiteConnection(async (db) => {
 
     const patterns = [
       {
@@ -364,7 +359,7 @@ export class EnhancedSQLiteManager {
       }
     ];
 
-    const insertPattern = this.db.prepare(`
+    const insertPattern = db.prepare(`
       INSERT OR IGNORE INTO custom_patterns (
         id, name, description, regex_pattern, category, industry,
         confidence_level, priority, enabled, test_cases, invalid_cases,
@@ -399,13 +394,14 @@ export class EnhancedSQLiteManager {
     }
 
     console.log('Custom patterns seeded successfully');
+    });
   }
 
   /**
    * Seed initial data retention policies
    */
   async seedDataRetentionPolicies(): Promise<void> {
-    if (!this.db) throw new Error('Database not initialized');
+    return withSQLiteConnection(async (db) => {
 
     const policies = [
       {
@@ -480,7 +476,7 @@ export class EnhancedSQLiteManager {
       }
     ];
 
-    const insertPolicy = this.db.prepare(`
+    const insertPolicy = db.prepare(`
       INSERT OR IGNORE INTO data_retention_policies (
         id, policy_name, description, applies_to_table, applies_to_data_type,
         framework_id, retention_period_days, auto_delete, archive_before_delete,
@@ -517,13 +513,14 @@ export class EnhancedSQLiteManager {
     }
 
     console.log('Data retention policies seeded successfully');
+    });
   }
 
   /**
    * Get database statistics and health information
    */
   async getDatabaseStats(): Promise<any> {
-    if (!this.db) throw new Error('Database not initialized');
+    return withSQLiteConnection(async (db) => {
 
     const stats = {
       tables: {} as any,
@@ -535,14 +532,14 @@ export class EnhancedSQLiteManager {
     };
 
     // Get table statistics
-    const tables = this.db
+    const tables = db
       .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")
       .all() as any[];
 
     for (const table of tables) {
       const tableName = table.name;
-      const count = this.db.prepare(`SELECT COUNT(*) as count FROM ${tableName}`).get() as any;
-      const tableInfo = this.db.prepare(`PRAGMA table_info(${tableName})`).all();
+      const count = db.prepare(`SELECT COUNT(*) as count FROM ${tableName}`).get() as any;
+      const tableInfo = db.prepare(`PRAGMA table_info(${tableName})`).all();
       
       stats.tables[tableName] = {
         rowCount: count.count,
@@ -557,22 +554,23 @@ export class EnhancedSQLiteManager {
     }
 
     // Count indexes, triggers, and views
-    const indexCount = this.db
+    const indexCount = db
       .prepare("SELECT COUNT(*) as count FROM sqlite_master WHERE type='index' AND name NOT LIKE 'sqlite_%'")
       .get() as any;
     stats.indexes = indexCount.count;
 
-    const triggerCount = this.db
+    const triggerCount = db
       .prepare("SELECT COUNT(*) as count FROM sqlite_master WHERE type='trigger'")
       .get() as any;
     stats.triggers = triggerCount.count;
 
-    const viewCount = this.db
+    const viewCount = db
       .prepare("SELECT COUNT(*) as count FROM sqlite_master WHERE type='view'")
       .get() as any;
     stats.views = viewCount.count;
 
     return stats;
+    });
   }
 
   /**

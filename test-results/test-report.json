@@ -1,6 +1,6 @@
 {
-  "timestamp": "2025-06-16T11:51:38.877Z",
-  "totalDuration": 972,
+  "timestamp": "2025-06-20T20:01:23.631Z",
+  "totalDuration": 799,
   "summary": {
     "total": 5,
     "passed": 0,
@@ -11,7 +11,7 @@
     "electron-shell": {
       "package": "electron-shell",
       "success": false,
-      "duration": 266,
+      "duration": 269,
       "stdout": "",
       "stderr": "npm error Lifecycle script `run` failed with error:\nnpm error workspace @datacloak/electron-shell@0.0.1\nnpm error location /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/electron-shell\nnpm error Missing script: \"run\"\nnpm error\nnpm error To see a list of scripts, run:\nnpm error   npm run --workspace=@datacloak/electron-shell@0.0.1\n",
       "exitCode": 1
@@ -19,15 +19,23 @@
     "security": {
       "package": "security",
       "success": false,
-      "duration": 267,
+      "duration": 250,
       "stdout": "",
       "stderr": "npm error Lifecycle script `run` failed with error:\nnpm error workspace @dsw/security@1.0.0\nnpm error location /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/security\nnpm error Missing script: \"run\"\nnpm error\nnpm error To see a list of scripts, run:\nnpm error   npm run --workspace=@dsw/security@1.0.0\n",
+      "exitCode": 1
+    },
+    "web-ui": {
+      "package": "web-ui",
+      "success": false,
+      "duration": 271,
+      "stdout": "",
+      "stderr": "npm error Lifecycle script `run` failed with error:\nnpm error workspace web-ui@0.0.0\nnpm error location /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/web-ui\nnpm error Missing script: \"run\"\nnpm error\nnpm error To see a list of scripts, run:\nnpm error   npm run --workspace=web-ui@0.0.0\n",
       "exitCode": 1
     },
     "datascience": {
       "package": "datascience",
       "success": false,
-      "duration": 414,
+      "duration": 274,
       "stdout": "",
       "stderr": "npm error Lifecycle script `run` failed with error:\nnpm error workspace @datacloak/datascience@1.0.0\nnpm error location /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/datascience\nnpm error Missing script: \"run\"\nnpm error\nnpm error To see a list of scripts, run:\nnpm error   npm run --workspace=@datacloak/datascience@1.0.0\n",
       "exitCode": 1
@@ -35,22 +43,14 @@
     "backend": {
       "package": "backend",
       "success": false,
-      "duration": 430,
+      "duration": 276,
       "stdout": "",
       "stderr": "npm error Lifecycle script `run` failed with error:\nnpm error workspace backend@1.0.0\nnpm error location /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/backend\nnpm error Missing script: \"run\"\nnpm error\nnpm error To see a list of scripts, run:\nnpm error   npm run --workspace=backend@1.0.0\n",
-      "exitCode": 1
-    },
-    "web-ui": {
-      "package": "web-ui",
-      "success": false,
-      "duration": 430,
-      "stdout": "",
-      "stderr": "npm error Lifecycle script `run` failed with error:\nnpm error workspace web-ui@0.0.0\nnpm error location /Users/thomaswagner/Documents/datacloak-sentiment-workbench/packages/web-ui\nnpm error Missing script: \"run\"\nnpm error\nnpm error To see a list of scripts, run:\nnpm error   npm run --workspace=web-ui@0.0.0\n",
       "exitCode": 1
     }
   },
   "system": {
-    "node": "v23.11.0",
+    "node": "v20.19.2",
     "platform": "darwin",
     "arch": "x64",
     "cpus": 12,

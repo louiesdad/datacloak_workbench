@@ -1,81 +1,75 @@
-import { ConfigService } from '../services/config.service';
-import * as fs from 'fs';
-import * as path from 'path';
+import { EventEmitter } from 'events';
 
-// Mock the ConfigService to avoid singleton issues in tests
-jest.mock('../services/config.service', () => {
-  const EventEmitter = require('events');
-  
-  return {
-    ConfigService: jest.fn().mockImplementation(() => {
-      const instance = new EventEmitter();
-      let config = {
-        PORT: 3000,
-        OPENAI_API_KEY: 'sk-test12345678901234567890123456789012345678901234',
-        OPENAI_MODEL: 'gpt-3.5-turbo',
-        OPENAI_MAX_TOKENS: 150,
-        OPENAI_TEMPERATURE: 0.1,
-        OPENAI_TIMEOUT: 30000,
-        ADMIN_PASSWORD: 'testpassword',
-        CONFIG_ENCRYPTION_KEY: undefined,
-        JWT_SECRET: 'test-secret',
-      };
-      
-      instance.get = jest.fn((key) => config[key]);
-      instance.getAll = jest.fn(() => ({ ...config }));
-      instance.update = jest.fn(async (key, value) => {
-        const oldValue = config[key];
-        config[key] = value;
-        instance.emit('config.updated', { key, oldValue, newValue: value });
-      });
-      instance.updateMultiple = jest.fn(async (updates) => {
-        Object.entries(updates).forEach(([key, value]) => {
-          config[key] = value;
-        });
-      });
-      instance.isOpenAIConfigured = jest.fn(() => !!config.OPENAI_API_KEY);
-      instance.getOpenAIConfig = jest.fn(() => ({
-        apiKey: config.OPENAI_API_KEY,
-        model: config.OPENAI_MODEL,
-        maxTokens: config.OPENAI_MAX_TOKENS,
-        temperature: config.OPENAI_TEMPERATURE,
-        timeout: config.OPENAI_TIMEOUT,
-      }));
-      instance.getSanitizedConfig = jest.fn(() => {
-        const sanitized = { ...config };
-        if (sanitized.OPENAI_API_KEY) {
-          sanitized.OPENAI_API_KEY = 'sk-***' + sanitized.OPENAI_API_KEY.slice(-4);
-        }
-        delete (sanitized as any).CONFIG_ENCRYPTION_KEY;
-        delete (sanitized as any).JWT_SECRET;
-        delete (sanitized as any).ADMIN_PASSWORD;
-        return sanitized;
-      });
-      instance.destroy = jest.fn();
-      
-      return instance;
-    }),
+// Create a mock ConfigService class
+class MockConfigService extends EventEmitter {
+  private config: any = {
+    PORT: 3000,
+    OPENAI_API_KEY: 'sk-test12345678901234567890123456789012345678901234',
+    OPENAI_MODEL: 'gpt-3.5-turbo',
+    OPENAI_MAX_TOKENS: 150,
+    OPENAI_TEMPERATURE: 0.1,
+    OPENAI_TIMEOUT: 30000,
+    ADMIN_PASSWORD: 'testpassword',
+    CONFIG_ENCRYPTION_KEY: undefined,
+    JWT_SECRET: 'test-secret',
   };
-});
+
+  get = jest.fn((key: string) => this.config[key]);
+  getAll = jest.fn(() => ({ ...this.config }));
+  update = jest.fn(async (key: string, value: any) => {
+    const oldValue = this.config[key];
+    this.config[key] = value;
+    this.emit('config.updated', { key, oldValue, newValue: value });
+  });
+  updateMultiple = jest.fn(async (updates: any) => {
+    Object.entries(updates).forEach(([key, value]) => {
+      this.config[key] = value;
+    });
+  });
+  isOpenAIConfigured = jest.fn(() => !!this.config.OPENAI_API_KEY);
+  getOpenAIConfig = jest.fn(() => ({
+    apiKey: this.config.OPENAI_API_KEY,
+    model: this.config.OPENAI_MODEL,
+    maxTokens: this.config.OPENAI_MAX_TOKENS,
+    temperature: this.config.OPENAI_TEMPERATURE,
+    timeout: this.config.OPENAI_TIMEOUT,
+  }));
+  getSanitizedConfig = jest.fn(() => {
+    const sanitized = { ...this.config };
+    if (sanitized.OPENAI_API_KEY) {
+      sanitized.OPENAI_API_KEY = 'sk-***' + sanitized.OPENAI_API_KEY.slice(-4);
+    }
+    delete (sanitized as any).CONFIG_ENCRYPTION_KEY;
+    delete (sanitized as any).JWT_SECRET;
+    delete (sanitized as any).ADMIN_PASSWORD;
+    return sanitized;
+  });
+  destroy = jest.fn();
+  
+  static getInstance = jest.fn(() => new MockConfigService());
+}
+
+// Mock the ConfigService module
+jest.mock('../services/config.service', () => ({
+  ConfigService: MockConfigService
+}));
 
 describe('ConfigService', () => {
-  let configService: any;
+  let configService: MockConfigService;
   
   beforeEach(() => {
     // Clear all instances and calls to constructor and all methods:
     jest.clearAllMocks();
     
     // Create a new instance for each test
-    const { ConfigService: MockedConfigService } = require('../services/config.service');
-    configService = new MockedConfigService();
-    MockedConfigService.getInstance = jest.fn(() => configService);
+    configService = new MockConfigService();
+    MockConfigService.getInstance.mockReturnValue(configService);
   });
 
   afterEach(() => {
     if (configService && configService.destroy) {
       configService.destroy();
     }
-    configService = null;
   });
 
   describe('Initialization', () => {
@@ -144,7 +138,7 @@ describe('ConfigService', () => {
     it('should sanitize sensitive values', () => {
       const sanitized = configService.getSanitizedConfig();
       
-      expect(sanitized.OPENAI_API_KEY).toBe('sk-***2345');
+      expect(sanitized.OPENAI_API_KEY).toBe('sk-***1234');
       expect(sanitized.CONFIG_ENCRYPTION_KEY).toBeUndefined();
       expect(sanitized.JWT_SECRET).toBeUndefined();
       expect(sanitized.ADMIN_PASSWORD).toBeUndefined();
