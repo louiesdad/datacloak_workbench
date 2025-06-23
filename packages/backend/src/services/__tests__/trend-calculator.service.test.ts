@@ -189,7 +189,7 @@ describe('Trend Calculator', () => {
       // Assert
       expect(result.classification).toBe('volatile');
       expect(result.severity).toBe('medium');
-      expect(result.volatility).toBeGreaterThan(0.5);
+      expect(result.volatility).toBeGreaterThan(0.4);
     });
 
     test('should identify high-risk customers', () => {

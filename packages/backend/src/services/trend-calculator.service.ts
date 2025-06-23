@@ -131,7 +131,7 @@ export class TrendCalculator {
     const predictionSE = se * Math.sqrt(1 + 1/n + Math.pow(daysAhead - meanX, 2) / sumXDiffSquared);
     
     // Wider intervals for predictions further in the future
-    const timeMultiplier = 1 + (daysAhead / 365); // Increase uncertainty over time
+    const timeMultiplier = 1 + (daysAhead / 30); // Increase uncertainty over time more aggressively
     const margin = Math.max(1, this.T_STATISTIC_95 * predictionSE * timeMultiplier); // Ensure margin is at least 1
 
     return {

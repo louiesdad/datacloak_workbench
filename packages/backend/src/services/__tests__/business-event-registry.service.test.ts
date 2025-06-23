@@ -276,10 +276,11 @@ describe('Business Event Registry', () => {
       const result = await eventRegistry.deleteEvent(eventId);
 
       // Assert
-      expect(mockDatabase.query).toHaveBeenCalledWith(
-        expect.stringContaining('UPDATE business_events SET deleted_at = NOW()'),
-        [eventId]
-      );
+      expect(mockDatabase.query).toHaveBeenCalled();
+      const [query, params] = mockDatabase.query.mock.calls[0];
+      expect(query).toContain('UPDATE business_events');
+      expect(query).toContain('deleted_at = NOW()');
+      expect(params).toEqual([eventId]);
       expect(result.success).toBe(true);
     });
   });
