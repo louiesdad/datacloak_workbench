@@ -37,10 +37,13 @@ export class TemporalAnalyzer {
         lagDays
       );
       
+      
       if (correlation !== null && 
-          Math.abs(correlation.coefficient) >= minCorrelation &&
+          correlation.coefficient >= minCorrelation &&
           (bestCorrelation === null || 
-           Math.abs(correlation.coefficient) > Math.abs(bestCorrelation.coefficient))) {
+           correlation.coefficient > bestCorrelation.coefficient ||
+           (correlation.coefficient === bestCorrelation.coefficient && 
+            (correlation as any).dataPointCount > (bestCorrelation as any).dataPointCount))) {
         bestCorrelation = correlation;
       }
     }
@@ -95,8 +98,9 @@ export class TemporalAnalyzer {
     return {
       lagDays,
       coefficient,
-      pValue: this.calculatePValue(coefficient, alignedPairs.length)
-    };
+      pValue: this.calculatePValue(coefficient, alignedPairs.length),
+      dataPointCount: alignedPairs.length
+    } as LaggedCorrelationResult & { dataPointCount: number };
   }
   
   private calculatePearsonCorrelation(x: number[], y: number[]): number {

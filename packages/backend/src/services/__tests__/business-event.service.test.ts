@@ -102,16 +102,62 @@ describe('BusinessEventService', () => {
     });
 
     test('should validate event date format', async () => {
-      // RED: This test should fail - date validation not implemented
+      // GREEN: This test should now pass with enhanced date validation
       const invalidEventData = {
         eventType: 'price_change',
         eventDate: 'invalid-date',
-        description: 'Test event',
+        description: 'Test event with valid length for validation',
         affectedCustomers: ['CUST-001']
       };
 
       await expect(businessEventService.createEvent(invalidEventData))
         .rejects.toThrow('Validation failed: eventDate must be a valid date (YYYY-MM-DD)');
+    });
+
+    test('should validate description length', async () => {
+      // REFACTOR: Enhanced validation test for description length
+      const shortDescEventData = {
+        eventType: 'price_change',
+        eventDate: '2024-06-23',
+        description: 'Short', // Too short
+        affectedCustomers: ['CUST-001']
+      };
+
+      await expect(businessEventService.createEvent(shortDescEventData))
+        .rejects.toThrow('Validation failed: description must be at least 10 characters long');
+
+      const longDescEventData = {
+        eventType: 'price_change',
+        eventDate: '2024-06-23',
+        description: 'x'.repeat(1001), // Too long
+        affectedCustomers: ['CUST-001']
+      };
+
+      await expect(businessEventService.createEvent(longDescEventData))
+        .rejects.toThrow('Validation failed: description cannot exceed 1000 characters');
+    });
+
+    test('should validate affected customers array', async () => {
+      // REFACTOR: Enhanced validation test for affected customers
+      const emptyArrayEventData = {
+        eventType: 'price_change',
+        eventDate: '2024-06-23',
+        description: 'Test event with valid description length',
+        affectedCustomers: [] as string[]
+      };
+
+      await expect(businessEventService.createEvent(emptyArrayEventData))
+        .rejects.toThrow('Validation failed: affectedCustomers array cannot be empty');
+    });
+
+    test('should provide utility methods for event types', async () => {
+      // REFACTOR: Test enhanced utility methods
+      const validTypes = businessEventService.getValidEventTypes();
+      expect(validTypes).toContain('price_change');
+      expect(validTypes).toContain('system_outage');
+      
+      expect(businessEventService.isValidEventType('price_change')).toBe(true);
+      expect(businessEventService.isValidEventType('invalid_type')).toBe(false);
     });
   });
 

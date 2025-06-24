@@ -1,6 +1,22 @@
 import { DatabaseService } from '../database/sqlite';
 import logger from '../config/logger';
 
+// Enhanced validation and audit logging for business events
+const VALID_EVENT_TYPES = [
+  'price_change',
+  'system_outage', 
+  'feature_launch',
+  'policy_change',
+  'marketing_campaign',
+  'service_disruption',
+  'product_discontinuation',
+  'competitor_action',
+  'seasonal_event',
+  'regulatory_change'
+] as const;
+
+type ValidEventType = typeof VALID_EVENT_TYPES[number];
+
 export interface BusinessEvent {
   id: string;
   eventType: string;
@@ -13,10 +29,11 @@ export interface BusinessEvent {
 }
 
 export interface CreateEventData {
-  eventType: string;
+  eventType: ValidEventType | string;
   eventDate: string;
   description: string;
   affectedCustomers: string[] | 'all';
+  metadata?: Record<string, any>; // Additional event metadata
 }
 
 export interface UpdateEventData {
@@ -58,9 +75,20 @@ export class BusinessEventService {
     this.databaseService = databaseService;
   }
 
+  // Enhanced utility methods
+  getValidEventTypes(): readonly string[] {
+    return VALID_EVENT_TYPES;
+  }
+
+  isValidEventType(eventType: string): boolean {
+    return VALID_EVENT_TYPES.includes(eventType as ValidEventType);
+  }
+
   async createEvent(eventData: CreateEventData): Promise<BusinessEvent> {
+    const startTime = Date.now();
+    
     try {
-      // Validation
+      // Enhanced validation with audit logging
       this.validateEventData(eventData);
 
       const sql = `
@@ -76,8 +104,7 @@ export class BusinessEventService {
         JSON.stringify(eventData.affectedCustomers)
       ]);
 
-      // Return the created event
-      return {
+      const createdEvent = {
         id: result.lastInsertRowid as string,
         eventType: eventData.eventType,
         eventDate: eventData.eventDate,
@@ -87,11 +114,40 @@ export class BusinessEventService {
         updatedAt: new Date().toISOString(),
         deletedAt: null
       };
+
+      // Enhanced audit logging for successful creation
+      const duration = Date.now() - startTime;
+      logger.info('Business event created successfully', {
+        component: 'business-event-service',
+        operation: 'create',
+        eventId: createdEvent.id,
+        eventType: eventData.eventType,
+        eventDate: eventData.eventDate,
+        affectedCustomersCount: Array.isArray(eventData.affectedCustomers) ? eventData.affectedCustomers.length : 'all',
+        descriptionLength: eventData.description.length,
+        duration,
+        metadata: eventData.metadata ? 'present' : 'none'
+      });
+
+      return createdEvent;
     } catch (error) {
+      const duration = Date.now() - startTime;
+      
+      // Enhanced error logging with context
       logger.error('Failed to create business event', {
         component: 'business-event-service',
-        error: error instanceof Error ? error.message : error
+        operation: 'create',
+        error: error instanceof Error ? error.message : error,
+        errorType: error instanceof Error ? error.constructor.name : 'Unknown',
+        duration,
+        eventData: {
+          eventType: eventData.eventType,
+          eventDate: eventData.eventDate,
+          descriptionLength: eventData.description?.length || 0,
+          affectedCustomersType: Array.isArray(eventData.affectedCustomers) ? 'array' : typeof eventData.affectedCustomers
+        }
       });
+      
       throw error;
     }
   }
@@ -330,33 +386,118 @@ export class BusinessEventService {
   }
 
   private validateEventData(eventData: CreateEventData): void {
+    const validationErrors: string[] = [];
+
+    // Enhanced event type validation
     if (!eventData.eventType || eventData.eventType.trim() === '') {
-      throw new Error('Validation failed: eventType is required');
+      validationErrors.push('eventType is required');
+    } else if (!VALID_EVENT_TYPES.includes(eventData.eventType as ValidEventType)) {
+      logger.warn('Non-standard event type used', {
+        component: 'business-event-service',
+        eventType: eventData.eventType,
+        validTypes: VALID_EVENT_TYPES
+      });
+      // Don't fail validation, just log warning for custom types
     }
 
+    // Enhanced date validation
     if (!eventData.eventDate) {
-      throw new Error('Validation failed: eventDate is required');
+      validationErrors.push('eventDate is required');
+    } else {
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(eventData.eventDate)) {
+        validationErrors.push('eventDate must be a valid date (YYYY-MM-DD)');
+      } else {
+        const date = new Date(eventData.eventDate + 'T00:00:00.000Z');
+        if (isNaN(date.getTime())) {
+          validationErrors.push('eventDate must be a valid date (YYYY-MM-DD)');
+        } else {
+          // Check if date is not too far in the future (max 1 year)
+          const oneYearFromNow = new Date();
+          oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+          if (date > oneYearFromNow) {
+            validationErrors.push('eventDate cannot be more than 1 year in the future');
+          }
+          // Check if date is not too far in the past (max 10 years)
+          const tenYearsAgo = new Date();
+          tenYearsAgo.setFullYear(tenYearsAgo.getFullYear() - 10);
+          if (date < tenYearsAgo) {
+            validationErrors.push('eventDate cannot be more than 10 years in the past');
+          }
+        }
+      }
     }
 
-    // Validate date format (YYYY-MM-DD)
-    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!dateRegex.test(eventData.eventDate)) {
-      throw new Error('Validation failed: eventDate must be a valid date (YYYY-MM-DD)');
-    }
-
-    // Validate that it's a real date
-    const date = new Date(eventData.eventDate + 'T00:00:00.000Z');
-    if (isNaN(date.getTime())) {
-      throw new Error('Validation failed: eventDate must be a valid date (YYYY-MM-DD)');
-    }
-
+    // Enhanced description validation
     if (!eventData.description || eventData.description.trim() === '') {
-      throw new Error('Validation failed: description is required');
+      validationErrors.push('description is required');
+    } else if (eventData.description.length > 1000) {
+      validationErrors.push('description cannot exceed 1000 characters');
+    } else if (eventData.description.length < 10) {
+      validationErrors.push('description must be at least 10 characters long');
     }
 
+    // Enhanced affected customers validation
     if (!eventData.affectedCustomers) {
-      throw new Error('Validation failed: affectedCustomers is required');
+      validationErrors.push('affectedCustomers is required');
+    } else if (Array.isArray(eventData.affectedCustomers)) {
+      if (eventData.affectedCustomers.length === 0) {
+        validationErrors.push('affectedCustomers array cannot be empty');
+      } else if (eventData.affectedCustomers.length > 10000) {
+        validationErrors.push('affectedCustomers array cannot exceed 10,000 entries');
+      } else {
+        // Validate customer ID format
+        const invalidCustomers = eventData.affectedCustomers.filter(
+          customer => !customer || typeof customer !== 'string' || customer.trim() === ''
+        );
+        if (invalidCustomers.length > 0) {
+          validationErrors.push('all customer IDs must be non-empty strings');
+        }
+      }
+    } else if (eventData.affectedCustomers !== 'all') {
+      validationErrors.push('affectedCustomers must be an array of customer IDs or "all"');
     }
+
+    // Metadata validation
+    if (eventData.metadata) {
+      if (typeof eventData.metadata !== 'object' || Array.isArray(eventData.metadata)) {
+        validationErrors.push('metadata must be an object');
+      } else {
+        const metadataStr = JSON.stringify(eventData.metadata);
+        if (metadataStr.length > 5000) {
+          validationErrors.push('metadata cannot exceed 5000 characters when serialized');
+        }
+      }
+    }
+
+    if (validationErrors.length > 0) {
+      const errorMessage = `Validation failed: ${validationErrors.join(', ')}`;
+      
+      // Enhanced audit logging for validation failures
+      logger.warn('Business event validation failed', {
+        component: 'business-event-service',
+        operation: 'create',
+        validationErrors,
+        eventData: {
+          eventType: eventData.eventType,
+          eventDate: eventData.eventDate,
+          descriptionLength: eventData.description?.length || 0,
+          affectedCustomersType: Array.isArray(eventData.affectedCustomers) ? 'array' : typeof eventData.affectedCustomers,
+          affectedCustomersCount: Array.isArray(eventData.affectedCustomers) ? eventData.affectedCustomers.length : 'N/A'
+        }
+      });
+      
+      throw new Error(errorMessage);
+    }
+
+    // Audit log successful validation
+    logger.debug('Business event validation passed', {
+      component: 'business-event-service',
+      operation: 'create',
+      eventType: eventData.eventType,
+      eventDate: eventData.eventDate,
+      affectedCustomersCount: Array.isArray(eventData.affectedCustomers) ? eventData.affectedCustomers.length : 'all'
+    });
   }
 
   private mapDbRowToEvent(row: any): BusinessEvent {

@@ -177,38 +177,47 @@ export class PatternAnalyzer {
   ): Promise<LaggedCorrelation> {
     let bestCorrelation = 0;
     let bestLag = 0;
-
-    // Sort series by timestamp
-    const sorted1 = [...series1].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
-    const sorted2 = [...series2].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+    let bestDataPoints = 0;
 
     // Try different lag values
     for (let lag = 0; lag <= options.maxLagDays; lag++) {
       const values1: number[] = [];
       const values2: number[] = [];
 
-      // For the test case, we know series2 starts 3 days after series1
-      // So we need to match series1 points with series2 points that are lag days later
-      for (let i = 0; i < sorted1.length; i++) {
-        // Find corresponding point in series2 that is 'lag' days after series1
-        const targetTime = sorted1[i].timestamp.getTime() + (lag * 24 * 60 * 60 * 1000);
+      // For each point in series1, try to find a corresponding point in series2
+      // that is 'lag' days later
+      for (const point1 of series1) {
+        const targetDate = new Date(point1.timestamp);
+        targetDate.setDate(targetDate.getDate() + lag);
         
-        const matchingPoint = sorted2.find(p => {
-          const timeDiff = Math.abs(p.timestamp.getTime() - targetTime);
-          return timeDiff < 12 * 60 * 60 * 1000; // Within 12 hours
+        // Find exact or close match in series2
+        const matchingPoint = series2.find(point2 => {
+          const date2 = new Date(point2.timestamp);
+          return date2.getFullYear() === targetDate.getFullYear() &&
+                 date2.getMonth() === targetDate.getMonth() &&
+                 date2.getDate() === targetDate.getDate();
         });
 
         if (matchingPoint) {
-          values1.push(sorted1[i].value);
+          values1.push(point1.value);
           values2.push(matchingPoint.value);
         }
       }
 
+      // Calculate correlation if we have enough data points
       if (values1.length >= 2) {
         const correlation = await this.calculateCorrelation(values1, values2);
-        if (Math.abs(correlation.coefficient) > Math.abs(bestCorrelation)) {
+        
+        // Debug: log correlation values
+        // console.log(`Lag ${lag}: ${values1.length} points, correlation: ${correlation.coefficient}`);
+        
+        // Update best lag if this correlation is stronger
+        // When correlations are equal, prefer the one with more data points
+        if (Math.abs(correlation.coefficient) > Math.abs(bestCorrelation) ||
+            (Math.abs(correlation.coefficient) === Math.abs(bestCorrelation) && values1.length > bestDataPoints)) {
           bestCorrelation = correlation.coefficient;
           bestLag = lag;
+          bestDataPoints = values1.length;
         }
       }
     }
