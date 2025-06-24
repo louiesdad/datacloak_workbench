@@ -46,11 +46,21 @@ export class PatternAnalyzer {
     'sentiment', 'satisfaction', 'rating', 'score', 'nps', 
     'feedback', 'review', 'emotion', 'opinion'
   ];
+  
+  private readonly MIN_CORRELATION_THRESHOLD = 0.3;
+  private readonly MIN_DATA_POINTS = 2;
+  private readonly P_VALUE_SIGNIFICANCE = 0.05;
 
   async findCorrelations(
     virtualJoin: VirtualJoin, 
     options?: CorrelationOptions
   ): Promise<Correlation[]> {
+    // TODO: Implement actual correlation analysis
+    // This would:
+    // 1. Extract numeric columns from joined data
+    // 2. Calculate pairwise correlations
+    // 3. Filter based on threshold and significance
+    
     // For now, return mock data to make tests pass
     const correlations: Correlation[] = [
       {
@@ -73,6 +83,13 @@ export class PatternAnalyzer {
       }
     ];
 
+    return this.filterAndSortCorrelations(correlations, options);
+  }
+  
+  private filterAndSortCorrelations(
+    correlations: Correlation[],
+    options?: CorrelationOptions
+  ): Correlation[] {
     let results = correlations;
 
     // Apply minimum correlation filter
@@ -82,15 +99,28 @@ export class PatternAnalyzer {
       );
     }
 
+    // Filter by statistical significance
+    results = results.filter(c => c.pValue < this.P_VALUE_SIGNIFICANCE);
+
     // Rank by significance if requested
     if (options?.rankBySignificance) {
       results.sort((a, b) => a.pValue - b.pValue);
+    } else {
+      // Default: sort by absolute correlation strength
+      results.sort((a, b) => Math.abs(b.correlation) - Math.abs(a.correlation));
     }
 
     return results;
   }
 
   async findTemporalPatterns(virtualJoin: VirtualJoin): Promise<TemporalPattern[]> {
+    // TODO: Implement actual temporal pattern detection
+    // This would:
+    // 1. Identify time-series columns
+    // 2. Test various lag periods
+    // 3. Calculate lagged correlations
+    // 4. Identify statistically significant patterns
+    
     // Mock implementation for temporal patterns
     return [
       {
@@ -208,8 +238,6 @@ export class PatternAnalyzer {
       if (values1.length >= 2) {
         const correlation = await this.calculateCorrelation(values1, values2);
         
-        // Debug: log correlation values
-        // console.log(`Lag ${lag}: ${values1.length} points, correlation: ${correlation.coefficient}`);
         
         // Update best lag if this correlation is stronger
         // When correlations are equal, prefer the one with more data points
@@ -282,19 +310,34 @@ export class PatternAnalyzer {
   }
 
   private calculatePValue(t: number, df: number): number {
-    // Simplified p-value calculation
-    // In production, would use a proper statistics library
-    const absT = Math.abs(t);
+    // Simplified p-value calculation using t-distribution approximation
+    // TODO: Replace with proper statistics library (e.g., jStat)
     
     if (df < 1) return 1;
     
-    // Very rough approximation for demonstration
-    if (absT > 3.0) return 0.001;
-    if (absT > 2.5) return 0.01;
-    if (absT > 2.0) return 0.05;
-    if (absT > 1.5) return 0.1;
+    const absT = Math.abs(t);
     
-    return 0.5;
+    // Critical values for two-tailed test at common significance levels
+    const criticalValues = [
+      { t: 3.182, p: 0.05, minDf: 3 },
+      { t: 2.776, p: 0.05, minDf: 4 },
+      { t: 2.571, p: 0.05, minDf: 5 },
+      { t: 2.447, p: 0.05, minDf: 6 },
+      { t: 2.365, p: 0.05, minDf: 7 },
+      { t: 2.306, p: 0.05, minDf: 8 },
+      { t: 2.262, p: 0.05, minDf: 9 },
+      { t: 2.228, p: 0.05, minDf: 10 },
+      { t: 1.96, p: 0.05, minDf: 30 } // Approximation for large df
+    ];
+    
+    // Find appropriate critical value based on df
+    for (const cv of criticalValues) {
+      if (df >= cv.minDf && absT > cv.t) {
+        return cv.p / 2; // Rough approximation
+      }
+    }
+    
+    return absT > 1.96 ? 0.05 : 0.5;
   }
 
   private isSameDay(date1: Date, date2: Date): boolean {
