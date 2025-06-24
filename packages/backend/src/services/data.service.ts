@@ -114,11 +114,26 @@ export class DataService {
     const filePath = path.join(uploadDir, filename);
 
     try {
-      // Save file to disk
-      fs.writeFileSync(filePath, file.buffer);
-
-      // Parse file and get preview data
-      const { previewData, fieldInfo, recordCount } = await this.parseFile(filePath, file.mimetype);
+      // Parse file first (before saving to disk) to validate it
+      // This uses the buffer in memory
+      const tempFilePath = path.join(uploadDir, `temp_${filename}`);
+      fs.writeFileSync(tempFilePath, file.buffer);
+      
+      let parseResult;
+      try {
+        parseResult = await this.parseFile(tempFilePath, file.mimetype);
+      } catch (parseError) {
+        // Clean up temp file if parsing fails
+        if (fs.existsSync(tempFilePath)) {
+          fs.unlinkSync(tempFilePath);
+        }
+        throw parseError;
+      }
+      
+      const { previewData, fieldInfo, recordCount } = parseResult;
+      
+      // Only move to final location if parsing succeeded
+      fs.renameSync(tempFilePath, filePath);
 
       // Perform security scan
       let securityScan;
@@ -137,28 +152,38 @@ export class DataService {
         const enhancedFieldInfo = await this.enhanceFieldInfoWithPII(fieldInfo, previewData);
         
         // Store dataset metadata in SQLite with security information
-        await withSQLiteConnection(async (db) => {
-          const stmt = db.prepare(`
-            INSERT INTO datasets (id, filename, original_filename, size, record_count, mime_type, 
-                                 pii_detected, compliance_score, risk_level)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-          `);
+        let dataset;
+        try {
+          await withSQLiteConnection(async (db) => {
+            const stmt = db.prepare(`
+              INSERT INTO datasets (id, filename, original_filename, size, record_count, mime_type, 
+                                   pii_detected, compliance_score, risk_level)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `);
 
-          stmt.run(
-            datasetId,
-            filename,
-            file.originalname,
-            file.size,
-            recordCount,
-            file.mimetype,
-            scanResult.piiItemsDetected > 0 ? 1 : 0,
-            scanResult.complianceScore,
-            this.getRiskLevel(scanResult.complianceScore)
-          );
-        });
+            stmt.run(
+              datasetId,
+              filename,
+              file.originalname,
+              file.size,
+              recordCount,
+              file.mimetype,
+              scanResult.piiItemsDetected > 0 ? 1 : 0,
+              scanResult.complianceScore,
+              this.getRiskLevel(scanResult.complianceScore)
+            );
+          });
 
-        // Get the created dataset
-        const dataset = await this.getDatasetById(datasetId);
+          // Get the created dataset
+          dataset = await this.getDatasetById(datasetId);
+        } catch (dbError) {
+          // If database operation fails, clean up the file
+          console.error('Database operation failed, cleaning up file:', filePath);
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+          }
+          throw dbError;
+        }
 
         return {
           dataset,
@@ -171,24 +196,34 @@ export class DataService {
         console.warn('Security scan failed, proceeding without security information:', securityError);
         
         // Store dataset metadata in SQLite without security information
-        await withSQLiteConnection(async (db) => {
-          const stmt = db.prepare(`
-            INSERT INTO datasets (id, filename, original_filename, size, record_count, mime_type)
-            VALUES (?, ?, ?, ?, ?, ?)
-          `);
+        let dataset;
+        try {
+          await withSQLiteConnection(async (db) => {
+            const stmt = db.prepare(`
+              INSERT INTO datasets (id, filename, original_filename, size, record_count, mime_type)
+              VALUES (?, ?, ?, ?, ?, ?)
+            `);
 
-          stmt.run(
-            datasetId,
-            filename,
-            file.originalname,
-            file.size,
-            recordCount,
-            file.mimetype
-          );
-        });
+            stmt.run(
+              datasetId,
+              filename,
+              file.originalname,
+              file.size,
+              recordCount,
+              file.mimetype
+            );
+          });
 
-        // Get the created dataset
-        const dataset = await this.getDatasetById(datasetId);
+          // Get the created dataset
+          dataset = await this.getDatasetById(datasetId);
+        } catch (dbError) {
+          // If database operation fails, clean up the file
+          console.error('Database operation failed, cleaning up file:', filePath);
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+          }
+          throw dbError;
+        }
 
         return {
           dataset,

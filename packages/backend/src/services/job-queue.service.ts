@@ -63,6 +63,9 @@ export class JobQueueService extends EventEmitter {
       createdAt: new Date(),
     };
 
+    console.log(`[JobQueue] Adding job ${jobId} of type ${type}`);
+    console.log(`[JobQueue] Job data:`, JSON.stringify(data, null, 2));
+
     this.jobs.set(jobId, job);
     this.emit('job:added', job);
     
@@ -77,7 +80,10 @@ export class JobQueueService extends EventEmitter {
 
     // Start processing if not already running
     if (!this.isProcessing) {
+      console.log(`[JobQueue] Starting job processing...`);
       this.startProcessing();
+    } else {
+      console.log(`[JobQueue] Job processing already running`);
     }
 
     return jobId;
@@ -342,12 +348,17 @@ export class JobQueueService extends EventEmitter {
    */
   private async processNextJobs(): Promise<void> {
     const availableSlots = this.maxConcurrentJobs - this.runningJobs.size;
-    if (availableSlots <= 0) return;
+    if (availableSlots <= 0) {
+      console.log(`[JobQueue] No available slots (running: ${this.runningJobs.size}/${this.maxConcurrentJobs})`);
+      return;
+    }
 
     const pendingJobs = this.getJobs({ status: 'pending', limit: availableSlots });
+    console.log(`[JobQueue] Found ${pendingJobs.length} pending jobs, ${availableSlots} slots available`);
     
     for (const job of pendingJobs) {
       if (this.runningJobs.size >= this.maxConcurrentJobs) break;
+      console.log(`[JobQueue] Starting to process job ${job.id} (${job.type})`);
       this.processJob(job);
     }
   }
@@ -359,6 +370,8 @@ export class JobQueueService extends EventEmitter {
     const handler = this.handlers.get(job.type);
     if (!handler) {
       // Leave job as pending if no handler is registered
+      console.warn(`No handler registered for job type: ${job.type}, jobId: ${job.id}`);
+      console.warn(`Available handlers: ${Array.from(this.handlers.keys()).join(', ')}`);
       return;
     }
 

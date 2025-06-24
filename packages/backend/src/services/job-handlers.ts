@@ -13,7 +13,9 @@ import * as XLSX from 'xlsx';
  * Job handler for batch sentiment analysis
  */
 export const createSentimentAnalysisBatchHandler = (
-  sentimentService: SentimentService
+  sentimentService: SentimentService,
+  dataService?: DataService,
+  fileStreamService?: FileStreamService
 ): JobHandler => {
   return async (job: Job, updateProgress: (progress: number) => void) => {
     const { texts, enablePIIMasking = true, datasetId, filePath, selectedColumns, analysisMode, model = 'basic' } = job.data;
@@ -28,14 +30,22 @@ export const createSentimentAnalysisBatchHandler = (
     
     // Handle full dataset analysis
     if (filePath && datasetId) {
-      const dataService = new DataService();
-      const fileStreamService = new FileStreamService();
+      console.log(`[SentimentHandler] Processing dataset job ${job.id}: datasetId=${datasetId}, filePath=${filePath}`);
+      
+      // Use provided services or create new ones
+      const ds = dataService || new DataService();
+      const fss = fileStreamService || new FileStreamService();
       
       // Resolve the file path
       const uploadDir = path.join(process.cwd(), 'data', 'uploads');
       const fullPath = filePath.startsWith('/') ? filePath : path.join(uploadDir, path.basename(filePath));
       
+      console.log(`[SentimentHandler] Resolved file path: ${fullPath}`);
+      
       if (!fs.existsSync(fullPath)) {
+        console.error(`[SentimentHandler] File not found: ${fullPath}`);
+        console.error(`[SentimentHandler] Upload directory: ${uploadDir}`);
+        console.error(`[SentimentHandler] Directory contents:`, fs.readdirSync(uploadDir).join(', '));
         throw new Error(`File not found: ${fullPath}`);
       }
       
@@ -45,7 +55,10 @@ export const createSentimentAnalysisBatchHandler = (
       const progressCallback = (progress: StreamProgress) => {
         updateProgress(progress.percentComplete);
         // Also update progress emitter with row count
-        progressEmitter.updateProgress(job.id, progress.processedRows);
+        progressEmitter.updateProgress(job.id, progress.rowsProcessed);
+        
+        // Debug logging
+        console.log(`[SentimentHandler] Job ${job.id} dataset progress: ${progress.rowsProcessed} rows processed, ${progress.chunksProcessed}/${progress.totalChunks} chunks (${progress.percentComplete.toFixed(1)}%)`);
       };
 
       const chunkCallback = async (chunkResult: any) => {
@@ -81,7 +94,7 @@ export const createSentimentAnalysisBatchHandler = (
         }
       };
 
-      await fileStreamService.streamProcessFile(fullPath, {
+      await fss.streamProcessFile(fullPath, {
         onProgress: progressCallback,
         onChunk: chunkCallback,
         chunkSize: 100 * 1024 * 1024 // 100MB chunks
@@ -134,6 +147,11 @@ export const createSentimentAnalysisBatchHandler = (
         processed++;
         const progressPercent = (processed / total) * 100;
         updateProgress(progressPercent);
+        
+        // Debug logging
+        if (processed % 10 === 0 || processed === total) {
+          console.log(`[SentimentHandler] Job ${job.id}: Processed ${processed}/${total} texts (${progressPercent.toFixed(1)}%)`);
+        }
         
         // Update progress emitter
         progressEmitter.updateProgress(job.id, processed);
@@ -401,25 +419,41 @@ export const registerAllHandlers = (
     fileStreamService: FileStreamService;
   }
 ): void => {
+  console.log('[JobHandlers] Registering all job handlers...');
+  
   // All sentiment analysis variations use the same handler
-  const sentimentHandler = createSentimentAnalysisBatchHandler(services.sentimentService);
+  const sentimentHandler = createSentimentAnalysisBatchHandler(
+    services.sentimentService,
+    services.dataService,
+    services.fileStreamService
+  );
   
   jobQueue.registerHandler('sentiment_analysis_batch', sentimentHandler);
+  console.log('[JobHandlers] Registered handler for sentiment_analysis_batch');
+  
   jobQueue.registerHandler('sentiment_analysis_preview', sentimentHandler);
+  console.log('[JobHandlers] Registered handler for sentiment_analysis_preview');
+  
   jobQueue.registerHandler('sentiment_analysis_sample', sentimentHandler);
+  console.log('[JobHandlers] Registered handler for sentiment_analysis_sample');
 
   jobQueue.registerHandler(
     'file_processing',
     createFileProcessingHandler(services.dataService, services.fileStreamService)
   );
+  console.log('[JobHandlers] Registered handler for file_processing');
 
   jobQueue.registerHandler(
     'security_scan',
     createSecurityScanHandler(services.securityService)
   );
+  console.log('[JobHandlers] Registered handler for security_scan');
 
   jobQueue.registerHandler(
     'data_export',
     createDataExportHandler(services.dataService)
   );
+  console.log('[JobHandlers] Registered handler for data_export');
+  
+  console.log('[JobHandlers] All handlers registered successfully');
 };

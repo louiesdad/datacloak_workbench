@@ -348,3 +348,61 @@ export interface PartialResults {
   status: 'processing' | 'completed' | 'cancelled';
   processedCount: number;
 }
+
+// Field Discovery Engine interfaces
+export interface FieldDiscoveryOptions {
+  confidenceThreshold?: number;
+  includePatternAnalysis?: boolean;
+  enableSampling?: boolean;
+  maxSampleSize?: number;
+  continueOnError?: boolean;
+}
+
+export interface DiscoveredField {
+  fieldName: string;
+  piiTypes: string[];
+  confidenceScore: number;
+  riskLevel: 'low' | 'medium' | 'high' | 'critical';
+  samples: Array<{
+    piiType: string;
+    sample: string;
+    masked: string;
+    confidence: number;
+  }>;
+}
+
+export interface PatternAnalysis {
+  suspiciousFieldNames: string[];
+  piiPatternMatches: Array<{
+    fieldName: string;
+    pattern: string;
+    suggestedType: string;
+    confidence: number;
+  }>;
+}
+
+export interface FieldDiscoveryResult {
+  discoveredFields: DiscoveredField[];
+  totalFieldsAnalyzed: number;
+  piiFieldsFound: number;
+  samplingUsed: boolean;
+  sampleSize?: number;
+  patternAnalysis?: PatternAnalysis;
+  summary: {
+    totalFields: number;
+    fieldsWithPII: number;
+    piiTypesFound: string[];
+    averageConfidence: number;
+    riskDistribution: {
+      low: number;
+      medium: number;
+      high: number;
+      critical: number;
+    };
+  };
+  errors?: Array<{
+    fieldName: string;
+    error: string;
+  }>;
+  processingTime: number;
+}

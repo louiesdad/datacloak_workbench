@@ -9,6 +9,7 @@ import { ConfigService } from './config.service';
 import { eventEmitter, EventTypes } from './event.service';
 import { getCacheService, ICacheService } from './cache.service';
 import { getOpenAIServiceInstance } from './openai-service-manager';
+import { OpenAIBatchService } from './openai-batch.service';
 import * as crypto from 'crypto';
 
 export interface SentimentAnalysisResult {
@@ -526,7 +527,7 @@ export class SentimentService {
     return result;
   }
 
-  async batchAnalyzeSentiment(texts: string[], model: string = 'basic'): Promise<SentimentAnalysisResult[]> {
+  async batchAnalyzeSentiment(texts: string[], model: string = 'basic', useParallel: boolean = true): Promise<SentimentAnalysisResult[]> {
     if (!Array.isArray(texts) || texts.length === 0) {
       throw new AppError('Texts array is required for batch analysis', 400, 'INVALID_TEXTS');
     }
@@ -538,8 +539,60 @@ export class SentimentService {
     const results: SentimentAnalysisResult[] = [];
     const batchId = uuidv4();
 
-    // Use DataCloak flow for OpenAI models
-    if (this.dataCloakService.isConfigured() && model !== 'basic') {
+    // Use parallel OpenAI processing for OpenAI models when enabled
+    if (this.openaiService && model !== 'basic' && useParallel) {
+      try {
+        console.log(`Using parallel OpenAI batch processing for ${texts.length} texts with model: ${model}`);
+        
+        const batchService = new OpenAIBatchService(this.openaiService);
+        const batchResult = await batchService.analyzeLargeBatch(texts, {
+          concurrency: 5, // Process 5 texts in parallel
+          chunkSize: 50,  // Process in chunks of 50
+          retryAttempts: 2,
+          timeout: 30000,
+          rateLimit: {
+            maxRequests: 50,
+            windowMs: 60000 // 50 requests per minute
+          }
+        });
+
+        // Convert batch results to SentimentAnalysisResult format
+        for (let i = 0; i < batchResult.results.length; i++) {
+          const openaiResult = batchResult.results[i];
+          const result: SentimentAnalysisResult = {
+            text: texts[i],
+            originalText: texts[i],
+            sentiment: openaiResult.sentiment,
+            score: openaiResult.score,
+            confidence: openaiResult.confidence,
+            piiDetected: false,
+            piiItemsFound: 0,
+            processingTimeMs: batchResult.stats.avgProcessingTime,
+            model,
+            batchId
+          };
+          results.push(result);
+        }
+
+        console.log(`Parallel batch processing completed: ${batchResult.stats.successful}/${batchResult.stats.total} successful`);
+        console.log(`Total processing time: ${batchResult.stats.totalProcessingTime}ms, Avg per text: ${batchResult.stats.avgProcessingTime.toFixed(0)}ms`);
+        
+        if (batchResult.errors.length > 0) {
+          console.warn(`${batchResult.errors.length} texts failed during batch processing`);
+        }
+
+        // Store results in database
+        await this.storeBatchResults(results, batchId);
+        
+        return results;
+      } catch (error) {
+        console.error('Parallel batch processing failed:', error);
+        // Fall through to sequential processing
+      }
+    }
+
+    // Use DataCloak flow for OpenAI models (sequential)
+    if (this.dataCloakService.isConfigured() && model !== 'basic' && !useParallel) {
       try {
         console.log(`Using DataCloak secure batch processing for ${texts.length} texts with model: ${model}`);
         
@@ -1285,6 +1338,50 @@ export class SentimentService {
           { word: 'horrible', count: 2 }
         ]
       };
+    }
+  }
+
+  /**
+   * Store batch results in database
+   */
+  private async storeBatchResults(results: SentimentAnalysisResult[], batchId: string): Promise<void> {
+    const db = await getSQLiteConnection();
+    if (!db) {
+      console.warn('Database connection not available, skipping batch storage');
+      return;
+    }
+
+    try {
+      const stmt = db.prepare(`
+        INSERT INTO sentiment_analyses (text, sentiment, score, confidence)
+        VALUES (?, ?, ?, ?)
+      `);
+
+      db.transaction(() => {
+        for (const result of results) {
+          const info = stmt.run(result.text, result.sentiment, result.score, result.confidence);
+          result.id = info.lastInsertRowid as number;
+        }
+      })();
+
+      // Store analytics in DuckDB (only if not in test environment)
+      if (process.env.NODE_ENV !== 'test') {
+        try {
+          for (const result of results) {
+            await runDuckDB(
+              'INSERT INTO text_analytics (text, sentiment, score, confidence, word_count, char_count, batch_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+              [result.text, result.sentiment, result.score, result.confidence, result.text.split(/\s+/).length, result.text.length, batchId]
+            );
+          }
+        } catch (error) {
+          console.warn('Failed to store batch analytics in DuckDB:', error);
+        }
+      }
+
+      console.log(`Stored ${results.length} batch results in database`);
+    } catch (error) {
+      console.error('Failed to store batch results in database:', error);
+      throw error;
     }
   }
 

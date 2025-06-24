@@ -346,7 +346,7 @@ export class PredictionService {
 
     const results = stmt.all(customerId);
     
-    return results.map(r => ({
+    return results.map((r: any) => ({
       id: r.id,
       customerId: r.customer_id,
       predictedDate: r.predicted_date,

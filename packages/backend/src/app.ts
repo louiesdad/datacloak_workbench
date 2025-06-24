@@ -6,11 +6,16 @@ import compression from 'compression';
 import { config } from './config/env';
 import { errorHandler } from './middleware/error.middleware';
 import { setupRoutes } from './routes';
-import { JobQueueService } from './services/job-queue.service';
 import { initializeDatabases } from './database';
+import { registerAllHandlers } from './services/job-handlers';
+import { SentimentService } from './services/sentiment.service';
+import { DataService } from './services/data.service';
+import { SecurityService } from './services/security.service';
+import { FileStreamService } from './services/file-stream.service';
+import { getJobQueueService, IJobQueueService } from './services/job-queue.factory';
 
 // Export app and job queue for testing
-export let jobQueue: JobQueueService;
+export let jobQueue: IJobQueueService;
 
 export const createApp = async (): Promise<Application> => {
   const app = express() as any; // Add index signature to allow property assignment
@@ -26,9 +31,20 @@ export const createApp = async (): Promise<Application> => {
     }
   }
   
-  // Initialize job queue
-  jobQueue = new JobQueueService({ maxConcurrentJobs: 3 });
+  // Initialize job queue using factory to ensure singleton
+  jobQueue = await getJobQueueService();
   app.jobQueue = jobQueue; // Attach to app for testing
+  
+  // Register job handlers immediately
+  const services = {
+    sentimentService: new SentimentService(),
+    dataService: new DataService(),
+    securityService: new SecurityService(),
+    fileStreamService: new FileStreamService()
+  };
+  
+  registerAllHandlers(jobQueue, services);
+  console.log('Job handlers registered successfully');
 
   // Security middleware
   app.use(helmet());

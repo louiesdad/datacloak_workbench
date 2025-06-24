@@ -429,21 +429,23 @@ export class SentimentController {
     progressEmitter.initializeJob(jobId, previewTexts.length);
     
     // Process each text with sentiment analysis
-    const results = [];
+    const results: Array<any> = [];
     for (let i = 0; i < previewTexts.length; i++) {
       try {
         const analysis = await this.sentimentService.analyzeSentiment(previewTexts[i], enablePIIMasking, model);
+        const { text, ...analysisWithoutText } = analysis;
         results.push({
           rowIndex: i,
-          text: previewTexts[i].substring(0, 100),
-          ...analysis
-        });
+          previewText: previewTexts[i].substring(0, 100),
+          originalText: text,
+          ...analysisWithoutText
+        } as any);
       } catch (error) {
         results.push({
           rowIndex: i,
-          text: previewTexts[i].substring(0, 100),
+          previewText: previewTexts[i].substring(0, 100),
           error: 'Analysis failed'
-        });
+        } as any);
       }
       
       // Update progress
@@ -522,10 +524,10 @@ export class SentimentController {
     progressEmitter.initializeJob(jobId, sampleTexts.length);
     
     // Simulate processing with progress updates
-    const results = [];
+    const results: Array<any> = [];
     for (let i = 0; i < Math.min(sampleTexts.length, 100); i++) {
       results.push({
-        text: sampleTexts[i].substring(0, 100),
+        previewText: sampleTexts[i].substring(0, 100),
         sentiment: 'neutral',
         confidence: 0.75
       });

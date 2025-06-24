@@ -5,7 +5,6 @@ import { SentimentService } from '../services/sentiment.service';
 import { DataService } from '../services/data.service';
 import { SecurityService } from '../services/security.service';
 import { FileStreamService } from '../services/file-stream.service';
-import { registerAllHandlers } from '../services/job-handlers';
 import { AppError } from '../middleware/error.middleware';
 
 export class JobController {
@@ -29,15 +28,8 @@ export class JobController {
     try {
       this.jobQueue = await getJobQueueService();
       
-      // Register all job handlers
-      registerAllHandlers(this.jobQueue, {
-        sentimentService: this.sentimentService,
-        dataService: this.dataService,
-        securityService: this.securityService,
-        fileStreamService: this.fileStreamService
-      });
-
-      // Set up event listeners for logging
+      // Don't register handlers here - they're already registered in app.ts
+      // Just set up event listeners for logging
       this.setupEventListeners();
       
       console.log('Job controller initialized successfully');
@@ -145,6 +137,9 @@ export class JobController {
 
       // Calculate detailed progress information
       const progressDetails = this.calculateProgressDetails(job);
+      
+      // Debug logging
+      console.log(`[JobController] Progress request for job ${jobId}: status=${job.status}, progress=${job.progress}%`);
 
       res.json({
         success: true,
@@ -157,7 +152,12 @@ export class JobController {
             created: job.createdAt.toISOString(),
             started: job.startedAt?.toISOString(),
             completed: job.completedAt?.toISOString()
-          }
+          },
+          // Include additional info for dataset jobs
+          ...(job.data?.datasetId && {
+            currentBatch: Math.floor(job.progress / 10),
+            totalBatches: 10
+          })
         }
       });
     } catch (error) {
@@ -355,11 +355,23 @@ export class JobController {
 
     // Add job-specific progress details
     if (job.type === 'sentiment_analysis_batch' && job.data) {
-      const totalTexts = job.data.texts?.length || 0;
-      const processedTexts = Math.floor((job.progress / 100) * totalTexts);
-      details.itemsProcessed = processedTexts;
-      details.totalItems = totalTexts;
-      details.remainingItems = totalTexts - processedTexts;
+      // Handle dataset-based jobs
+      if (job.data.datasetId && job.data.filePath) {
+        // For dataset jobs, we don't know exact item count until processing starts
+        // Use progress percentage directly
+        details.itemsProcessed = job.progress;
+        details.totalItems = 100;
+        details.remainingItems = 100 - job.progress;
+        details.datasetId = job.data.datasetId;
+        details.filePath = job.data.filePath;
+      } else if (job.data.texts) {
+        // Handle text array jobs
+        const totalTexts = job.data.texts.length;
+        const processedTexts = Math.floor((job.progress / 100) * totalTexts);
+        details.itemsProcessed = processedTexts;
+        details.totalItems = totalTexts;
+        details.remainingItems = totalTexts - processedTexts;
+      }
     }
 
     return details;

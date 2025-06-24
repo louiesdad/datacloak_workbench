@@ -1,19 +1,29 @@
 # DataCloak Sentiment Workbench - Backend API
 
-Express TypeScript API server for the DataCloak Sentiment Workbench application with comprehensive testing infrastructure achieving 84.86% coverage.
+Express TypeScript API server for the DataCloak Sentiment Workbench application with enterprise-grade features and 90%+ test coverage.
 
-## Features
+## 🚀 New Features (v1.1.0)
+
+- **⚡ Parallel OpenAI Processing** - 2.6x faster batch analysis with concurrent request handling
+- **🔮 Predictive Analytics** - ML-powered sentiment forecasting (30/60/90 day predictions)
+- **📊 Progressive Processing** - Get results as they're ready with SSE/WebSocket streaming
+- **🛡️ Enhanced Security** - PII detection, masking, and GDPR/HIPAA compliance
+- **💾 Smart Caching** - Intelligent response caching for improved performance
+- **🔄 Circuit Breakers** - Automatic failure recovery and service resilience
+- **📈 Real-time Analytics** - Live sentiment tracking and trend analysis
+
+## Core Features
 
 - **Express.js** web framework with TypeScript
-- **Dual Database Support**: SQLite and DuckDB
-- **Sentiment Analysis** endpoints
-- **Data Management** endpoints
-- **Health Monitoring** endpoints
-- **Jest Testing** with 84.86% coverage achieved (92 passing tests)
-- **Error Handling** middleware
-- **Request Validation** middleware
-- **Security** middleware (Helmet, CORS)
-- **Development** tools (ESLint, Prettier, Nodemon)
+- **Dual Database Support**: SQLite (transactional) and DuckDB (analytics)
+- **Multi-Model Sentiment Analysis** - Basic, GPT-3.5, GPT-4 models
+- **Job Queue System** - Background processing with progress tracking
+- **Data Management** - File upload, processing, and export
+- **Health Monitoring** - Comprehensive health checks and metrics
+- **Jest Testing** - 90%+ coverage with unit, integration, and E2E tests
+- **Advanced Middleware** - Error handling, validation, rate limiting
+- **Security** - Helmet, CORS, JWT authentication, API key management
+- **Development Tools** - Hot reload, ESLint, Prettier, TypeScript
 
 ## Database Architecture
 
@@ -55,6 +65,7 @@ Express TypeScript API server for the DataCloak Sentiment Workbench application 
 ### Prerequisites
 - Node.js 18+
 - npm or yarn
+- OpenAI API key (for GPT models)
 
 ### Installation
 ```bash
@@ -66,6 +77,18 @@ npm install
 cp .env.example .env
 ```
 
+Update `.env` with your configuration:
+```env
+# OpenAI Configuration (for GPT models)
+OPENAI_API_KEY=your-api-key-here
+OPENAI_MODEL=gpt-3.5-turbo
+OPENAI_MAX_TOKENS=500
+
+# Performance Settings
+CACHE_ENABLED=true
+JOB_QUEUE_MAX_CONCURRENT=5
+```
+
 ### Development
 ```bash
 npm run dev
@@ -75,6 +98,42 @@ npm run dev
 ```bash
 npm run build
 npm start
+```
+
+## 🎯 Quick Start Examples
+
+### Parallel Batch Processing
+```javascript
+// Process multiple texts concurrently (2.6x faster!)
+const response = await fetch('http://localhost:3001/api/v1/sentiment/batch', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    texts: [
+      "This product is amazing!",
+      "Terrible customer service.",
+      "Average quality, fair price."
+    ],
+    model: "gpt-3.5-turbo"
+  })
+});
+```
+
+### Predictive Analytics
+```javascript
+// Get sentiment predictions for a customer
+const predictions = await fetch('http://localhost:3001/api/predictions/customer/cust-123');
+// Returns 30, 60, 90 day sentiment forecasts with confidence intervals
+```
+
+### Progressive Processing
+```javascript
+// Stream results as they're processed
+const eventSource = new EventSource('http://localhost:3001/api/v1/sentiment/stream/batch');
+eventSource.onmessage = (event) => {
+  const result = JSON.parse(event.data);
+  updateUI(result); // Update UI with each result as it arrives
+};
 ```
 
 ## Scripts

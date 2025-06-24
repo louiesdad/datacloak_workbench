@@ -13,6 +13,9 @@ module.exports = {
       tsconfig: 'tsconfig.test.json'
     }]
   },
+  transformIgnorePatterns: [
+    'node_modules/(?!(p-limit|yocto-queue)/)'
+  ],
   collectCoverageFrom: [
     'src/**/*.ts',
     '!src/**/*.d.ts',
