@@ -1,37 +1,48 @@
-# Dependencies
-node_modules/
-__pycache__/
-*.py[cod]
-*$py.class
+# Database
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.sql
+*.sql.gz
 
-# Environment variables
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+# Logs
+*.log
+logs/
+!*.sample.log
 
-# Build outputs
-/dist/
-/build/
-*.exe
+# Uploads
+/packages/backend/data/uploads/
+
+# Test data
+/test-data/
+/test_*.csv
+*.test.csv
+sample-data.csv
+
+# Build artifacts
+/target/
+/temp/
+/bin/
 *.dll
+*.exe
 *.so
 *.dylib
+*.a
+*.lib
+*.o
+*.obj
+*.out
 
-# Debug logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# Node modules
+node_modules/
 
-# Editor directories and files
-.idea
-.vscode
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 
 # OS generated files
 .DS_Store
@@ -41,57 +52,3 @@ yarn-error.log*
 .Trashes
 ehthumbs.db
 Thumbs.db
-
-# Local development
-*.local
-
-# Logs
-logs
-*.log
-
-# Testing
-coverage/
-
-# Electron builder
-out/
-electron-builder.env
-
-# Large test files and data
-packages/e2e-tests/fixtures/large-test.csv
-*.csv
-test_data.csv
-
-# Test results and artifacts
-tests/e2e/test-results/artifacts/
-tests/e2e/test-results/html/
-tests/e2e/test-results/*.png
-tests/e2e/test-results/*.json
-tests/e2e/test-results/*.xml
-test-results/
-
-# Large datasets and temporary files
-temp/
-data/
-*.sqlite
-*.db
-
-# Claude settings (contains API keys)
-.claude/settings.local.json
-
-# Build and compile outputs
-packages/backend/dist/
-packages/web-ui/dist/
-packages/electron-shell/dist/
-
-# DataCloak library files (large binary)
-temp/datacloak/
-
-# Package manager files
-package-lock.json
-yarn.lock
-
-# IDE and editor files
-*.swp
-*.swo
-*~
-ISSUE_ANALYSIS.md
