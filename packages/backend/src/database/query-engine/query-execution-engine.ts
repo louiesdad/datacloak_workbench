@@ -84,12 +84,10 @@ export class QueryExecutionEngine extends EventEmitter {
 
     try {
       // Check for timeout
+      let timeoutHandle: NodeJS.Timeout | undefined;
       if (options?.timeoutMs) {
-        setTimeout(() => {
-          if (!this.cancelled) {
-            this.cancelled = true;
-            throw new Error('Query execution timeout');
-          }
+        timeoutHandle = setTimeout(() => {
+          this.cancelled = true;
         }, options.timeoutMs);
       }
 
@@ -130,9 +128,10 @@ export class QueryExecutionEngine extends EventEmitter {
       // Add a small delay to allow cancellation to work
       await new Promise(resolve => setTimeout(resolve, 50));
       
-      // Check for cancellation
+      // Check for cancellation or timeout
       if (this.cancelled) {
-        throw new Error('Query execution cancelled');
+        if (timeoutHandle) clearTimeout(timeoutHandle);
+        throw new Error(options?.timeoutMs ? 'Query execution timeout' : 'Query execution cancelled');
       }
 
       // Handle memory limit
@@ -203,6 +202,9 @@ export class QueryExecutionEngine extends EventEmitter {
       this.queryCache.set(cacheKey, result);
 
       this.emit('progress', { percentage: 100, status: 'Complete' });
+
+      // Clear timeout
+      if (timeoutHandle) clearTimeout(timeoutHandle);
 
       return result;
 

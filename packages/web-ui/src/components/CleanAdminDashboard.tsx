@@ -9,6 +9,7 @@ export const CleanAdminDashboard: React.FC = () => {
   const [activeView, setActiveView] = useState<'overview' | 'jobs' | 'usage' | 'audit'>('overview');
   const [stats, setStats] = useState<any>(null);
   const [websocket, setWebsocket] = useState<WebSocket | null>(null);
+  const [wsStatus, setWsStatus] = useState<'connecting' | 'connected' | 'disconnected'>('disconnected');
 
   // Load basic stats
   useEffect(() => {
@@ -25,20 +26,24 @@ export const CleanAdminDashboard: React.FC = () => {
   // Setup WebSocket connection
   useEffect(() => {
     try {
+      setWsStatus('connecting');
       const ws = new WebSocket('ws://localhost:3001/ws');
       
       ws.onopen = () => {
         console.log('WebSocket connected');
         setWebsocket(ws);
+        setWsStatus('connected');
       };
       
       ws.onerror = (error) => {
         console.error('WebSocket error:', error);
+        setWsStatus('disconnected');
       };
       
       ws.onclose = () => {
         console.log('WebSocket disconnected');
         setWebsocket(null);
+        setWsStatus('disconnected');
       };
       
       return () => {
@@ -56,6 +61,13 @@ export const CleanAdminDashboard: React.FC = () => {
 
       <div className="admin-header">
         <h2>Enhanced Logging Dashboard</h2>
+        <div className="connection-status">
+          <span className={`status-indicator ${wsStatus}`}>
+            {wsStatus === 'connected' && '🟢 Real-time Connected'}
+            {wsStatus === 'connecting' && '🟡 Connecting...'}
+            {wsStatus === 'disconnected' && '🔴 Real-time Disconnected'}
+          </span>
+        </div>
       </div>
       
       <div className="admin-tabs">

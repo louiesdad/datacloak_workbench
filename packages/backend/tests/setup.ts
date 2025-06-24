@@ -1,9 +1,8 @@
 import { TestDatabaseManager } from './utils/test-database-manager';
 import { setupTestServiceContainer, cleanupTestServiceContainer } from './utils/service-integration-setup';
-import { loadTestEnvironment, validateTestEnvironment, ensureTestDirectories } from '../src/config/test-env';
+import { validateTestEnvironment, ensureTestDirectories } from '../src/config/test-env';
 
-// Load and validate test environment
-loadTestEnvironment();
+// Environment is already loaded by env-setup.ts, just validate
 const validation = validateTestEnvironment();
 if (!validation.valid) {
   console.error('Test environment validation failed:');

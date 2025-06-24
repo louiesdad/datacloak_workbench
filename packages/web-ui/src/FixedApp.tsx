@@ -20,7 +20,7 @@ export default function FixedApp() {
   const [jobProgress, setJobProgress] = useState(0);
   const [jobStatus, setJobStatus] = useState('');
   const [lastProgressUpdate, setLastProgressUpdate] = useState(Date.now());
-  const [sentimentModel, setSentimentModel] = useState<'basic' | 'gpt-3.5-turbo' | 'gpt-4'>('gpt-3.5-turbo');
+  const [sentimentModel, setSentimentModel] = useState<'basic' | 'gpt-3.5-turbo' | 'gpt-4'>('basic');
   const [batchProgress, setBatchProgress] = useState({ current: 0, total: 0 });
   const [adminLogs, setAdminLogs] = useState<any[]>([]);
   const [adminStats, setAdminStats] = useState<any>(null);
@@ -162,22 +162,24 @@ export default function FixedApp() {
     }
   }, [currentStep]);
 
-  // Monitor job progress via SSE
+  // Monitor job progress via polling
   useEffect(() => {
     if (!jobId) return;
 
-    let eventSource: EventSource | null = null;
-    let connectionTimeout: NodeJS.Timeout;
+    let pollInterval: NodeJS.Timeout;
     let stuckJobTimeout: NodeJS.Timeout;
-    let lastProgressUpdate = Date.now();
+    let pollCount = 0;
 
     const cleanup = () => {
-      if (eventSource) {
-        eventSource.close();
-        eventSource = null;
+      console.log('Cleaning up job progress polling');
+      if (pollInterval) {
+        clearInterval(pollInterval);
+        pollInterval = undefined;
       }
-      clearTimeout(connectionTimeout);
-      clearTimeout(stuckJobTimeout);
+      if (stuckJobTimeout) {
+        clearInterval(stuckJobTimeout);
+        stuckJobTimeout = undefined;
+      }
     };
 
     const handleJobError = (message: string) => {
@@ -188,75 +190,80 @@ export default function FixedApp() {
       cleanup();
     };
 
-    try {
-      eventSource = new EventSource(`http://localhost:3001/api/v1/jobs/${jobId}/progress`);
+    const pollJobProgress = async () => {
+      pollCount++;
+      console.log(`[Poll #${pollCount}] Checking job progress for ${jobId}`);
       
-      // Set connection timeout
-      connectionTimeout = setTimeout(() => {
-        handleJobError('Failed to connect to job monitoring service. The backend may be unavailable.');
-      }, 10000); // 10 second connection timeout
-
-      // Set stuck job detection
-      const checkStuckJob = () => {
-        const timeSinceLastUpdate = Date.now() - lastProgressUpdate;
-        if (timeSinceLastUpdate > 60000) { // 60 seconds without update
-          handleJobError('Job appears to be stuck. This may be due to API rate limits or server issues. Please try again with a smaller dataset or contact support.');
+      try {
+        const response = await fetch(`http://localhost:3001/api/v1/jobs/${jobId}/progress`);
+        if (!response.ok) {
+          if (response.status === 404) {
+            handleJobError('Job not found. It may have been removed or expired.');
+            return;
+          }
+          throw new Error(`HTTP ${response.status}`);
         }
-      };
-      stuckJobTimeout = setInterval(checkStuckJob, 10000); // Check every 10 seconds
-
-      eventSource.addEventListener('open', () => {
-        clearTimeout(connectionTimeout);
-        console.log('Connected to job progress monitoring');
-      });
-      
-      eventSource.addEventListener('job:progress', (event) => {
-        const data = JSON.parse(event.data);
-        setJobProgress(data.progress);
-        setJobStatus(data.status || 'Processing...');
-        lastProgressUpdate = Date.now();
-        setLastProgressUpdate(Date.now());
-      });
-
-      eventSource.addEventListener('job:completed', (event) => {
-        const data = JSON.parse(event.data);
-        setJobStatus('Analysis complete!');
-        // Fetch full results
-        fetchJobResults(jobId);
-        cleanup();
-      });
-
-      eventSource.addEventListener('job:failed', (event) => {
-        const data = JSON.parse(event.data);
-        const errorMessage = data.error || 'Job failed';
         
-        // Provide more specific error messages
-        if (errorMessage.includes('Circuit breaker is OPEN')) {
-          handleJobError('The OpenAI API is temporarily unavailable due to too many failed requests. Please wait a few minutes and try again with a smaller dataset.');
-        } else if (errorMessage.includes('Failed to acquire connection')) {
-          handleJobError('Database connection error. The server may be overloaded. Please try again in a few moments.');
-        } else if (errorMessage.includes('Rate limit')) {
-          handleJobError('OpenAI API rate limit exceeded. Please wait a few minutes before trying again.');
-        } else {
-          handleJobError(`Job failed: ${errorMessage}`);
+        const result = await response.json();
+        console.log('Job progress response:', result);
+        
+        if (result.success && result.data) {
+          const data = result.data;
+          console.log('Job progress data:', data);
+          
+          // Handle different progress data structures
+          const progress = data.progress || data.percentComplete || 0;
+          const status = data.status || data.state || 'Processing...';
+          
+          setJobProgress(progress);
+          setJobStatus(status);
+          setLastProgressUpdate(Date.now());
+          
+          if (data.currentBatch && data.totalBatches) {
+            setBatchProgress({ current: data.currentBatch, total: data.totalBatches });
+          }
+          
+          // Handle completion
+          if (data.status === 'completed') {
+            setJobStatus('Analysis complete! Loading results...');
+            await fetchJobResults(jobId);
+            cleanup();
+          } else if (data.status === 'failed') {
+            const errorMessage = data.error || 'Job failed for unknown reason';
+            
+            // Provide more specific error messages
+            if (errorMessage.includes('Circuit breaker is OPEN')) {
+              handleJobError('The OpenAI API is temporarily unavailable due to too many failed requests. Please wait a few minutes and try again with a smaller dataset.');
+            } else if (errorMessage.includes('Failed to acquire connection')) {
+              handleJobError('Database connection error. The server may be overloaded. Please try again in a few moments.');
+            } else if (errorMessage.includes('Rate limit')) {
+              handleJobError('OpenAI API rate limit exceeded. Please wait a few minutes before trying again.');
+            } else {
+              handleJobError(`Job failed: ${errorMessage}`);
+            }
+          }
         }
-      });
+      } catch (err) {
+        console.error('Failed to poll job progress:', err);
+        // Don't error immediately on network issues, keep trying
+      }
+    };
 
-      eventSource.onerror = (error) => {
-        console.error('SSE connection error:', error);
-        // Don't immediately fail - SSE connections can reconnect
-        // But if we haven't connected yet, this is a real error
-        if (eventSource?.readyState === EventSource.CONNECTING && !lastProgressUpdate) {
-          handleJobError('Unable to monitor job progress. Please check if the backend is running.');
-        }
-      };
-    } catch (error) {
-      console.error('Failed to create SSE connection:', error);
-      handleJobError('Failed to start job monitoring. Please check your connection.');
-    }
+    // Start polling immediately and then every 2 seconds
+    pollJobProgress();
+    pollInterval = setInterval(pollJobProgress, 2000);
+
+    // Check for stuck jobs
+    const checkStuckJob = () => {
+      const timeSinceLastUpdate = Date.now() - lastProgressUpdate;
+      if (timeSinceLastUpdate > 60000) { // 60 seconds without update
+        handleJobError('Job appears to be stuck. This may be due to API rate limits or server issues. Please try again with a smaller dataset or contact support.');
+      }
+    };
+    stuckJobTimeout = setInterval(checkStuckJob, 10000); // Check every 10 seconds
 
     return cleanup;
-  }, [jobId]);
+  }, [jobId]); // Remove lastProgressUpdate from dependencies to prevent infinite re-renders
 
   const fetchJobResults = async (jobId: string) => {
     try {
@@ -340,9 +347,13 @@ export default function FixedApp() {
       if (analysisType === 'full') {
         console.log('Starting full dataset analysis as background job...');
         
+        // Extract just the filename from the path
+        const fullPath = uploadedDataset.filepath || uploadedDataset.filename || '';
+        const fileName = fullPath.split('/').pop() || fullPath;
+        
         const jobData = {
           datasetId: uploadedDataset.id,
-          filePath: uploadedDataset.filepath || uploadedDataset.filename,
+          filePath: fileName,
           selectedColumns: analysisMode === 'existing' ? selectedColumns : [],
           analysisMode: analysisMode,
           model: sentimentModel,
@@ -352,6 +363,9 @@ export default function FixedApp() {
           }
         };
 
+        console.log('Creating job with data:', jobData);
+        console.log('Full path was:', fullPath, 'Using filename:', fileName);
+        
         const response = await fetch('http://localhost:3001/api/v1/jobs', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -361,14 +375,25 @@ export default function FixedApp() {
           })
         });
 
+        console.log('Job creation response status:', response.status);
+        
         if (!response.ok) {
-          throw new Error(`Failed to create job: ${response.status}`);
+          const errorText = await response.text();
+          console.error('Job creation failed:', response.status, errorText);
+          throw new Error(`Failed to create job: ${response.status} - ${errorText}`);
         }
 
         const result = await response.json();
+        console.log('Job creation full response:', result);
+        
         if (result.success && result.data) {
-          setJobId(result.data.id);
+          const extractedJobId = result.data.jobId || result.data.id || result.jobId;
+          console.log('Extracted job ID:', extractedJobId, 'from response data:', result.data);
+          
+          setJobId(extractedJobId);
           setJobStatus('Job created, starting analysis...');
+          setJobProgress(0);
+          setBatchProgress({ current: 0, total: 0 });
           // The useEffect hook will monitor progress
         } else {
           throw new Error('Failed to create analysis job');
@@ -673,8 +698,8 @@ export default function FixedApp() {
                     checked={analysisMode === 'generate'}
                     onChange={(e) => setAnalysisMode(e.target.value as 'existing' | 'generate')}
                   />
-                  <span>Generate Sentiment Column</span>
-                  <p>Add a new column with generated sentiment data</p>
+                  <span>Generate Mock Data (Demo Only)</span>
+                  <p>⚠️ Creates synthetic sentiment data for testing - not real analysis</p>
                 </label>
               </div>
               
@@ -869,7 +894,10 @@ export default function FixedApp() {
                     </div>
                     <div className="progress-details">
                       <span className="progress-percentage">{jobProgress}%</span>
-                      <span className="progress-status">{jobStatus}</span>
+                      <span className="progress-status">{jobStatus || 'Initializing...'}</span>
+                      {jobProgress === 0 && (
+                        <span className="progress-note">⏳ Job starting - progress will appear shortly</span>
+                      )}
                     </div>
                   </div>
                   <div className="job-info">
@@ -919,6 +947,29 @@ export default function FixedApp() {
                   <p>Analyzing your data with PII protection...</p>
                   <p>This may take a few moments.</p>
                   
+                  {/* Debug info */}
+                  <div className="debug-info" style={{marginTop: '20px', padding: '10px', background: '#f5f5f5', fontSize: '12px'}}>
+                    <p><strong>Debug Info:</strong></p>
+                    <p>Analysis Type: {analysisType}</p>
+                    <p>Analysis Mode: {analysisMode}</p>
+                    <p>Job ID: {jobId || 'None'}</p>
+                    <p>Loading: {loading.toString()}</p>
+                    <p>Selected Columns: {selectedColumns.join(', ') || 'None'}</p>
+                  </div>
+                  
+                  <div style={{marginTop: '20px'}}>
+                    <button 
+                      onClick={() => {
+                        setLoading(false);
+                        setCurrentStep('config');
+                        setError('Analysis cancelled by user');
+                      }}
+                      className="secondary-button"
+                    >
+                      ← Go Back to Configuration
+                    </button>
+                  </div>
+                  
                   {/* Show batch progress for OpenAI models */}
                   {batchProgress.total > 1 && (
                     <div className="batch-progress-container">
@@ -931,7 +982,7 @@ export default function FixedApp() {
                       <div className="progress-bar">
                         <div 
                           className="progress-fill" 
-                          style={{ width: `${(batchProgress.current / batchProgress.total) * 100}%` }}
+                          style={{ width: `${batchProgress.total > 0 ? (batchProgress.current / batchProgress.total) * 100 : 0}%` }}
                         />
                       </div>
                     </div>

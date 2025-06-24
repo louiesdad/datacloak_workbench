@@ -64,7 +64,11 @@ export const configSchema = Joi.object({
     .default('admin'),
   ADMIN_PASSWORD: Joi.string()
     .min(8)
-    .required()
+    .when('NODE_ENV', {
+      is: 'test',
+      then: Joi.string().default('test-admin-password-for-testing'),
+      otherwise: Joi.required()
+    })
     .description('Admin password for configuration management'),
   
   // Redis Configuration
@@ -177,7 +181,11 @@ export const configSchema = Joi.object({
   AWS_REGION: Joi.string()
     .when('SECRET_PROVIDER', {
       is: 'aws',
-      then: Joi.required()
+      then: Joi.when('NODE_ENV', {
+        is: 'test',
+        then: Joi.string().default('us-east-1'),
+        otherwise: Joi.required()
+      })
     })
     .description('AWS region for Secrets Manager'),
   AWS_SECRET_PREFIX: Joi.string()
@@ -189,19 +197,31 @@ export const configSchema = Joi.object({
     .uri()
     .when('SECRET_PROVIDER', {
       is: 'azure',
-      then: Joi.required()
+      then: Joi.when('NODE_ENV', {
+        is: 'test',
+        then: Joi.string().uri().default('https://test-vault.vault.azure.net/'),
+        otherwise: Joi.required()
+      })
     })
     .description('Azure Key Vault URL'),
   AZURE_TENANT_ID: Joi.string()
     .when('SECRET_PROVIDER', {
       is: 'azure',
-      then: Joi.required()
+      then: Joi.when('NODE_ENV', {
+        is: 'test',
+        then: Joi.string().default('test-tenant-id'),
+        otherwise: Joi.required()
+      })
     })
     .description('Azure tenant ID'),
   AZURE_CLIENT_ID: Joi.string()
     .when('SECRET_PROVIDER', {
       is: 'azure',
-      then: Joi.required()
+      then: Joi.when('NODE_ENV', {
+        is: 'test',
+        then: Joi.string().default('test-client-id'),
+        otherwise: Joi.required()
+      })
     })
     .description('Azure client ID'),
   
@@ -210,13 +230,21 @@ export const configSchema = Joi.object({
     .uri()
     .when('SECRET_PROVIDER', {
       is: 'vault',
-      then: Joi.required()
+      then: Joi.when('NODE_ENV', {
+        is: 'test',
+        then: Joi.string().uri().default('http://localhost:8200'),
+        otherwise: Joi.required()
+      })
     })
     .description('HashiCorp Vault address'),
   VAULT_TOKEN: Joi.string()
     .when('SECRET_PROVIDER', {
       is: 'vault',
-      then: Joi.required()
+      then: Joi.when('NODE_ENV', {
+        is: 'test',
+        then: Joi.string().default('test-vault-token'),
+        otherwise: Joi.required()
+      })
     })
     .description('HashiCorp Vault token'),
   VAULT_PATH: Joi.string()

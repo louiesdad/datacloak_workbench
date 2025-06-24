@@ -69,10 +69,27 @@ export const JobMonitor: React.FC<JobMonitorProps> = ({ websocket, className }) 
   const fetchJobs = async () => {
     try {
       setIsLoading(true);
+      console.log('JobMonitor: Fetching jobs...');
       const response = await fetch('http://localhost:3001/api/v1/jobs');
       if (response.ok) {
         const data = await response.json();
-        const jobsList = Array.isArray(data) ? data : (data.jobs || []);
+        console.log('JobMonitor: Received data:', data);
+        
+        // Ensure we always get an array
+        let jobsList: Job[] = [];
+        if (Array.isArray(data)) {
+          jobsList = data;
+        } else if (data && typeof data === 'object') {
+          if (Array.isArray(data.data?.jobs)) {
+            jobsList = data.data.jobs;
+          } else if (Array.isArray(data.data)) {
+            jobsList = data.data;
+          } else if (Array.isArray(data.jobs)) {
+            jobsList = data.jobs;
+          }
+        }
+        
+        console.log('JobMonitor: Parsed jobs list:', jobsList);
         setJobs(jobsList);
         
         // Calculate stats from jobs
@@ -85,9 +102,16 @@ export const JobMonitor: React.FC<JobMonitorProps> = ({ websocket, className }) 
           cancelled: jobsList.filter((j: Job) => j.status === 'cancelled').length
         };
         setStats(calculatedStats);
+        console.log('JobMonitor: Updated jobs count:', jobsList.length, 'Stats:', calculatedStats);
+      } else {
+        console.error('JobMonitor: Failed to fetch jobs:', response.status, response.statusText);
+        // Reset to empty array on error
+        setJobs([]);
       }
     } catch (error) {
       console.error('Failed to fetch jobs:', error);
+      // Reset to empty array on error
+      setJobs([]);
     } finally {
       setIsLoading(false);
     }
@@ -98,18 +122,24 @@ export const JobMonitor: React.FC<JobMonitorProps> = ({ websocket, className }) 
     fetchJobs();
     
     if (autoRefresh) {
-      const interval = setInterval(fetchJobs, 5000); // Refresh every 5 seconds
+      const interval = setInterval(fetchJobs, 2000); // Refresh every 2 seconds
       return () => clearInterval(interval);
     }
   }, [autoRefresh]);
 
   // WebSocket integration for real-time updates
   useEffect(() => {
-    if (!websocket) return;
+    if (!websocket) {
+      console.log('JobMonitor: No WebSocket connection available');
+      return;
+    }
+
+    console.log('JobMonitor: Setting up WebSocket event listeners');
 
     const handleMessage = (event: MessageEvent) => {
       try {
         const message = JSON.parse(event.data);
+        console.log('JobMonitor: Received WebSocket message:', message);
         
         switch (message.type) {
           case 'job:created':
@@ -117,12 +147,19 @@ export const JobMonitor: React.FC<JobMonitorProps> = ({ websocket, className }) 
           case 'job:completed':
           case 'job:failed':
           case 'job:cancelled':
+            console.log('JobMonitor: Job event received, refreshing jobs list');
             // Fetch latest jobs when job events occur
             fetchJobs();
             break;
+          default:
+            // Also check for generic 'progress' or other job-related events
+            if (message.jobId || message.type?.includes('job') || message.type?.includes('progress')) {
+              console.log('JobMonitor: Generic job-related event, refreshing jobs list');
+              fetchJobs();
+            }
         }
       } catch (error) {
-        console.error('Failed to parse WebSocket message:', error);
+        console.error('Failed to parse WebSocket message:', error, event.data);
       }
     };
 
@@ -174,11 +211,11 @@ export const JobMonitor: React.FC<JobMonitorProps> = ({ websocket, className }) 
   };
 
   // Filter jobs based on selected criteria
-  const filteredJobs = jobs.filter(job => {
+  const filteredJobs = Array.isArray(jobs) ? jobs.filter(job => {
     if (selectedStatus !== 'all' && job.status !== selectedStatus) return false;
     if (selectedType !== 'all' && job.type !== selectedType) return false;
     return true;
-  });
+  }) : [];
 
   // Get status badge variant
   const getStatusBadgeVariant = (status: JobStatus): string => {
@@ -388,6 +425,11 @@ export const JobMonitor: React.FC<JobMonitorProps> = ({ websocket, className }) 
             {filteredJobs.length === 0 ? (
               <div className="empty-state">
                 <p>No jobs found matching the current filters.</p>
+                {jobs.length === 0 && (
+                  <p className="text-sm text-gray-500 mt-2">
+                    💡 Jobs will appear here when you start an analysis
+                  </p>
+                )}
               </div>
             ) : (
               <div className="table-container">

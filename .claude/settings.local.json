@@ -141,7 +141,11 @@
       "Bash(sqlite3:*)",
       "Bash(bash:*)",
       "Bash(./test-openai.sh:*)",
-      "Bash(/usr/bin/env node:*)"
+      "Bash(/usr/bin/env node:*)",
+      "Bash(git rm:*)",
+      "Bash(npx vitest run:*)",
+      "Bash(npm audit:*)",
+      "Bash(git reset:*)"
     ],
     "deny": []
   }

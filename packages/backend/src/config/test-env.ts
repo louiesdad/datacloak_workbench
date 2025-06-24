@@ -45,13 +45,23 @@ const TEST_ENV_CONFIG: TestEnvironmentConfig = {
 };
 
 export function loadTestEnvironment(): void {
-  // Load .env.test file if it exists
+  // Force NODE_ENV to test first
+  process.env.NODE_ENV = 'test';
+  
+  // Apply defaults first to ensure they're available
+  Object.entries(TEST_ENV_CONFIG.defaults).forEach(([key, value]) => {
+    if (!process.env[key]) {
+      process.env[key] = value;
+    }
+  });
+
+  // Load .env.test file if it exists (this can override defaults)
   const testEnvPath = path.join(__dirname, '../../.env.test');
   if (fs.existsSync(testEnvPath)) {
     dotenv.config({ path: testEnvPath });
   }
 
-  // Apply defaults for missing values
+  // Apply defaults again for any variables that weren't in .env.test
   Object.entries(TEST_ENV_CONFIG.defaults).forEach(([key, value]) => {
     if (!process.env[key]) {
       process.env[key] = value;

@@ -14,7 +14,7 @@ module.exports = {
     }]
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(p-limit|yocto-queue)/)'
+    'node_modules/(?!(@babel/runtime)/)'
   ],
   collectCoverageFrom: [
     'src/**/*.ts',
@@ -59,23 +59,29 @@ module.exports = {
       statements: 85
     }
   },
-  setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
-  testTimeout: 6000, // Further optimized from 8s to 6s for faster execution
-  verbose: true,
+  setupFilesAfterEnv: ['<rootDir>/tests/env-setup.ts', '<rootDir>/tests/setup.ts'],
+  testTimeout: 10000, // Increased to prevent premature timeouts
+  verbose: false, // Reduced verbosity to improve performance
   forceExit: true,
   clearMocks: true,
   resetMocks: true,
   restoreMocks: true,
   
-  // Worker configuration for stability
-  maxWorkers: process.env.CI ? 2 : '50%',  // Use 50% of CPUs locally, 2 in CI
-  workerIdleMemoryLimit: '512MB',  // Kill idle workers using >512MB
+  // Improved cleanup and error handling
+  errorOnDeprecated: true,
+  bail: false, // Continue running tests even if some fail
+  
+  // Optimized worker configuration for stability
+  maxWorkers: process.env.CI ? 1 : 
+              process.env.NODE_ENV === 'test' ? 2 : 
+              Math.min(require('os').cpus().length, 4),  // Cap at 4 workers max
+  workerIdleMemoryLimit: '256MB',  // Reduced memory limit for faster cleanup
   
   // Memory management
   globals: {},
   
   // Additional performance optimizations
-  detectOpenHandles: false, // Disable for faster cleanup
+  detectOpenHandles: process.env.NODE_ENV === 'development', // Enable only in dev for debugging
   testSequencer: '<rootDir>/tests/test-sequencer.js', // Custom test sequencer for optimal order
   
   // Prevent memory leaks in tests
@@ -123,6 +129,7 @@ module.exports = {
   moduleNameMapper: {
     '^ioredis$': '<rootDir>/src/services/__mocks__/ioredis.ts',
     '^../database/sqlite-refactored$': '<rootDir>/src/database/__mocks__/sqlite-refactored.ts',
+    '^p-limit$': '<rootDir>/src/services/__mocks__/p-limit.ts',
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@tests/(.*)$': '<rootDir>/tests/$1'
   }

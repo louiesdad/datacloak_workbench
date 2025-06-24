@@ -87,45 +87,49 @@ describe('Query Execution Engine - TDD', () => {
     });
 
     it('should handle query cancellation', async () => {
-      // Test query cancellation
+      // Test query cancellation - create new engine for this test
+      const cancelEngine = new QueryExecutionEngine(db);
       const query = queryBuilder.buildJoinQuery({
         files: ['users', 'orders'],
         joinKeys: [{ left: 'id', right: 'user_id' }]
       });
       
-      const executionPromise = executionEngine.execute(query);
+      const executionPromise = cancelEngine.execute(query);
       
-      // Cancel after 100ms
+      // Cancel after 10ms to ensure it happens during execution
       setTimeout(() => {
-        executionEngine.cancel();
-      }, 100);
+        cancelEngine.cancel();
+      }, 10);
       
       await expect(executionPromise).rejects.toThrow('Query execution cancelled');
     });
 
     it('should implement query result caching', async () => {
-      // Test query result caching
+      // Test query result caching - create new engine for this test
+      const cacheEngine = new QueryExecutionEngine(db);
       const query = queryBuilder.buildJoinQuery({
         files: ['users', 'orders'],
         joinKeys: [{ left: 'id', right: 'user_id' }]
       });
       
       // First execution - should not be cached
-      const result1 = await executionEngine.execute(query);
+      const result1 = await cacheEngine.execute(query);
       expect(result1.metadata.cacheHit).toBe(false);
       
       // Second execution - should be cached
-      const result2 = await executionEngine.execute(query);
+      const result2 = await cacheEngine.execute(query);
       expect(result2.metadata.cacheHit).toBe(true);
       expect(result2.metadata.executionTimeMs).toBeLessThan(result1.metadata.executionTimeMs);
     });
 
     it('should handle query timeout', async () => {
       // Test query timeout
-      const query = queryBuilder.buildJoinQuery({
-        files: ['infinite_table'],
-        joinKeys: [{ left: 'id', right: 'ref_id' }]
-      });
+      // Create a mock query that will trigger timeout behavior
+      const query = {
+        toString: () => 'SELECT * FROM infinite_table',
+        getParameters: () => [],
+        getIndexSuggestions: () => []
+      };
       
       const options = {
         timeoutMs: 1000 // 1 second timeout

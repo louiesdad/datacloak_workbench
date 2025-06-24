@@ -13,6 +13,9 @@
   background: white;
   border-bottom: 1px solid var(--gray-light-1);
   box-shadow: var(--shadow-sm);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .admin-header h2 {
@@ -331,4 +334,31 @@ button.tab-item {
   .admin-content {
     padding: var(--spacing-md);
   }
+}
+
+/* Connection Status Indicator */
+.connection-status .status-indicator {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid;
+}
+
+.connection-status .status-indicator.connected {
+  background: #d4edda;
+  color: #155724;
+  border-color: #c3e6cb;
+}
+
+.connection-status .status-indicator.connecting {
+  background: #fff3cd;
+  color: #856404;
+  border-color: #ffeaa7;
+}
+
+.connection-status .status-indicator.disconnected {
+  background: #f8d7da;
+  color: #721c24;
+  border-color: #f5c6cb;
 }
